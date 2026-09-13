@@ -17,10 +17,10 @@ export default function CatalogPage() {
       <section className="collection-list">
         {artworkCollections.map((collection) => (
           <article key={collection.id} className="collection-card">
-            <div className="collection-art"><Image src="/maison-botanical.webp" width="768" height="1152" alt="" /></div>
+            <div className={`collection-art ${collection.id}`}><Image src={collection.id === "luminous-parchment" ? "/maison-luminous-parchment.webp" : "/maison-botanical.webp"} width="768" height="1152" alt="" /></div>
             <div className="collection-copy">
               <p className="eyebrow">Artwork collection</p><h2>{collection.name}</h2>
-              <p>Four event-specific compositions, bound to one released theme version.</p>
+              <p>Four event-specific compositions, bound to one released theme and artwork family.</p>
               <div className="preset-links">
                 {eventPresets.filter((preset) => preset.collectionId === collection.id).map((preset) => (
                   <Link key={preset.id} href={`/i/${preset.id}-demo`}>{preset.eventType}</Link>

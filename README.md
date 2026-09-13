@@ -4,7 +4,7 @@ Designer-operated software for producing premium interactive invitations. The fi
 
 ## Implemented foundation
 
-- Eight event and collection presets with one semantic, reduced-motion-aware renderer
+- Eight event and collection presets with one semantic, naturally scrollable, reduced-motion-aware renderer
 - Always-available Details and RSVP controls, long participant-list handling, and synthetic public demos
 - Customer content portal and constrained production studio prototypes
 - Strict Zod event, invitation, upload, and RSVP contracts
@@ -52,4 +52,4 @@ npm run build
 7. Configure Resend, Sentry with personal-content redaction, scheduled bounded task claims, PITR, and a separate media backup destination.
 8. Deploy to Vercel only after integration, browser, restore, and real-device gates pass. The optional `dev:sites` and `build:sites` scripts retain the portable preview path used during initial UI construction.
 
-See [architecture decisions](docs/adr/README.md) and the [production runbook](docs/operations.md).
+See the [Phase 1 acceptance record](docs/phase-1-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).
