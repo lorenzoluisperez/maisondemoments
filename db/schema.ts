@@ -8,6 +8,7 @@ export const eventType = pgEnum("event_type", ["wedding", "birthday", "debut", "
 export const reviewState = pgEnum("review_state", ["EDITING", "IN_REVIEW", "CHANGES_REQUESTED", "APPROVED"]);
 export const invitationAvailability = pgEnum("invitation_availability", ["UNPUBLISHED", "LIVE", "SUSPENDED", "EXPIRED", "REMOVED"]);
 export const mediaState = pgEnum("media_state", ["QUARANTINED", "PROCESSING", "READY", "REJECTED", "DELETED"]);
+export const mediaUsage = pgEnum("media_usage", ["CUSTOMER_IMAGE", "EXCLUSIVE_ARTWORK", "CATALOG_ARTWORK"]);
 export const guestSlotType = pgEnum("guest_slot_type", ["ADULT", "CHILD"]);
 export const rsvpStatus = pgEnum("rsvp_status", ["ATTENDING", "DECLINED"]);
 export const backgroundJobState = pgEnum("background_job_state", ["PENDING", "RUNNING", "SUCCEEDED", "FAILED"]);
@@ -83,20 +84,33 @@ export const artworkCollections = pgTable("artwork_collections", {
 
 export const mediaObjects = pgTable("media_objects", {
   id: uuid("id").primaryKey().defaultRandom(), ownerAccountId: uuid("owner_account_id").references(() => accounts.id), jobOrderId: uuid("job_order_id").references(() => jobOrders.id),
-  storageKey: text("storage_key").notNull().unique(), originalFilename: text("original_filename").notNull(), detectedContentType: text("detected_content_type"),
+  usage: mediaUsage("usage").notNull().default("CUSTOMER_IMAGE"), bucket: text("bucket").notNull(), storageKey: text("storage_key").notNull().unique(),
+  quarantineStorageKey: text("quarantine_storage_key"),
+  uploadIntentKey: uuid("upload_intent_key").unique(), originalFilename: text("original_filename").notNull(), claimedContentType: text("claimed_content_type"), detectedContentType: text("detected_content_type"),
   bytes: bigint("bytes", { mode: "number" }).notNull(), width: integer("width"), height: integer("height"), checksum: text("checksum"),
-  state: mediaState("state").notNull().default("QUARANTINED"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  state: mediaState("state").notNull().default("QUARANTINED"), failureCode: text("failure_code"), processingRecipeVersion: integer("processing_recipe_version"),
+  finalizedAt: timestamp("finalized_at", { withTimezone: true }), deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  storagePurgedAt: timestamp("storage_purged_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index("media_objects_owner_idx").on(table.ownerAccountId),
   index("media_objects_order_idx").on(table.jobOrderId),
+  index("media_objects_cleanup_idx").on(table.state, table.createdAt),
   check("media_bytes_nonnegative", sql`${table.bytes} >= 0`),
+  check("media_dimensions_together", sql`(${table.width} IS NULL AND ${table.height} IS NULL) OR (${table.width} > 0 AND ${table.height} > 0)`),
+  check("media_customer_ownership", sql`${table.usage} = 'CATALOG_ARTWORK' OR (${table.ownerAccountId} IS NOT NULL AND ${table.jobOrderId} IS NOT NULL)`),
 ]);
 
 export const mediaVariants = pgTable("media_variants", {
   id: uuid("id").primaryKey().defaultRandom(), sourceMediaId: uuid("source_media_id").notNull().references(() => mediaObjects.id, { onDelete: "cascade" }),
-  storageKey: text("storage_key").notNull().unique(), format: text("format").notNull(), width: integer("width").notNull(), height: integer("height").notNull(),
-  bytes: bigint("bytes", { mode: "number" }).notNull(), recipeVersion: integer("recipe_version").notNull(),
-}, (table) => [index("media_variants_source_idx").on(table.sourceMediaId)]);
+  bucket: text("bucket").notNull(), storageKey: text("storage_key").notNull().unique(), contentType: text("content_type").notNull(), format: text("format").notNull(),
+  width: integer("width").notNull(), height: integer("height").notNull(), bytes: bigint("bytes", { mode: "number" }).notNull(), checksum: text("checksum").notNull(),
+  recipeVersion: integer("recipe_version").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("media_variants_source_idx").on(table.sourceMediaId),
+  uniqueIndex("media_variant_recipe_unique").on(table.sourceMediaId, table.recipeVersion, table.width, table.format),
+  check("media_variant_values_valid", sql`${table.width} > 0 AND ${table.height} > 0 AND ${table.bytes} > 0 AND ${table.recipeVersion} > 0`),
+]);
 
 export const artworkAssets = pgTable("artwork_assets", {
   id: uuid("id").primaryKey().defaultRandom(), collectionId: uuid("collection_id").notNull().references(() => artworkCollections.id),

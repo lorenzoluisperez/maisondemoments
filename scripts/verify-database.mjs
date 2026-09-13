@@ -52,7 +52,7 @@ try {
   if (browserGrants.total !== 0) throw new Error("Browser database roles still have application table grants");
   if (functionGrants.total !== 0) throw new Error("Public database roles can execute private functions");
   if (missingIndexes.length) throw new Error("One or more foreign-key columns are missing an index");
-  if (migrations.total < 4) throw new Error("Expected Phase 2 migrations are not applied");
+  if (migrations.total < 7) throw new Error("Expected Phase 3 migrations are not applied");
 
   console.log(JSON.stringify({
     runtimeRole: runtime.role,

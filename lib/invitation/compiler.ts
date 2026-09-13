@@ -1,10 +1,17 @@
 import { createHash } from "node:crypto";
 import { eventDisplayNames, eventSchema, type Event } from "@/lib/domain/event";
-import { invitationConfigSchema, type InvitationConfig, type InvitationSnapshot } from "./config";
+import { invitationConfigSchema, snapshotMediaReferenceSchema, type InvitationConfig, type InvitationSnapshot } from "./config";
 
-export function compileInvitation(input: { event: Event; config: InvitationConfig; slug: string; version: number }): InvitationSnapshot & { contentHash: string } {
+export function compileInvitation(input: {
+  event: Event;
+  config: InvitationConfig;
+  slug: string;
+  version: number;
+  media?: { gallery: Array<{ mediaId: string; alt: string }> };
+}): InvitationSnapshot & { contentHash: string } {
   const event = eventSchema.parse(input.event);
   const config = invitationConfigSchema.parse(input.config);
+  const media = { gallery: snapshotMediaReferenceSchema.array().max(12).parse(input.media?.gallery ?? []) };
   const [title, secondaryName] = eventDisplayNames(event);
   const date = new Date(`${event.primaryLocalDate}T12:00:00Z`);
   const deadline = new Date(`${event.rsvpDeadline}T12:00:00Z`);
@@ -29,6 +36,7 @@ export function compileInvitation(input: { event: Event; config: InvitationConfi
     story: event.story,
     dressCode: event.dressCode,
     giftInformation: event.giftInformation,
+    media,
     config,
   };
   const contentHash = createHash("sha256").update(stableStringify(snapshot)).digest("hex");

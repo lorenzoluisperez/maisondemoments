@@ -36,3 +36,14 @@ Run expiry and deletion as idempotent background jobs. Keep deletion tombstones 
 - Use `MIGRATION_DATABASE_URL` only for `npm run db:migrate`, `npm run db:configure-role`, and `npm run db:verify`. Do not add it to the application runtime environment.
 - Run `npm run test:db` only against development or staging. It creates isolated fixtures, verifies concurrency and tenant isolation, and removes its rows afterward.
 - Run `npm run db:verify` after every schema migration and before deployment.
+
+## Media operations
+
+- Run `npm run storage:setup` once per environment and after changing bucket policy. Both `maison-quarantine` and `maison-private-media` must remain private.
+- Run `npm run catalog:seed` after migrations and whenever a released catalog definition is added. Never change bytes at an existing released artwork path.
+- Run `npm run media:verify` before deployment to verify private buckets and released catalog records.
+- Invoke `POST /api/internal/media-jobs` with `Authorization: Bearer <BACKGROUND_JOB_SECRET>` on a bounded schedule. The secret must contain at least 32 random bytes.
+- Use `npm run media:work` for a manual bounded worker and cleanup pass in development or staging.
+- Alert on `FAILED` media jobs, `REJECTED` media objects, growing pending-job age, and ready media with a retained quarantine key.
+- Signed private delivery URLs expire after five minutes. Delivered objects use a five-minute browser cache. Immediate removal requires deleting the object and allowing for CDN invalidation propagation.
+- Recipe changes require a new recipe version and new object paths. Never overwrite an existing derivative path.

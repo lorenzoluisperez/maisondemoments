@@ -34,6 +34,11 @@ export const invitationConfigSchema = z.object({
 
 export type InvitationConfig = z.infer<typeof invitationConfigSchema>;
 
+export const snapshotMediaReferenceSchema = z.object({
+  mediaId: z.string().uuid(),
+  alt: z.string().trim().max(300),
+}).strict();
+
 export interface InvitationSnapshot {
   version: number;
   slug: string;
@@ -48,5 +53,6 @@ export interface InvitationSnapshot {
   story?: string;
   dressCode?: string;
   giftInformation?: string;
+  media: { gallery: Array<z.infer<typeof snapshotMediaReferenceSchema>> };
   config: InvitationConfig;
 }

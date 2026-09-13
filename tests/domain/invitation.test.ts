@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { demoEvents, demoSnapshotsBySlug } from "@/lib/demo-data";
 import { compileInvitation } from "@/lib/invitation/compiler";
-import { createPreset } from "@/lib/invitation/presets";
+import { createPreset, eventPresets } from "@/lib/invitation/presets";
+import { getCatalogArtwork } from "@/lib/media/catalog";
 
 describe("invitation compiler", () => {
   it("produces a deterministic snapshot and hash", () => {
@@ -30,5 +31,26 @@ describe("invitation compiler", () => {
 
     expect(debut.participants).toHaveLength(18);
     expect(debut.participants.at(-1)).toEqual({ roleLabel: "Candle 18", displayName: "Loved One 18" });
+  });
+
+  it("includes stable media references in the immutable content hash", () => {
+    const base = { event: demoEvents.birthday, config: createPreset("birthday", "luminous-parchment"), slug: "birthday-demo", version: 1 };
+    const withoutMedia = compileInvitation(base);
+    const withMedia = compileInvitation({
+      ...base,
+      media: { gallery: [{ mediaId: "00000000-0000-4000-8000-000000000001", alt: "A birthday portrait" }] },
+    });
+    expect(withMedia.media.gallery).toHaveLength(1);
+    expect(withMedia.contentHash).not.toBe(withoutMedia.contentHash);
+  });
+
+  it("binds every event and collection preset to released artwork", () => {
+    expect(eventPresets).toHaveLength(8);
+    eventPresets.forEach((preset) => {
+      preset.config.scenes.forEach((scene) => {
+        expect(scene.assets).toHaveLength(1);
+        expect(getCatalogArtwork(scene.assets[0].assetKey)).not.toBeNull();
+      });
+    });
   });
 });

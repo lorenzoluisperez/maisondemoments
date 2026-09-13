@@ -8,22 +8,22 @@ This document records the agreed product direction, architecture, release bounda
 
 ## Current position
 
-**The technical roadmap is entering Phase 3.** Phase 1 implementation and Phase 2 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
+**The technical roadmap is entering Phase 4.** Phase 1 implementation, Phase 2, and Phase 3 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
 
 | Phase | Status | Evidence or remaining work |
 |---|---|---|
 | 0. Product and art contract | Partially complete | Product boundaries and architecture are documented. Pricing terms, artwork rights, privacy terms, and production capacity still need written decisions. |
 | 1. Guest experience proof | Implementation complete, release gate pending | The shared scrollable renderer, eight presets, shortcuts, long-content behavior, and reduced motion are implemented. Physical iPhone, Android, and in-app-browser testing remains. |
 | 2. Domain foundation | Complete | Four event schemas, live database model, ownership checks, JO generation, least-privilege runtime access, RLS, API boundaries, integration tests, and production build pass. |
-| 3. Media and renderer | **Next** | Build the production media pipeline and persistent asset library, then validate all eight presets with production-ready media behavior. |
-| 4. Production slice | Not started | Connect customer content collection to generated drafts and the constrained studio. |
+| 3. Media and renderer | Complete | Private signed uploads, durable Sharp processing, immutable variants, signed delivery, cleanup, persistent artwork metadata, renderer asset bindings, live integration tests, and budgets pass. |
+| 4. Production slice | **Next** | Connect customer content collection to generated drafts and the constrained studio. |
 | 5. Review and publishing | Not started | Implement frozen review versions, exact-version approval, publication, and rollback in the application. Database foundations already exist. |
 | 6. Guests and RSVP | Not started | Implement household import, seat allocation, private link exchange, RSVP amendments, deadlines, and exports. Domain and credential primitives already exist. |
 | 7. Operational hardening | Not started | Add payments ledger workflows, queues, monitoring, backups, deletion, retention, and restore drills. |
 | 8. Private pilot | Not started | Complete at least two real pilot orders for each event type and measure time, usability, and margins. |
 | 9. Public launch | Not started | Publish the marketing catalog and open controlled intake after all launch gates pass. |
 
-Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md) and [Phase 2 acceptance record](phase-2-acceptance.md).
+Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), and [Phase 3 acceptance record](phase-3-acceptance.md).
 
 ## Product definition
 
@@ -243,11 +243,11 @@ Proposed retention defaults are 48 hours for abandoned quarantine uploads, seven
 
 Payment state is derived separately from confirmed entries and reversals. Do not overload one status with production, review, payment, and availability conditions.
 
-## Phase 3: next implementation scope
+## Phase 3: implementation record
 
-Phase 3 completes the production media and renderer layer. The existing renderer proof and synthetic artwork are its starting point.
+Phase 3 completed the production media and renderer layer using the existing renderer proof and artwork as its starting point.
 
-### Required work
+### Delivered
 
 1. Define storage buckets, object-path rules, quotas, and customer ownership checks.
 2. Implement upload intent and finalization APIs using the current Supabase keys and private storage.
@@ -262,15 +262,15 @@ Phase 3 completes the production media and renderer layer. The existing renderer
 11. Record measured transfer, decoded-memory, and interaction results against the stated budgets.
 12. Update `.env.example`, operations documentation, ADRs, and the phase status in this file.
 
-### Exit criterion
+### Exit evidence
 
-Phase 3 is complete when an authorized customer image can travel from direct private upload through durable validation and derivative generation into the shared renderer, all eight presets render complete and edge-case content, media references cannot cross customers or be removed while retained versions depend on them, failures are recoverable, and the automated production build and database integration gates pass.
+An authorized customer image now travels from direct private upload through durable validation and derivative generation into the shared renderer. All eight presets bind released artwork and pass edge-case and budget checks. PostgreSQL rejects cross-customer references and deletion of referenced media. Processing, cleanup, and bounded-retry integration tests pass against the configured Supabase project.
 
 The physical-device gate remains separate and still requires real target devices and relevant in-app browsers.
 
-## Later phases
+## Next phase and later phases
 
-### Phase 4: production slice
+### Phase 4: next implementation scope
 
 Connect event-specific portal forms, incremental persistence, completeness validation, generated drafts, autosave, conflict handling, and constrained studio controls. Exit when a designer can produce a complete invitation without retyping customer facts.
 
