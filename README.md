@@ -52,4 +52,6 @@ npm run build
 7. Configure Resend, Sentry with personal-content redaction, scheduled bounded task claims, PITR, and a separate media backup destination.
 8. Deploy to Vercel only after integration, browser, restore, and real-device gates pass. The optional `dev:sites` and `build:sites` scripts retain the portable preview path used during initial UI construction.
 
+Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.
+
 See the [Phase 1 acceptance record](docs/phase-1-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).
