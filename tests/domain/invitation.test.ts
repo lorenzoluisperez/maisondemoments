@@ -1,0 +1,19 @@
+import { describe, expect, it } from "vitest";
+import { demoEvents } from "@/lib/demo-data";
+import { compileInvitation } from "@/lib/invitation/compiler";
+import { createPreset } from "@/lib/invitation/presets";
+
+describe("invitation compiler", () => {
+  it("produces a deterministic snapshot and hash", () => {
+    const input = { event: demoEvents.wedding, config: createPreset("wedding", "midnight-garden"), slug: "wedding-demo", version: 1 };
+    expect(compileInvitation(input)).toEqual(compileInvitation(input));
+    expect(compileInvitation(input).contentHash).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("changes the hash when a material fact changes", () => {
+    const config = createPreset("birthday", "luminous-parchment");
+    const original = compileInvitation({ event: demoEvents.birthday, config, slug: "birthday-demo", version: 1 });
+    const changed = compileInvitation({ event: { ...demoEvents.birthday, primaryLocalDate: "2026-10-05" }, config, slug: "birthday-demo", version: 1 });
+    expect(changed.contentHash).not.toBe(original.contentHash);
+  });
+});
