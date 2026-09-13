@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+function isIanaTimeZone(value: string) {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const namedPersonSchema = z.object({
   displayName: z.string().trim().min(1).max(120),
   roleLabel: z.string().trim().min(1).max(60),
@@ -17,7 +26,7 @@ const activitySchema = z.object({
 
 const baseEventSchema = z.object({
   id: z.string().uuid(),
-  timezone: z.string().min(1).max(80),
+  timezone: z.string().min(1).max(80).refine(isIanaTimeZone, "Timezone must be a valid IANA timezone"),
   primaryLocalDate: z.string().date(),
   rsvpDeadline: z.string().date(),
   hostWording: z.string().trim().max(260).optional(),

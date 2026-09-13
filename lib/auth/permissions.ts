@@ -14,6 +14,10 @@ export function canPublish(actor: Actor) {
   return actor.accountType === "STAFF" && actor.roles.includes("ADMIN");
 }
 
+export function canCreateOrder(actor: Actor) {
+  return actor.accountType === "STAFF" && actor.roles.includes("ADMIN");
+}
+
 export function canReadGuestExport(actor: Actor, order: { customerId: string }) {
   return actor.roles.includes("ADMIN") || (actor.accountType === "CUSTOMER" && actor.accountId === order.customerId);
 }

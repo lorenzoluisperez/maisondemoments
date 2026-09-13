@@ -9,12 +9,14 @@ Designer-operated software for producing premium interactive invitations. The fi
 - Customer content portal and constrained production studio prototypes
 - Strict Zod event, invitation, upload, and RSVP contracts
 - PostgreSQL schema for accounts, orders, catalog, immutable versions, reviews, households, seats, payments, audit history, and durable tasks
+- Persistent account and order APIs with Supabase Auth session verification and normalized event storage
+- Least-privilege pooled database runtime, locked Data API tables, RLS, and repeatable database verification
 - Transaction-safe JO allocation, exact-version publication gate, immutable version trigger, and leased task claiming
 - Role checks for customers, assigned designers, and admins
 - 256-bit household token generation, keyed digest lookup, encrypted reissue storage, and timing-safe comparison
-- Domain tests for all event types, deterministic snapshots, permissions, transitions, RSVP seats/deadlines, and credentials
+- Domain and database integration tests for event types, snapshots, permissions, tenant isolation, JO concurrency, RSVP rules, and credentials
 
-The current portal, studio, and RSVP interactions use synthetic in-browser data. This keeps the experience reviewable without pretending production authentication, storage, email, or payment confirmation is configured.
+The visible portal, studio, and RSVP interactions still use synthetic in-browser data. Persistent account provisioning and authorized order APIs now exist behind `/api/account` and `/api/orders`; connecting those APIs to the customer forms belongs to the production slice in Phase 4.
 
 ## Run locally
 
@@ -22,7 +24,7 @@ Requirements: Node.js 22.13 or newer.
 
 ```bash
 npm install
-cp .env.example .env.local
+cp .env.example .env
 npm run dev
 ```
 
@@ -37,6 +39,8 @@ Run validation:
 
 ```bash
 npm run check
+npm run test:db
+npm run db:verify
 npm run db:generate
 npm run build
 ```
@@ -44,14 +48,14 @@ npm run build
 ## Production setup
 
 1. Create separate Supabase projects for staging and production.
-2. Apply `drizzle/0000_flawless_jack_flag.sql`, then `drizzle/0001_domain_functions.sql` with a migration-only database role.
-3. Configure the values documented in `.env.example`. Never expose the service-role key, guest-token secrets, or database URL to the browser.
-4. Add Supabase email OTP for customers and MFA-enforced staff sign-in.
-5. Implement server adapters behind the existing domain contracts. Every handler must load the actor server-side and call the role and ownership checks.
+2. Set the pooled `DATABASE_URL` for `maison_app` and the privileged, session-pooled `MIGRATION_DATABASE_URL` only in migration environments.
+3. Run `npm run db:migrate`, `npm run db:configure-role`, and `npm run db:verify` through the migration environment.
+4. Configure the remaining values documented in `.env.example`. Never expose the Supabase secret key, guest-token secrets, or database URLs to the browser.
+5. Enable Supabase email OTP for customers and MFA-enforced staff sign-in.
 6. Create private quarantine and customer-media buckets. Process uploads with Sharp under the limits in `lib/media/policy.ts`.
 7. Configure Resend, Sentry with personal-content redaction, scheduled bounded task claims, PITR, and a separate media backup destination.
 8. Deploy to Vercel only after integration, browser, restore, and real-device gates pass. The optional `dev:sites` and `build:sites` scripts retain the portable preview path used during initial UI construction.
 
 Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.
 
-See the [Phase 1 acceptance record](docs/phase-1-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).
+See the [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).

@@ -29,3 +29,10 @@
 | Financial records | Separate accountant-reviewed policy |
 
 Run expiry and deletion as idempotent background jobs. Keep deletion tombstones in a separately protected record so a restoration cannot resurrect removed invitations.
+
+## Database operations
+
+- Use `DATABASE_URL` only with the pooled `maison_app` login. It has DML access through explicit RLS policies and cannot create roles, create databases, replicate, or bypass RLS.
+- Use `MIGRATION_DATABASE_URL` only for `npm run db:migrate`, `npm run db:configure-role`, and `npm run db:verify`. Do not add it to the application runtime environment.
+- Run `npm run test:db` only against development or staging. It creates isolated fixtures, verifies concurrency and tenant isolation, and removes its rows afterward.
+- Run `npm run db:verify` after every schema migration and before deployment.

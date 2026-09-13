@@ -11,3 +11,9 @@ export function getDb() {
   client ??= postgres(databaseUrl, { prepare: false, max: 4, idle_timeout: 20 });
   return drizzle(client, { schema });
 }
+
+export async function closeDb() {
+  if (!client) return;
+  await client.end({ timeout: 5 });
+  client = undefined;
+}

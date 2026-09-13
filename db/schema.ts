@@ -44,7 +44,14 @@ export const jobOrders = pgTable("job_orders", {
   depositRequiredMinor: bigint("deposit_required_minor", { mode: "number" }).notNull(), dueDate: date("due_date"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [index("job_orders_queue_idx").on(table.state, table.dueDate), check("job_order_amounts_nonnegative", sql`${table.quotedAmountMinor} >= 0 AND ${table.depositRequiredMinor} >= 0`)]);
+}, (table) => [
+  index("job_orders_queue_idx").on(table.state, table.dueDate),
+  index("job_orders_customer_idx").on(table.customerId),
+  index("job_orders_designer_idx").on(table.assignedDesignerId),
+  index("job_orders_package_idx").on(table.packageId),
+  check("job_order_amounts_valid", sql`${table.quotedAmountMinor} >= 0 AND ${table.depositRequiredMinor} >= 0 AND ${table.depositRequiredMinor} <= ${table.quotedAmountMinor}`),
+  check("job_order_currency_iso", sql`${table.currency} ~ '^[A-Z]{3}$'`),
+]);
 
 export const events = pgTable("events", {
   id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").notNull().unique().references(() => jobOrders.id, { onDelete: "cascade" }),
@@ -79,18 +86,25 @@ export const mediaObjects = pgTable("media_objects", {
   storageKey: text("storage_key").notNull().unique(), originalFilename: text("original_filename").notNull(), detectedContentType: text("detected_content_type"),
   bytes: bigint("bytes", { mode: "number" }).notNull(), width: integer("width"), height: integer("height"), checksum: text("checksum"),
   state: mediaState("state").notNull().default("QUARANTINED"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [check("media_bytes_nonnegative", sql`${table.bytes} >= 0`)]);
+}, (table) => [
+  index("media_objects_owner_idx").on(table.ownerAccountId),
+  index("media_objects_order_idx").on(table.jobOrderId),
+  check("media_bytes_nonnegative", sql`${table.bytes} >= 0`),
+]);
 
 export const mediaVariants = pgTable("media_variants", {
   id: uuid("id").primaryKey().defaultRandom(), sourceMediaId: uuid("source_media_id").notNull().references(() => mediaObjects.id, { onDelete: "cascade" }),
   storageKey: text("storage_key").notNull().unique(), format: text("format").notNull(), width: integer("width").notNull(), height: integer("height").notNull(),
   bytes: bigint("bytes", { mode: "number" }).notNull(), recipeVersion: integer("recipe_version").notNull(),
-});
+}, (table) => [index("media_variants_source_idx").on(table.sourceMediaId)]);
 
 export const artworkAssets = pgTable("artwork_assets", {
   id: uuid("id").primaryKey().defaultRandom(), collectionId: uuid("collection_id").notNull().references(() => artworkCollections.id),
   key: text("key").notNull(), originalMediaId: uuid("original_media_id").notNull().references(() => mediaObjects.id), metadata: jsonb("metadata").notNull(), reuseScope: text("reuse_scope").notNull(),
-}, (table) => [uniqueIndex("artwork_asset_key_unique").on(table.collectionId, table.key)]);
+}, (table) => [
+  uniqueIndex("artwork_asset_key_unique").on(table.collectionId, table.key),
+  index("artwork_assets_original_media_idx").on(table.originalMediaId),
+]);
 
 export const themes = pgTable("themes", { id: uuid("id").primaryKey().defaultRandom(), key: text("key").notNull().unique(), name: text("name").notNull() });
 export const themeVersions = pgTable("theme_versions", {
@@ -102,39 +116,48 @@ export const invitations = pgTable("invitations", {
   id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").notNull().unique().references(() => jobOrders.id, { onDelete: "cascade" }),
   slug: text("slug").notNull().unique(), liveVersionId: uuid("live_version_id"), availability: invitationAvailability("availability").notNull().default("UNPUBLISHED"),
   accessEpoch: integer("access_epoch").notNull().default(1), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-});
+}, (table) => [index("invitations_live_version_idx").on(table.liveVersionId)]);
 
 export const invitationDrafts = pgTable("invitation_drafts", {
   invitationId: uuid("invitation_id").primaryKey().references(() => invitations.id, { onDelete: "cascade" }), themeVersionId: uuid("theme_version_id").notNull().references(() => themeVersions.id),
   configuration: jsonb("configuration").notNull(), revision: integer("revision").notNull().default(1), reviewState: reviewState("review_state").notNull().default("EDITING"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [index("invitation_drafts_theme_version_idx").on(table.themeVersionId)]);
 
 export const invitationVersions = pgTable("invitation_versions", {
   id: uuid("id").primaryKey().defaultRandom(), invitationId: uuid("invitation_id").notNull().references(() => invitations.id, { onDelete: "cascade" }),
   version: integer("version").notNull(), sourceRevision: integer("source_revision").notNull(), snapshot: jsonb("snapshot").notNull(),
   contentHash: text("content_hash").notNull(), rendererVersion: text("renderer_version").notNull(), createdBy: uuid("created_by").notNull().references(() => accounts.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [uniqueIndex("invitation_version_unique").on(table.invitationId, table.version)]);
+}, (table) => [
+  uniqueIndex("invitation_version_unique").on(table.invitationId, table.version),
+  index("invitation_versions_creator_idx").on(table.createdBy),
+]);
 
 export const versionMediaRefs = pgTable("version_media_refs", {
   versionId: uuid("version_id").notNull().references(() => invitationVersions.id, { onDelete: "cascade" }), mediaId: uuid("media_id").notNull().references(() => mediaObjects.id),
-}, (table) => [primaryKey({ columns: [table.versionId, table.mediaId] })]);
+}, (table) => [
+  primaryKey({ columns: [table.versionId, table.mediaId] }),
+  index("version_media_refs_media_idx").on(table.mediaId),
+]);
 
 export const approvals = pgTable("approvals", {
   id: uuid("id").primaryKey().defaultRandom(), versionId: uuid("version_id").notNull().unique().references(() => invitationVersions.id),
   customerId: uuid("customer_id").notNull().references(() => accounts.id), approvedAt: timestamp("approved_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [index("approvals_customer_idx").on(table.customerId)]);
 
 export const reviewRequests = pgTable("review_requests", {
   id: uuid("id").primaryKey().defaultRandom(), versionId: uuid("version_id").notNull().references(() => invitationVersions.id),
   requestedBy: uuid("requested_by").notNull().references(() => accounts.id), summary: text("summary").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("review_requests_version_idx").on(table.versionId),
+  index("review_requests_requester_idx").on(table.requestedBy),
+]);
 
 export const guestGroups = pgTable("guest_groups", {
   id: uuid("id").primaryKey().defaultRandom(), invitationId: uuid("invitation_id").notNull().references(() => invitations.id, { onDelete: "cascade" }),
   label: text("label").notNull(), active: boolean("active").notNull().default(true), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [index("guest_groups_invitation_idx").on(table.invitationId)]);
 
 export const guestSlots = pgTable("guest_slots", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().references(() => guestGroups.id, { onDelete: "cascade" }),
@@ -145,13 +168,13 @@ export const guestLinks = pgTable("guest_links", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().references(() => guestGroups.id, { onDelete: "cascade" }),
   tokenDigest: text("token_digest").notNull().unique(), encryptedToken: text("encrypted_token").notNull(), generation: integer("generation").notNull().default(1),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), revokedAt: timestamp("revoked_at", { withTimezone: true }),
-});
+}, (table) => [index("guest_links_group_idx").on(table.groupId)]);
 
 export const guestSessions = pgTable("guest_sessions", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().references(() => guestGroups.id, { onDelete: "cascade" }),
   linkGeneration: integer("link_generation").notNull(), sessionDigest: text("session_digest").notNull().unique(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
-});
+}, (table) => [index("guest_sessions_group_idx").on(table.groupId)]);
 
 export const rsvps = pgTable("rsvps", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().unique().references(() => guestGroups.id, { onDelete: "cascade" }),
@@ -161,20 +184,31 @@ export const rsvps = pgTable("rsvps", {
 
 export const rsvpAttendees = pgTable("rsvp_attendees", {
   rsvpId: uuid("rsvp_id").notNull().references(() => rsvps.id, { onDelete: "cascade" }), slotId: uuid("slot_id").notNull().references(() => guestSlots.id),
-}, (table) => [primaryKey({ columns: [table.rsvpId, table.slotId] })]);
+}, (table) => [
+  primaryKey({ columns: [table.rsvpId, table.slotId] }),
+  index("rsvp_attendees_slot_idx").on(table.slotId),
+]);
 
 export const paymentEntries = pgTable("payment_entries", {
   id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").notNull().references(() => jobOrders.id),
   amountMinor: bigint("amount_minor", { mode: "number" }).notNull(), currency: text("currency").notNull(), method: text("method").notNull(),
   externalReference: text("external_reference"), confirmedBy: uuid("confirmed_by").notNull().references(() => accounts.id), reversalOfId: uuid("reversal_of_id"),
   confirmedAt: timestamp("confirmed_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [check("payment_nonzero", sql`${table.amountMinor} <> 0`)]);
+}, (table) => [
+  index("payment_entries_order_idx").on(table.jobOrderId),
+  index("payment_entries_confirmer_idx").on(table.confirmedBy),
+  index("payment_entries_reversal_idx").on(table.reversalOfId),
+  check("payment_nonzero", sql`${table.amountMinor} <> 0`),
+]);
 
 export const auditEvents = pgTable("audit_events", {
   id: uuid("id").primaryKey().defaultRandom(), actorAccountId: uuid("actor_account_id").references(() => accounts.id), action: text("action").notNull(),
   entityType: text("entity_type").notNull(), entityId: uuid("entity_id").notNull(), metadata: jsonb("metadata").notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [index("audit_entity_idx").on(table.entityType, table.entityId, table.createdAt)]);
+}, (table) => [
+  index("audit_entity_idx").on(table.entityType, table.entityId, table.createdAt),
+  index("audit_actor_idx").on(table.actorAccountId),
+]);
 
 export const backgroundJobs = pgTable("background_jobs", {
   id: uuid("id").primaryKey().defaultRandom(), kind: text("kind").notNull(), payload: jsonb("payload").notNull(), idempotencyKey: text("idempotency_key").notNull().unique(),

@@ -13,6 +13,11 @@ describe("event schemas", () => {
     expect(result.ready).toBe(false);
   });
 
+  it("rejects an invalid event timezone", () => {
+    const event = { ...demoEvents.christening, timezone: "Manila" };
+    expect(eventSchema.safeParse(event).success).toBe(false);
+  });
+
   it("rejects insecure venue links and unknown fields", () => {
     const event = {
       ...demoEvents.birthday,

@@ -15,8 +15,13 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:db": "node --env-file=.env ./node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
     "check": "npm run lint && npm run typecheck && npm run test",
-    "db:generate": "drizzle-kit generate"
+    "db:configure-role": "node --env-file=.env scripts/configure-database-role.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs",
+    "db:verify": "node --env-file=.env scripts/verify-database.mjs",
+    "check:full": "npm run check && npm run test:db && npm run db:verify && npm run build"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
