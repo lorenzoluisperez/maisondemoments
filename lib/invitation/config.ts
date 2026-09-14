@@ -39,20 +39,25 @@ export const snapshotMediaReferenceSchema = z.object({
   alt: z.string().trim().max(300),
 }).strict();
 
-export interface InvitationSnapshot {
-  version: number;
-  slug: string;
-  eventType: "wedding" | "birthday" | "debut" | "christening";
-  title: string;
-  secondaryName?: string;
-  hostWording: string;
-  dateLabel: string;
-  rsvpDeadlineLabel: string;
-  activities: Array<{ id: string; label: string; timeLabel: string; venueName: string; address: string; mapUrl: string }>;
-  participants: Array<{ roleLabel: string; displayName: string }>;
-  story?: string;
-  dressCode?: string;
-  giftInformation?: string;
-  media: { gallery: Array<z.infer<typeof snapshotMediaReferenceSchema>> };
-  config: InvitationConfig;
-}
+export const invitationSnapshotSchema = z.object({
+  version: z.number().int().positive(),
+  slug: z.string().min(1).max(200),
+  eventType: z.enum(["wedding", "birthday", "debut", "christening"]),
+  title: z.string().min(1).max(120),
+  secondaryName: z.string().min(1).max(120).optional(),
+  hostWording: z.string().min(1).max(260),
+  dateLabel: z.string().min(1).max(120),
+  rsvpDeadlineLabel: z.string().min(1).max(120),
+  activities: z.array(z.object({
+    id: z.string().uuid(), label: z.string().min(1).max(80), timeLabel: z.string().min(1).max(80),
+    venueName: z.string().min(1).max(160), address: z.string().min(1).max(240), mapUrl: z.string().url(),
+  }).strict()).min(1).max(8),
+  participants: z.array(z.object({ roleLabel: z.string().min(1).max(60), displayName: z.string().min(1).max(120) }).strict()).max(120),
+  story: z.string().max(2400).optional(),
+  dressCode: z.string().max(500).optional(),
+  giftInformation: z.string().max(800).optional(),
+  media: z.object({ gallery: z.array(snapshotMediaReferenceSchema).max(12) }).strict(),
+  config: invitationConfigSchema,
+}).strict();
+
+export type InvitationSnapshot = z.infer<typeof invitationSnapshotSchema>;

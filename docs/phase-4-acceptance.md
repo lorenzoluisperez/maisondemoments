@@ -17,7 +17,7 @@
 - The renderer applies placement through individual transform properties so scene animation cannot overwrite the designer's composition.
 - Studio changes autosave with optimistic concurrency. Stale writes require a reload, review-locked drafts reject saves, and local undo/redo retains up to 50 editing steps.
 - Customer facts remain separate from presentation overrides. Designers cannot type alternate dates or names, change theme versions, add arbitrary CSS or scripts, or attach cross-collection artwork.
-- Review creation is visibly unavailable until Phase 5 supplies immutable versions and exact-version approval.
+- The Phase 4 studio boundary reserved review creation for the immutable version and exact-approval workflow now implemented in Phase 5.
 
 ## Security and database controls
 

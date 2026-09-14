@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { eventDisplayNames, eventSchema, type Event } from "@/lib/domain/event";
-import { invitationConfigSchema, snapshotMediaReferenceSchema, type InvitationConfig, type InvitationSnapshot } from "./config";
+import { invitationConfigSchema, invitationSnapshotSchema, snapshotMediaReferenceSchema, type InvitationConfig, type InvitationSnapshot } from "./config";
 
 export function compileInvitation(input: {
   event: Event;
@@ -15,7 +15,7 @@ export function compileInvitation(input: {
   const [title, secondaryName] = eventDisplayNames(event);
   const date = new Date(`${event.primaryLocalDate}T12:00:00Z`);
   const deadline = new Date(`${event.rsvpDeadline}T12:00:00Z`);
-  const snapshot: InvitationSnapshot = {
+  const snapshot = invitationSnapshotSchema.parse({
     version: input.version,
     slug: input.slug,
     eventType: event.type,
@@ -38,7 +38,7 @@ export function compileInvitation(input: {
     giftInformation: event.giftInformation,
     media,
     config,
-  };
+  });
   const contentHash = createHash("sha256").update(stableStringify(snapshot)).digest("hex");
   return { ...snapshot, contentHash };
 }

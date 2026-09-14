@@ -8,6 +8,7 @@ Designer-operated software for producing premium interactive invitations. The fi
 - Always-available Details and RSVP controls, long participant-list handling, and synthetic public demos
 - Persistent event-specific customer portal with incremental autosave, completeness guidance, photo attachments, and explicit submission
 - Automatic collection-pinned draft generation and a constrained production studio with conflict-safe autosave, undo/redo, responsive previews, and bounded design controls
+- Frozen client reviews with exact-version approval, consolidated feedback, material-change labels, payment-gated admin publication, compatible rollback, and access controls
 - Strict Zod event, invitation, upload, and RSVP contracts
 - PostgreSQL schema for accounts, orders, catalog, immutable versions, reviews, households, seats, payments, audit history, and durable tasks
 - Persistent account and order APIs with Supabase Auth session verification and normalized event storage
@@ -63,4 +64,4 @@ npm run guest:verify
 
 Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.
 
-See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [Phase 4 acceptance record](docs/phase-4-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).
+See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [Phase 4 acceptance record](docs/phase-4-acceptance.md), [Phase 5 acceptance record](docs/phase-5-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertCircle, Check, Clock3, ImagePlus, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/workspace/app-shell";
 import { Progress } from "@/components/ui/progress";
+import { CustomerReviewBanner } from "@/components/portal/customer-review-banner";
 import type { EventBriefDocument } from "@/lib/content/brief";
 import { uploadCustomerImage } from "@/lib/media/browser-upload";
 
@@ -125,6 +126,7 @@ export function PortalWorkspace() {
   return <AppShell area="portal">
     <header className="workspace-header"><div><p className="workspace-kicker">{brief.order.jobNumber}</p><h1>{eventTitle(event)}</h1></div>{orders.length > 1 ? <select className="workspace-select" value={selectedOrderId ?? ""} onChange={(change) => { if (saveState === "saved") { setSelectedOrderId(change.target.value); void loadBrief(change.target.value); } }}>{orders.map((order) => <option key={order.id} value={order.id}>{order.jobNumber}</option>)}</select> : null}</header>
     <section className="portal-overview"><div><p>Brief completion</p><strong>{brief.completion.percent}%</strong><Progress value={brief.completion.percent} /></div><div><p>Current stage</p><strong>{brief.submittedAt ? "Submitted" : "Content collection"}</strong><span><Clock3 /> {saveLabel(saveState)}</span></div><div><p>Collection</p><strong>{brief.order.collectionKey === "midnight-garden" ? "Midnight Garden" : "Luminous Parchment"}</strong><span><Check /> Facts remain separate from design</span></div></section>
+    <CustomerReviewBanner orderId={brief.order.id} />
     {message ? <div className="workspace-alert"><AlertCircle />{message}</div> : null}
     {saveState === "conflict" ? <div className="workspace-alert conflict"><AlertCircle /><span>A newer copy was saved elsewhere.</span><button onClick={() => void loadBrief(brief.order.id)}><RefreshCw /> Reload current copy</button></div> : null}
     <div className="workspace-grid"><aside className="task-list">{sections.map((section, index) => <button key={section.id} className={activeSection === section.id ? "active" : issueSections.has(section.id) ? "" : "complete"} onClick={() => setActiveSection(section.id)}>{issueSections.has(section.id) ? <span>{index + 1}</span> : <Check />} {section.label}</button>)}</aside>

@@ -42,9 +42,20 @@ Run expiry and deletion as idempotent background jobs. Keep deletion tombstones 
 - Customers and admins may edit an order brief. Assigned designers may read customer facts but cannot change them.
 - Brief and studio writes include the revision the browser last read. HTTP 409 means another session saved first. Reload the current revision before continuing.
 - Brief submission validates all required event facts and attached media, replaces normalized activities, participants, and content in one transaction, then creates or resets the collection-pinned draft.
-- A resubmitted brief returns the draft to `EDITING` and increments its revision. Any future review version must therefore be recreated and approved in Phase 5.
+- A saved brief returns the draft to `EDITING`, clears its submission marker, and increments the draft revision. Staff cannot create a review until the customer resubmits the complete brief.
 - Only assigned designers and admins may edit presentation. The API accepts released typography, motion, layout, and existing decorative placement fields. It rejects arbitrary CSS, HTML, scripts, theme changes, new assets, and cross-collection artwork.
-- Review states other than `EDITING` and `CHANGES_REQUESTED` lock studio autosave. Admin publication remains unavailable until Phase 5 is implemented.
+- Review states other than `EDITING` and `CHANGES_REQUESTED` lock studio autosave.
+
+## Review and publication operations
+
+- Before creating a review, verify the submitted customer brief, all responsive layouts, keyboard and reduced-motion behavior, and every referenced media object. The studio requires all four QA checks.
+- Review creation freezes one validated snapshot with a content hash, renderer compatibility version, source draft revision, media references, and material-change labels. The customer reviews that exact version.
+- One review version accepts one decision. Approval and consolidated feedback are mutually exclusive, and only the order owner may record either decision.
+- Any customer-content or studio edit increments the aggregate draft revision and invalidates the previous review as a publication candidate. Create and approve a new version.
+- Admin publication requires the exact current approved version, a zero outstanding balance, an active unexpired invitation, and matching customer ownership. The database performs these checks while locking the invitation.
+- Rollback may target only a previously customer-approved version of the same invitation with a compatible renderer. It changes the live-version pointer without changing responses, payments, or prior audit records.
+- Suspension immediately changes availability and increments the access epoch. Resume requires an unexpired invitation with a live version. Expiry is terminal until a future explicit extension workflow is implemented.
+- Every review, decision, publication, rollback, suspension, resumption, and expiry writes bounded audit metadata. Reasons are required for availability changes.
 
 ## Media operations
 

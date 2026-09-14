@@ -143,6 +143,7 @@ export const invitations = pgTable("invitations", {
   id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").notNull().unique().references(() => jobOrders.id, { onDelete: "cascade" }),
   slug: text("slug").notNull().unique(), liveVersionId: uuid("live_version_id"), availability: invitationAvailability("availability").notNull().default("UNPUBLISHED"),
   accessEpoch: integer("access_epoch").notNull().default(1), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  publishedAt: timestamp("published_at", { withTimezone: true }), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("invitations_live_version_idx").on(table.liveVersionId)]);
 
 export const invitationDrafts = pgTable("invitation_drafts", {
@@ -154,11 +155,13 @@ export const invitationDrafts = pgTable("invitation_drafts", {
 export const invitationVersions = pgTable("invitation_versions", {
   id: uuid("id").primaryKey().defaultRandom(), invitationId: uuid("invitation_id").notNull().references(() => invitations.id, { onDelete: "cascade" }),
   version: integer("version").notNull(), sourceRevision: integer("source_revision").notNull(), snapshot: jsonb("snapshot").notNull(),
-  contentHash: text("content_hash").notNull(), rendererVersion: text("renderer_version").notNull(), createdBy: uuid("created_by").notNull().references(() => accounts.id),
+  contentHash: text("content_hash").notNull(), rendererVersion: text("renderer_version").notNull(), materialChanges: jsonb("material_changes").notNull().default([]),
+  createdBy: uuid("created_by").notNull().references(() => accounts.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   uniqueIndex("invitation_version_unique").on(table.invitationId, table.version),
   index("invitation_versions_creator_idx").on(table.createdBy),
+  check("invitation_version_values_valid", sql`${table.version} > 0 AND ${table.sourceRevision} > 0 AND ${table.contentHash} ~ '^[0-9a-f]{64}$'`),
 ]);
 
 export const versionMediaRefs = pgTable("version_media_refs", {
@@ -177,8 +180,16 @@ export const reviewRequests = pgTable("review_requests", {
   id: uuid("id").primaryKey().defaultRandom(), versionId: uuid("version_id").notNull().references(() => invitationVersions.id),
   requestedBy: uuid("requested_by").notNull().references(() => accounts.id), summary: text("summary").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
-  index("review_requests_version_idx").on(table.versionId),
+  uniqueIndex("review_requests_version_unique").on(table.versionId),
   index("review_requests_requester_idx").on(table.requestedBy),
+]);
+
+export const reviewItems = pgTable("review_items", {
+  id: uuid("id").primaryKey().defaultRandom(), reviewRequestId: uuid("review_request_id").notNull().references(() => reviewRequests.id, { onDelete: "cascade" }),
+  sectionKey: text("section_key").notNull(), message: text("message").notNull(), displayOrder: integer("display_order").notNull(),
+}, (table) => [
+  uniqueIndex("review_item_order_unique").on(table.reviewRequestId, table.displayOrder),
+  check("review_item_values_valid", sql`${table.sectionKey} ~ '^[a-z][a-z0-9-]{0,79}$' AND char_length(${table.message}) BETWEEN 1 AND 1200 AND ${table.displayOrder} >= 0`),
 ]);
 
 export const guestGroups = pgTable("guest_groups", {

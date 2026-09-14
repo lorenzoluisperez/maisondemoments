@@ -8,7 +8,7 @@ This document records the agreed product direction, architecture, release bounda
 
 ## Current position
 
-**The technical roadmap is entering Phase 5.** Phase 1 implementation and Phases 2 through 4 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
+**The technical roadmap is entering Phase 6.** Phase 1 implementation and Phases 2 through 5 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
 
 | Phase | Status | Evidence or remaining work |
 |---|---|---|
@@ -17,13 +17,13 @@ This document records the agreed product direction, architecture, release bounda
 | 2. Domain foundation | Complete | Four event schemas, live database model, ownership checks, JO generation, least-privilege runtime access, RLS, API boundaries, integration tests, and production build pass. |
 | 3. Media and renderer | Complete | Private signed uploads, durable Sharp processing, immutable variants, signed delivery, cleanup, persistent artwork metadata, renderer asset bindings, live integration tests, and budgets pass. |
 | 4. Production slice | Complete | Persistent event briefs, incremental customer autosave, completeness checks, media attachment, automatic drafts, and the conflict-safe constrained studio pass live integration tests. |
-| 5. Review and publishing | **Next** | Implement frozen review versions, exact-version approval, publication, and rollback in the application. Database foundations already exist. |
-| 6. Guests and RSVP | Not started | Implement household import, seat allocation, private link exchange, RSVP amendments, deadlines, and exports. Domain and credential primitives already exist. |
+| 5. Review and publishing | Complete | Frozen reviews, exact-version customer decisions, material-change reporting, payment-gated admin publication, compatible rollback, availability controls, and audit history pass live integration tests. |
+| 6. Guests and RSVP | **Next** | Implement household import, seat allocation, private link exchange, RSVP amendments, deadlines, and exports. Domain and credential primitives already exist. |
 | 7. Operational hardening | Not started | Add payments ledger workflows, queues, monitoring, backups, deletion, retention, and restore drills. |
 | 8. Private pilot | Not started | Complete at least two real pilot orders for each event type and measure time, usability, and margins. |
 | 9. Public launch | Not started | Publish the marketing catalog and open controlled intake after all launch gates pass. |
 
-Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), and [Phase 4 acceptance record](phase-4-acceptance.md).
+Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), [Phase 4 acceptance record](phase-4-acceptance.md), and [Phase 5 acceptance record](phase-5-acceptance.md).
 
 ## Product definition
 
@@ -289,13 +289,28 @@ All four event types round-trip between normalized event data and editable brief
 
 The order-creation API currently starts from a valid event baseline. It remains an admin workflow, while customers can clear, revise, and resubmit the editable brief. A future sales-intake workflow may create a less complete shell if operational evidence shows that is needed.
 
+## Phase 5: implementation record
+
+Phase 5 completed the controlled path from a mutable production draft to an immutable approved and published invitation.
+
+### Delivered
+
+1. Freeze a submitted, complete, current draft only after staff completes the internal QA checklist.
+2. Store immutable, schema-validated snapshots with deterministic hashes, source revisions, renderer compatibility, material-change labels, and retained media references.
+3. Give the customer a dedicated frozen review with one exact-version approval or one consolidated change request.
+4. Invalidate pending and approved review candidates when customer facts or designer presentation change.
+5. Require an admin, exact current customer approval, full confirmed balance, active hosting period, and invitation ownership before publication.
+6. Publish transactionally by moving the live-version pointer and preserving the immutable snapshot.
+7. Roll back only to a compatible, previously approved version without changing payments, responses, or history.
+8. Suspend, resume, or expire invitation availability through audited state transitions and session-generation invalidation.
+
+### Exit evidence
+
+Live PostgreSQL integration tests prove customer ownership, review locking, stale and superseded decision rejection, payment blocking, exact publication, material correction publication, compatible rollback, and availability transitions. Database triggers preserve immutable versions, approval ownership, and same-invitation live pointers. Editing draft-dependent content increments the aggregate revision, so it cannot alter or silently replace the live snapshot.
+
 ## Next phase and later phases
 
-### Phase 5: next implementation scope
-
-Implement immutable review creation, consolidated feedback, exact-version approval, material-change handling, admin publication, rollback, suspension, expiry, and audit history. Exit when draft changes cannot alter a live invitation.
-
-### Phase 6: guests and RSVP
+### Phase 6: next implementation scope
 
 Implement household import and entry, allocated slots, token issuance and rotation, session exchange, response amendments, deadlines, concurrency protection, admin corrections, and safe CSV export. Exit when forwarding, revocation, stale writes, seat totals, and deadline behavior pass integration and browser tests.
 

@@ -128,6 +128,13 @@ export async function saveEventBrief(actor: Actor, orderId: string, input: unkno
       updatedAt: new Date(),
     }).where(and(eq(eventBriefs.jobOrderId, parsedOrderId), eq(eventBriefs.revision, parsed.expectedRevision))).returning();
     if (!rows.length) return [];
+    const [invitation] = await transaction.select({ id: invitations.id }).from(invitations)
+      .where(eq(invitations.jobOrderId, parsedOrderId)).limit(1);
+    if (invitation) await transaction.update(invitationDrafts).set({
+      revision: sql`${invitationDrafts.revision} + 1`,
+      reviewState: "EDITING",
+      updatedAt: new Date(),
+    }).where(eq(invitationDrafts.invitationId, invitation.id));
     await transaction.update(jobOrders).set({
       state: sql`case when ${jobOrders.state} = 'NEW' then 'COLLECTING' else ${jobOrders.state} end`,
       submittedAt: null,
@@ -138,7 +145,7 @@ export async function saveEventBrief(actor: Actor, orderId: string, input: unkno
       action: "event_brief.saved",
       entityType: "job_order",
       entityId: parsedOrderId,
-      metadata: { revision: rows[0].revision },
+      metadata: { revision: rows[0].revision, reviewInvalidated: Boolean(invitation) },
     });
     return rows;
   });
@@ -234,7 +241,7 @@ export async function submitEventBrief(actor: Actor, orderId: string, input: unk
       .from(paymentEntries).where(eq(paymentEntries.jobOrderId, parsedOrderId));
     const productionReady = Boolean(order.assignedDesignerId) && Number(paid?.amount ?? 0) >= order.depositRequiredMinor;
     await transaction.update(jobOrders).set({
-      state: productionReady ? "READY" : "COLLECTING",
+      state: sql`case when ${jobOrders.state} in ('DELIVERED', 'CLOSED') then ${jobOrders.state} else ${productionReady ? "READY" : "COLLECTING"}::production_state end`,
       submittedAt: new Date(),
       updatedAt: new Date(),
     }).where(eq(jobOrders.id, parsedOrderId));
