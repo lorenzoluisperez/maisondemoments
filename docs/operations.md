@@ -55,10 +55,17 @@ Run expiry and deletion as idempotent background jobs. Keep deletion tombstones 
 - Review creation freezes one validated snapshot with a content hash, renderer compatibility version, source draft revision, media references, and material-change labels. The customer reviews that exact version.
 - One review version accepts one decision. Approval and consolidated feedback are mutually exclusive, and only the order owner may record either decision.
 - Any customer-content or studio edit increments the aggregate draft revision and invalidates the previous review as a publication candidate. Create and approve a new version.
-- Admin publication requires the exact current approved version, a zero outstanding balance, an active unexpired invitation, and matching customer ownership. The database performs these checks while locking the invitation.
+- Admin publication requires the exact current approved version, a zero outstanding balance, verified off-provider backup for every referenced customer media object, an active unexpired invitation, and matching customer ownership. The database performs these checks while locking the invitation.
 - Rollback may target only a previously customer-approved version of the same invitation with a compatible renderer. It changes the live-version pointer without changing responses, payments, or prior audit records.
 - Suspension immediately changes availability and increments the access epoch. Resume requires an unexpired invitation with a live version. Expiry is terminal until a future explicit extension workflow is implemented.
 - Every review, decision, publication, rollback, suspension, resumption, and expiry writes bounded audit metadata. Reasons are required for availability changes.
+
+## Payments and operations
+
+- Admins record confirmed receipts in the studio payment ledger. Amounts are entered in the displayed currency and stored in minor units. A reference may be used only once for the same order and method.
+- Never edit or delete a receipt to correct it. Reverse the original entry with a reason. The database permits one exact reversal and preserves both audit records.
+- `/studio/operations` shows work queues, overdue orders, failed durable tasks, media backup state, and email delivery state. Retry a failed task only after correcting its persistent cause.
+- Vercel invokes `GET /api/internal/operations` with `Authorization: Bearer <CRON_SECRET>` every five minutes. The route processes bounded batches; cron delivery itself is not the retry mechanism.
 
 ## Household access and RSVP operations
 
@@ -76,8 +83,17 @@ Run expiry and deletion as idempotent background jobs. Keep deletion tombstones 
 - Run `npm run storage:setup` once per environment and after changing bucket policy. Both `maison-quarantine` and `maison-private-media` must remain private.
 - Run `npm run catalog:seed` after migrations and whenever a released catalog definition is added. Never change bytes at an existing released artwork path.
 - Run `npm run media:verify` before deployment to verify private buckets and released catalog records.
-- Invoke `POST /api/internal/media-jobs` with `Authorization: Bearer <BACKGROUND_JOB_SECRET>` on a bounded schedule. The secret must contain at least 32 random bytes.
+- `POST /api/internal/media-jobs` remains available for a manual media-only run with `BACKGROUND_JOB_SECRET`. Normal production processing uses the combined protected operations cron.
 - Use `npm run media:work` for a manual bounded worker and cleanup pass in development or staging.
 - Alert on `FAILED` media jobs, `REJECTED` media objects, growing pending-job age, and ready media with a retained quarantine key.
 - Signed private delivery URLs expire after five minutes. Delivered objects use a five-minute browser cache. Immediate removal requires deleting the object and allowing for CDN invalidation propagation.
 - Recipe changes require a new recipe version and new object paths. Never overwrite an existing derivative path.
+
+## Backup, retention, and restoration
+
+- Configure `BACKUP_S3_*` against storage owned independently from the primary Supabase project. Publication remains blocked until every referenced customer media object reports `VERIFIED`.
+- Expiry and removal revoke guest links and sessions immediately. Expiry schedules purge after 30 days; removal schedules it immediately. The purge exports its tombstone before personal data is destroyed.
+- Backup deletion uses the recorded media prefix, then primary-media cleanup removes Supabase originals and variants. Deletion tombstones remain in the independent destination for restoration replay.
+- Enable Supabase PITR in production. Database backup does not cover Storage objects, so keep PITR and media backup as separate controls.
+- Set `RESTORE_DATABASE_URL` to a disposable database that is different from production, install `pg_dump` and `pg_restore`, then run `CONFIRM_RESTORE_DRILL=RESTORE_DISPOSABLE_DATABASE npm run ops:restore-drill`.
+- Never direct the restoration command at an active environment. The script deliberately refuses an identical source and target and requires the confirmation phrase.

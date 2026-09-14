@@ -22,7 +22,7 @@ export const requestChangesSchema = z.object({
 
 export const publishVersionSchema = z.object({ versionId: z.string().uuid() }).strict();
 export const availabilityActionSchema = z.object({
-  action: z.enum(["suspend", "resume", "expire"]),
+  action: z.enum(["suspend", "resume", "expire", "remove"]),
   reason: z.string().trim().min(3).max(500),
 }).strict();
 

@@ -1,12 +1,24 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { syncCustomerAccount } from "@/lib/accounts/service";
+import { AccountSetupRequiredError, AuthenticationRequiredError, requireCurrentActor } from "@/lib/auth/current-actor";
 import { isTrustedMutationRequest, PayloadTooLargeError, readBoundedJson } from "@/lib/http/request-security";
 import { createClient } from "@/lib/supabase/server";
 
 const profileSchema = z.object({
   displayName: z.string().trim().min(1).max(160),
 }).strict();
+
+export async function GET() {
+  try {
+    const actor = await requireCurrentActor();
+    return NextResponse.json({ actor }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    if (error instanceof AuthenticationRequiredError) return NextResponse.json({ error: error.message }, { status: 401 });
+    if (error instanceof AccountSetupRequiredError) return NextResponse.json({ error: error.message }, { status: 403 });
+    throw error;
+  }
+}
 
 export async function POST(request: Request) {
   if (!isTrustedMutationRequest(request)) {

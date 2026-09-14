@@ -106,6 +106,41 @@
       "when": 1789368582992,
       "tag": "0014_order_terms_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789369568749,
+      "tag": "0015_abandoned_black_tom",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789371001000,
+      "tag": "0016_phase_7_operational_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789371002000,
+      "tag": "0017_phase_7_payment_immutability",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789386119873,
+      "tag": "0018_bouncy_iron_lad",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789386121000,
+      "tag": "0019_phase_7_transactional_notifications",
+      "breakpoints": true
     }
   ]
 }

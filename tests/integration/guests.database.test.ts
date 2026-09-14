@@ -53,7 +53,7 @@ beforeAll(async () => {
     currency: "PHP", quotedAmountMinor: 200000, depositRequiredMinor: 100000, dueDate: "2094-08-01", collectionKey: "midnight-garden", event,
   }, { jobNumberYear: 2094 });
   orderId = order.id;
-  await adminSql`insert into payment_entries (job_order_id, amount_minor, currency, method, confirmed_by) values (${orderId}, 200000, 'PHP', 'bank-transfer', ${fixture.adminId})`;
+  await adminSql`insert into payment_entries (job_order_id, amount_minor, currency, method, confirmed_by, idempotency_key) values (${orderId}, 200000, 'PHP', 'bank-transfer', ${fixture.adminId}, ${randomUUID()})`;
   const brief = await getEventBrief(customerActor, orderId);
   await submitEventBrief(customerActor, orderId, { expectedRevision: brief.revision });
   const studio = await getStudioOrder(designerActor, orderId);
@@ -67,6 +67,8 @@ afterAll(async () => {
   await adminSql.begin(async (sql) => {
     await sql`delete from audit_events where actor_account_id in (${fixture.adminId}, ${fixture.designerId}, ${fixture.customerId}, ${fixture.otherId}) or (entity_type = 'guest_group' and entity_id in (select id from guest_groups where invitation_id in (select id from invitations where job_order_id = ${orderId})))`;
     await sql`delete from approvals where version_id in (select version.id from invitation_versions version join invitations invitation on invitation.id = version.invitation_id where invitation.job_order_id = ${orderId})`;
+    await sql`delete from background_jobs where kind = 'SEND_EMAIL' and payload->>'deliveryId' in (select id::text from notification_deliveries where job_order_id = ${orderId})`;
+    await sql`delete from notification_deliveries where job_order_id = ${orderId}`;
     await sql`delete from payment_entries where job_order_id = ${orderId}`;
     await sql`delete from job_orders where id = ${orderId}`;
     await sql`delete from packages where id = ${fixture.packageId}`;

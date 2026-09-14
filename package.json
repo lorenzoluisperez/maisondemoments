@@ -26,11 +26,14 @@
     "media:work": "node --conditions=react-server --env-file=.env --import tsx scripts/process-media-jobs.ts",
     "media:verify": "node --conditions=react-server --env-file=.env --import tsx scripts/verify-media.ts",
     "guest:verify": "node scripts/verify-guest-budgets.mjs",
+    "ops:restore-drill": "node --env-file=.env scripts/restore-drill.mjs",
     "check:full": "npm run check && npm run test:db && npm run db:verify && npm run media:verify && npm run build && npm run guest:verify"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1131.0",
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^5.7.1",
+    "@sentry/nextjs": "^10.74.0",
     "@shadcn/react": "^0.3.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",

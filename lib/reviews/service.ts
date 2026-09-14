@@ -1,11 +1,12 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
 import {
-  approvals, auditEvents, eventBriefs, invitationDrafts, invitationVersions, invitations, jobOrders,
-  paymentEntries, reviewItems, reviewRequests, versionMediaRefs,
+  approvals, auditEvents, deletionRecords, eventBriefs, guestLinks, guestSessions, invitationDrafts, invitationVersions, invitations, jobOrders,
+  paymentEntries, reviewItems, reviewRequests, versionMediaRefs, guestGroups,
 } from "@/db/schema";
 import { canEditInvitationDraft, canReadOrder, type Actor } from "@/lib/auth/permissions";
 import { completeEventFromBrief, eventBriefDocumentSchema } from "@/lib/content/brief";
@@ -105,6 +106,7 @@ export async function createReviewVersion(actor: Actor, orderId: string, input: 
       entityId: created.id,
       metadata: { invitationId: row.invitationId, version: nextVersion, sourceRevision: row.revision, checklist: parsed.checklist, materialChanges },
     });
+    await transaction.execute(sql`select queue_customer_notification(${parsedOrderId}, 'REVIEW_READY', ${created.id}::text, ${JSON.stringify({ versionId: created.id })}::jsonb)`);
     return created.id;
   });
   return getReviewVersion(actor, versionId);
@@ -253,14 +255,20 @@ export async function publishApprovedVersion(actor: Actor, invitationId: string,
   requireAdmin(actor);
   const parsedInvitationId = idSchema.parse(invitationId);
   const { versionId } = publishVersionSchema.parse(input);
+  let orderId: string;
   try {
-    await getDb().execute(sql`select publish_approved_invitation(${parsedInvitationId}, ${versionId}, ${actor.accountId})`);
+    orderId = await getDb().transaction(async (transaction) => {
+      const [order] = await transaction.select({ id: invitations.jobOrderId }).from(invitations).where(eq(invitations.id, parsedInvitationId)).limit(1);
+      if (!order) throw new ReviewNotFoundError("Invitation not found");
+      await transaction.execute(sql`select publish_approved_invitation(${parsedInvitationId}, ${versionId}, ${actor.accountId})`);
+      await transaction.execute(sql`select queue_customer_notification(${order.id}, 'INVITATION_PUBLISHED', ${versionId}, ${JSON.stringify({ versionId })}::jsonb)`);
+      return order.id;
+    });
   } catch (error) {
+    if (error instanceof ReviewNotFoundError) throw error;
     throw new PublicationBlockedError(publicationMessage(error));
   }
-  const [order] = await getDb().select({ id: invitations.jobOrderId }).from(invitations).where(eq(invitations.id, parsedInvitationId)).limit(1);
-  if (!order) throw new ReviewNotFoundError("Invitation not found");
-  return listReviewHistory(actor, order.id);
+  return listReviewHistory(actor, orderId);
 }
 
 export async function rollbackApprovedVersion(actor: Actor, invitationId: string, input: unknown) {
@@ -286,17 +294,29 @@ export async function changeInvitationAvailability(actor: Actor, invitationId: s
     await transaction.execute(sql`select pg_advisory_xact_lock(hashtextextended(${parsedInvitationId}, 0))`);
     const [current] = await transaction.select().from(invitations).where(eq(invitations.id, parsedInvitationId)).limit(1);
     if (!current) throw new ReviewNotFoundError("Invitation not found");
-    const target = parsed.action === "suspend" ? "SUSPENDED" : parsed.action === "resume" ? "LIVE" : "EXPIRED";
-    const auditAction = parsed.action === "suspend" ? "suspended" : parsed.action === "resume" ? "resumed" : "expired";
+    const target = parsed.action === "suspend" ? "SUSPENDED" : parsed.action === "resume" ? "LIVE" : parsed.action === "remove" ? "REMOVED" : "EXPIRED";
+    const auditAction = parsed.action === "suspend" ? "suspended" : parsed.action === "resume" ? "resumed" : parsed.action === "remove" ? "removed" : "expired";
     const allowed = parsed.action === "suspend" ? current.availability === "LIVE"
       : parsed.action === "resume" ? current.availability === "SUSPENDED" && current.expiresAt > new Date() && Boolean(current.liveVersionId)
-        : current.availability === "LIVE" || current.availability === "SUSPENDED";
+        : parsed.action === "remove" ? current.availability !== "REMOVED"
+          : current.availability === "LIVE" || current.availability === "SUSPENDED";
     if (!allowed) throw new PublicationBlockedError(`Cannot ${parsed.action} an invitation in ${current.availability.toLowerCase()} state`);
     await transaction.update(invitations).set({
       availability: target,
       accessEpoch: parsed.action === "resume" ? current.accessEpoch : current.accessEpoch + 1,
       updatedAt: new Date(),
     }).where(eq(invitations.id, parsedInvitationId));
+    if (parsed.action === "expire" || parsed.action === "remove") {
+      const groups = transaction.select({ id: guestGroups.id }).from(guestGroups).where(eq(guestGroups.invitationId, parsedInvitationId));
+      await transaction.update(guestLinks).set({ revokedAt: new Date() }).where(sql`${guestLinks.groupId} in (${groups}) and ${guestLinks.revokedAt} is null`);
+      await transaction.update(guestSessions).set({ revokedAt: new Date() }).where(sql`${guestSessions.groupId} in (${groups}) and ${guestSessions.revokedAt} is null`);
+      const executeAfter = parsed.action === "remove" ? new Date() : new Date(Date.now() + 30 * 86400000);
+      await transaction.insert(deletionRecords).values({
+        jobOrderId: current.jobOrderId, invitationId: current.id,
+        slugDigest: createHash("sha256").update(current.slug).digest("hex"), reason: parsed.reason,
+        requestedBy: actor.accountId, executeAfter,
+      }).onConflictDoUpdate({ target: deletionRecords.invitationId, set: { reason: parsed.reason, requestedBy: actor.accountId, executeAfter } });
+    }
     await transaction.insert(auditEvents).values({
       actorAccountId: actor.accountId, action: `invitation.${auditAction}`, entityType: "invitation", entityId: parsedInvitationId,
       metadata: { from: current.availability, to: target, reason: parsed.reason },
@@ -336,6 +356,7 @@ function publicationMessage(error: unknown) {
     "Approved version is not the current draft revision", "Invitation must be active and unexpired before publication",
     "Version does not belong to invitation", "Invitation has no live version to roll back",
     "Renderer compatibility blocks rollback", "Rollback requires a customer-approved version",
+    "Verified media backup required before publication",
   ].find((value) => message.includes(value));
   return known ?? "Publication could not be completed";
 }

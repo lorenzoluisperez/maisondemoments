@@ -1,0 +1,1 @@
+ALTER TABLE "payment_entries" ADD CONSTRAINT "payment_entries_reversal_of_id_payment_entries_id_fk" FOREIGN KEY ("reversal_of_id") REFERENCES "public"."payment_entries"("id") ON DELETE no action ON UPDATE no action;

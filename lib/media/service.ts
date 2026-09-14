@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { auditEvents, backgroundJobs, jobOrders, mediaObjects, mediaVariants } from "@/db/schema";
+import { auditEvents, backgroundJobs, invitations, jobOrders, mediaObjects, mediaVariants } from "@/db/schema";
 import { canReadOrder, type Actor } from "@/lib/auth/permissions";
 import {
   MAX_MEDIA_BYTES_PER_ORDER,
@@ -37,12 +37,14 @@ export async function createMediaUploadIntent(actor: Actor, input: UploadIntentI
 
   const media = await db.transaction(async (transaction) => {
     const [order] = await transaction
-      .select({ id: jobOrders.id, customerId: jobOrders.customerId, assignedDesignerId: jobOrders.assignedDesignerId })
+      .select({ id: jobOrders.id, customerId: jobOrders.customerId, assignedDesignerId: jobOrders.assignedDesignerId, availability: invitations.availability })
       .from(jobOrders)
+      .leftJoin(invitations, eq(invitations.jobOrderId, jobOrders.id))
       .where(eq(jobOrders.id, parsed.jobOrderId))
       .limit(1);
     if (!order) throw new MediaNotFoundError("Job order not found");
     if (!canReadOrder(actor, order)) throw new MediaAuthorizationError("Forbidden");
+    if (order.availability === "REMOVED") throw new MediaConflictError("Media access has been removed for this order");
 
     await transaction.execute(sql`select pg_advisory_xact_lock(hashtextextended(${parsed.jobOrderId}, 0))`);
 
@@ -202,6 +204,8 @@ export async function resolveGuestMediaReferences(jobOrderId: string, references
 
 async function resolveAuthorizedOrderMedia(jobOrderId: string, parsedReferences: SnapshotMediaReference[]) {
   if (!parsedReferences.length) return [];
+  const [invitation] = await getDb().select({ availability: invitations.availability }).from(invitations).where(eq(invitations.jobOrderId, jobOrderId)).limit(1);
+  if (invitation?.availability === "REMOVED") throw new MediaConflictError("Media access has been removed for this order");
   const ids = [...new Set(parsedReferences.map((reference) => reference.mediaId))];
   const media = await getDb().select().from(mediaObjects).where(and(
     inArray(mediaObjects.id, ids),
@@ -248,12 +252,15 @@ async function requireAuthorizedMedia(actor: Actor, mediaId: string) {
     finalizedAt: mediaObjects.finalizedAt,
     customerId: jobOrders.customerId,
     assignedDesignerId: jobOrders.assignedDesignerId,
+    availability: invitations.availability,
   }).from(mediaObjects)
     .innerJoin(jobOrders, eq(jobOrders.id, mediaObjects.jobOrderId))
+    .leftJoin(invitations, eq(invitations.jobOrderId, jobOrders.id))
     .where(eq(mediaObjects.id, mediaId))
     .limit(1);
   if (!media) throw new MediaNotFoundError("Media upload not found");
   if (!canReadOrder(actor, media)) throw new MediaAuthorizationError("Forbidden");
+  if (media.availability === "REMOVED") throw new MediaConflictError("Media access has been removed for this order");
   return media;
 }
 

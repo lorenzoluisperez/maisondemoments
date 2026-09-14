@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, Eye, PauseCircle, RotateCcw, Send, Undo2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, PauseCircle, RotateCcw, Send, Trash2, Undo2, WalletCards } from "lucide-react";
 
 type History = {
   invitation: { id: string; liveVersionId: string | null; availability: string; expiresAt: string; publishedAt: string | null; reviewState: string | null; draftRevision: number | null } | null;
@@ -52,10 +52,10 @@ export function ReviewPublishingPanel({ orderId, revision, reviewState, saveStat
     finally { setWorking(false); }
   }
 
-  async function availabilityAction(action: "suspend" | "resume" | "expire") {
+  async function availabilityAction(action: "suspend" | "resume" | "expire" | "remove") {
     const invitation = history?.invitation;
     if (!invitation || reason.trim().length < 3) return;
-    if (!window.confirm(`${action[0].toUpperCase()}${action.slice(1)} this invitation?`)) return;
+    if (!window.confirm(action === "remove" ? "Remove access immediately and schedule personal-content deletion? This cannot be undone from the studio." : `${action[0].toUpperCase()}${action.slice(1)} this invitation?`)) return;
     setWorking(true); setMessage(null);
     try {
       const response = await fetch(`/api/admin/invitations/${invitation.id}/availability`, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, reason }) });
@@ -77,8 +77,21 @@ export function ReviewPublishingPanel({ orderId, revision, reviewState, saveStat
         const blockedByBalance = action === "publish" && Boolean(history.balance?.outstandingAmountMinor);
         return <article key={version.id}><div><strong>Version {version.number}</strong>{version.live ? <span>Live</span> : !version.current ? <span>Superseded</span> : version.approvedAt ? <span>Approved</span> : version.changesRequestedAt ? <span>Changes requested</span> : <span>In review</span>}</div><p>{version.materialChanges.map((change) => change.label).join(" · ")}</p><small>{version.contentHash.slice(0, 12)} · {new Date(version.createdAt).toLocaleString()}</small><div className="version-actions"><Link href={`/review/${version.id}`} target="_blank"><Eye /> Review</Link>{history.permissions.canPublish && version.approvedAt && !version.live && action ? <button disabled={working || blockedByBalance} onClick={() => void publicationAction(action, version.id)}>{action === "publish" ? <Send /> : <Undo2 />}{action === "publish" ? "Publish" : "Rollback"}</button> : null}</div></article>;
       }) : <p>No review versions yet.</p>}</div>
-      {history?.permissions.canPublish && history.invitation?.liveVersionId ? <div className="availability-controls"><h4>Live access</h4><p>Status: <strong>{history.invitation.availability}</strong></p><label>Required reason<input value={reason} onChange={(change) => setReason(change.target.value)} placeholder="Reason recorded in the audit trail" /></label><div>{history.invitation.availability === "LIVE" ? <button disabled={working || reason.trim().length < 3} onClick={() => void availabilityAction("suspend")}><PauseCircle /> Suspend</button> : null}{history.invitation.availability === "SUSPENDED" ? <button disabled={working || reason.trim().length < 3} onClick={() => void availabilityAction("resume")}><CheckCircle2 /> Resume</button> : null}{history.invitation.availability === "LIVE" || history.invitation.availability === "SUSPENDED" ? <button disabled={working || reason.trim().length < 3} onClick={() => void availabilityAction("expire")}><RotateCcw /> Expire</button> : null}</div></div> : null}
+      {history?.permissions.canPublish ? <PaymentLedger orderId={orderId} currency={history.balance?.currency ?? "PHP"} onChanged={loadHistory} /> : null}
+      {history?.permissions.canPublish && history.invitation?.liveVersionId ? <div className="availability-controls"><h4>Live access</h4><p>Status: <strong>{history.invitation.availability}</strong></p><label>Required reason<input value={reason} onChange={(change) => setReason(change.target.value)} placeholder="Reason recorded in the audit trail" /></label><div>{history.invitation.availability === "LIVE" ? <button disabled={working || reason.trim().length < 3} onClick={() => void availabilityAction("suspend")}><PauseCircle /> Suspend</button> : null}{history.invitation.availability === "SUSPENDED" ? <button disabled={working || reason.trim().length < 3} onClick={() => void availabilityAction("resume")}><CheckCircle2 /> Resume</button> : null}{history.invitation.availability === "LIVE" || history.invitation.availability === "SUSPENDED" ? <button disabled={working || reason.trim().length < 3} onClick={() => void availabilityAction("expire")}><RotateCcw /> Expire</button> : null}{history.invitation.availability !== "REMOVED" ? <button className="danger" disabled={working || reason.trim().length < 3} onClick={() => void availabilityAction("remove")}><Trash2 /> Remove and delete</button> : null}</div></div> : null}
     </div></section>;
 }
 
 function money(value: number, currency: string) { return new Intl.NumberFormat("en-PH", { style: "currency", currency }).format(value / 100); }
+
+type Ledger = { order: { currency: string; quotedAmountMinor: number }; paidAmountMinor: number; outstandingAmountMinor: number; entries: Array<{ id: string; amountMinor: number; method: string; externalReference: string | null; note: string | null; confirmedAt: string; reversible: boolean }> };
+
+function PaymentLedger({ orderId, currency, onChanged }: { orderId: string; currency: string; onChanged: () => Promise<void> }) {
+  const [ledger, setLedger] = useState<Ledger | null>(null);
+  const [amount, setAmount] = useState(""); const [method, setMethod] = useState("Bank transfer"); const [reference, setReference] = useState(""); const [message, setMessage] = useState<string | null>(null);
+  const load = useCallback(async () => { const response = await fetch(`/api/admin/orders/${orderId}/payments`, { cache: "no-store" }); const body = await response.json() as { ledger?: Ledger; error?: string }; if (!response.ok || !body.ledger) throw new Error(body.error ?? "Payment ledger could not be loaded"); setLedger(body.ledger); }, [orderId]);
+  useEffect(() => { void (async () => { try { await load(); } catch (error) { setMessage(error instanceof Error ? error.message : "Payment ledger could not be loaded"); } })(); }, [load]);
+  async function record() { const amountMinor = Math.round(Number(amount) * 100); if (!Number.isInteger(amountMinor) || amountMinor <= 0) return; const response = await fetch(`/api/admin/orders/${orderId}/payments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amountMinor, method, ...(reference.trim() ? { externalReference: reference.trim() } : {}), idempotencyKey: crypto.randomUUID() }) }); const body = await response.json() as { ledger?: Ledger; error?: string }; if (!response.ok || !body.ledger) { setMessage(body.error ?? "Payment could not be recorded"); return; } setLedger(body.ledger); setAmount(""); setReference(""); setMessage("Payment recorded."); await onChanged(); }
+  async function reverse(id: string) { const reason = window.prompt("Reason for reversing this payment"); if (!reason || reason.trim().length < 3) return; const response = await fetch(`/api/admin/orders/${orderId}/payments/${id}/reverse`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason, idempotencyKey: crypto.randomUUID() }) }); const body = await response.json() as { ledger?: Ledger; error?: string }; if (!response.ok || !body.ledger) { setMessage(body.error ?? "Payment could not be reversed"); return; } setLedger(body.ledger); setMessage("Payment reversed."); await onChanged(); }
+  return <div className="availability-controls"><h4><WalletCards /> Payment ledger</h4>{message ? <p>{message}</p> : null}<p><strong>{money(ledger?.outstandingAmountMinor ?? 0, currency)}</strong> outstanding</p><div className="form-columns"><label>Amount ({currency})<input inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" /></label><label>Method<input value={method} onChange={(event) => setMethod(event.target.value)} /></label></div><label>Reference<input value={reference} onChange={(event) => setReference(event.target.value)} /></label><button disabled={!amount || !method.trim()} onClick={() => void record()}>Record confirmed payment</button>{ledger?.entries.map((entry) => <p key={entry.id}>{money(entry.amountMinor, currency)} · {entry.method} · {new Date(entry.confirmedAt).toLocaleDateString()} {entry.reversible ? <button onClick={() => void reverse(entry.id)}>Reverse</button> : null}</p>)}</div>;
+}

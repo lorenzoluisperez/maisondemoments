@@ -17,6 +17,7 @@ import {
   putImmutablePrivateObject,
   removePrivateObjects,
 } from "@/lib/media/storage";
+import { queueMediaBackup } from "@/lib/backup/worker";
 
 const mediaJobPayloadSchema = z.object({ mediaId: z.string().uuid() }).strict();
 const MAX_MEDIA_JOB_ATTEMPTS = 3;
@@ -49,7 +50,10 @@ export async function processMediaObject(mediaId: string) {
   const db = getDb();
   const [media] = await db.select().from(mediaObjects).where(eq(mediaObjects.id, parsedMediaId)).limit(1);
   if (!media) throw new Error("MEDIA_NOT_FOUND");
-  if (media.state === "READY") return "READY" as const;
+  if (media.state === "READY") {
+    if (media.usage !== "CATALOG_ARTWORK" && media.jobOrderId) await queueMediaBackup(media.id, media.jobOrderId);
+    return "READY" as const;
+  }
   if (media.state === "REJECTED") return "REJECTED" as const;
   if (media.state === "DELETED") throw new Error("MEDIA_DELETED");
   if (!media.jobOrderId || !media.finalizedAt) throw new Error("MEDIA_NOT_FINALIZED");
@@ -120,6 +124,7 @@ export async function processMediaObject(mediaId: string) {
         // Retain the quarantine key for the idempotent cleanup sweep.
       }
     }
+    if (media.usage !== "CATALOG_ARTWORK") await queueMediaBackup(media.id, media.jobOrderId);
     return "READY" as const;
   } catch (error) {
     if (error instanceof ImageValidationError) {

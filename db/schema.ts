@@ -1,4 +1,4 @@
-import { bigint, boolean, check, date, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, check, date, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const accountType = pgEnum("account_type", ["CUSTOMER", "STAFF"]);
@@ -12,6 +12,8 @@ export const mediaUsage = pgEnum("media_usage", ["CUSTOMER_IMAGE", "EXCLUSIVE_AR
 export const guestSlotType = pgEnum("guest_slot_type", ["ADULT", "CHILD"]);
 export const rsvpStatus = pgEnum("rsvp_status", ["ATTENDING", "DECLINED"]);
 export const backgroundJobState = pgEnum("background_job_state", ["PENDING", "RUNNING", "SUCCEEDED", "FAILED"]);
+export const mediaBackupState = pgEnum("media_backup_state", ["PENDING", "VERIFIED", "FAILED", "DELETED"]);
+export const notificationState = pgEnum("notification_state", ["PENDING", "SENDING", "SENT", "FAILED"]);
 
 export const accounts = pgTable("accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -257,13 +259,52 @@ export const guestRateLimits = pgTable("guest_rate_limits", {
 export const paymentEntries = pgTable("payment_entries", {
   id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").notNull().references(() => jobOrders.id),
   amountMinor: bigint("amount_minor", { mode: "number" }).notNull(), currency: text("currency").notNull(), method: text("method").notNull(),
-  externalReference: text("external_reference"), confirmedBy: uuid("confirmed_by").notNull().references(() => accounts.id), reversalOfId: uuid("reversal_of_id"),
+  externalReference: text("external_reference"), confirmedBy: uuid("confirmed_by").notNull().references(() => accounts.id), reversalOfId: uuid("reversal_of_id").references((): AnyPgColumn => paymentEntries.id),
+  idempotencyKey: uuid("idempotency_key").notNull().unique(), note: text("note"),
   confirmedAt: timestamp("confirmed_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index("payment_entries_order_idx").on(table.jobOrderId),
   index("payment_entries_confirmer_idx").on(table.confirmedBy),
   index("payment_entries_reversal_idx").on(table.reversalOfId),
-  check("payment_nonzero", sql`${table.amountMinor} <> 0`),
+  uniqueIndex("payment_reversal_unique").on(table.reversalOfId).where(sql`${table.reversalOfId} IS NOT NULL`),
+  uniqueIndex("payment_external_reference_unique").on(table.jobOrderId, table.method, table.externalReference).where(sql`${table.externalReference} IS NOT NULL`),
+  check("payment_values_valid", sql`${table.amountMinor} <> 0 AND ${table.currency} ~ '^[A-Z]{3}$' AND char_length(btrim(${table.method})) BETWEEN 1 AND 40 AND (${table.note} IS NULL OR char_length(${table.note}) <= 500)`),
+]);
+
+export const mediaBackups = pgTable("media_backups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mediaId: uuid("media_id").notNull().unique().references(() => mediaObjects.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(), objectPrefix: text("object_prefix").notNull().unique(), manifest: jsonb("manifest").notNull().default({}),
+  state: mediaBackupState("state").notNull().default("PENDING"), attempts: integer("attempts").notNull().default(0),
+  lastErrorCode: text("last_error_code"), verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("media_backups_state_idx").on(table.state, table.updatedAt),
+  check("media_backup_values_valid", sql`char_length(btrim(${table.provider})) BETWEEN 1 AND 40 AND char_length(btrim(${table.objectPrefix})) BETWEEN 1 AND 500 AND ${table.attempts} >= 0`),
+]);
+
+export const notificationDeliveries = pgTable("notification_deliveries", {
+  id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").references(() => jobOrders.id),
+  kind: text("kind").notNull(), recipient: text("recipient").notNull(), payload: jsonb("payload").notNull().default({}),
+  idempotencyKey: text("idempotency_key").notNull().unique(), state: notificationState("state").notNull().default("PENDING"),
+  attempts: integer("attempts").notNull().default(0), providerMessageId: text("provider_message_id"), lastErrorCode: text("last_error_code"),
+  sentAt: timestamp("sent_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("notification_deliveries_order_idx").on(table.jobOrderId),
+  index("notification_deliveries_state_idx").on(table.state, table.createdAt),
+  check("notification_delivery_values_valid", sql`char_length(btrim(${table.kind})) BETWEEN 1 AND 80 AND char_length(btrim(${table.recipient})) BETWEEN 3 AND 320 AND ${table.attempts} >= 0`),
+]);
+
+export const deletionRecords = pgTable("deletion_records", {
+  id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").notNull(), invitationId: uuid("invitation_id").notNull(),
+  slugDigest: text("slug_digest").notNull(), reason: text("reason").notNull(), requestedBy: uuid("requested_by"),
+  requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(), executeAfter: timestamp("execute_after", { withTimezone: true }).notNull(),
+  contentPurgedAt: timestamp("content_purged_at", { withTimezone: true }), tombstoneExportedAt: timestamp("tombstone_exported_at", { withTimezone: true }),
+}, (table) => [
+  uniqueIndex("deletion_records_invitation_unique").on(table.invitationId),
+  index("deletion_records_due_idx").on(table.contentPurgedAt, table.executeAfter),
+  check("deletion_record_values_valid", sql`char_length(${table.slugDigest}) = 64 AND char_length(btrim(${table.reason})) BETWEEN 1 AND 500`),
 ]);
 
 export const auditEvents = pgTable("audit_events", {

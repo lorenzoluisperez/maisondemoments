@@ -12,6 +12,9 @@ Designer-operated software for producing premium interactive invitations. The fi
 - Admin job-order intake with in-place customer account creation, package terms, event baselines, assignment, and commercial amounts
 - Household entry and CSV import, allocated adult and child seats, revocable private links, guest sessions, deadline-aware RSVP amendments, audited corrections, and formula-safe exports
 - Customer and staff sign-out from every private workspace
+- Append-only manual payment ledger, exact reversals, production queues, failed-task retry, and role-aware workspace navigation
+- Fixed transactional email tasks, structured logs, privacy-reduced Sentry reporting, and protected scheduled operations
+- Off-provider media backup with checksum verification, backup-gated publication, expiry, removal, deletion tombstones, and guarded restoration replay
 - Strict Zod event, invitation, upload, and RSVP contracts
 - PostgreSQL schema for accounts, orders, catalog, immutable versions, reviews, households, seats, payments, audit history, and durable tasks
 - Persistent account and order APIs with Supabase Auth session verification and normalized event storage
@@ -42,6 +45,7 @@ Open:
 - `/portal` for the customer workflow
 - `/studio` for the designer queue and constrained editor
 - `/studio/orders/new` for admin job-order intake
+- `/studio/operations` for admin production and infrastructure queues
 
 Run validation:
 
@@ -53,6 +57,8 @@ npm run media:verify
 npm run db:generate
 npm run build
 npm run guest:verify
+# Requires a disposable database, backup credentials, PostgreSQL client tools, and the confirmation variable.
+npm run ops:restore-drill
 ```
 
 ## Production setup
@@ -63,9 +69,9 @@ npm run guest:verify
 4. Run `npm run storage:setup`, `npm run catalog:seed`, and `npm run media:verify` from a trusted server environment.
 5. Configure the remaining values documented in `.env.example`. Never expose the Supabase secret key, background-job secret, guest-token secrets, or database URLs to the browser.
 6. Enable Supabase email OTP for customers and MFA-enforced staff sign-in.
-7. Schedule the protected media-job endpoint, then configure Resend, Sentry with personal-content redaction, PITR, and a separate media backup destination.
+7. Configure `CRON_SECRET`, Resend, the server-only Sentry DSN, Supabase PITR, and a separate S3-compatible media backup destination. Vercel schedules the combined operations endpoint from `vercel.json`.
 8. Deploy to Vercel only after integration, browser, restore, and real-device gates pass. The optional `dev:sites` and `build:sites` scripts retain the portable preview path used during initial UI construction.
 
 Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.
 
-See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [Phase 4 acceptance record](docs/phase-4-acceptance.md), [Phase 5 acceptance record](docs/phase-5-acceptance.md), [Phase 6 acceptance record](docs/phase-6-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).
+See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [Phase 4 acceptance record](docs/phase-4-acceptance.md), [Phase 5 acceptance record](docs/phase-5-acceptance.md), [Phase 6 acceptance record](docs/phase-6-acceptance.md), [Phase 7 acceptance record](docs/phase-7-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).

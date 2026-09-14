@@ -45,7 +45,7 @@ beforeAll(async () => {
     collectionKey: "midnight-garden", event,
   }, { jobNumberYear: 2095 });
   orderId = order.id;
-  await adminSql`insert into payment_entries (job_order_id, amount_minor, currency, method, confirmed_by) values (${orderId}, 100000, 'PHP', 'bank-transfer', ${fixture.adminId})`;
+  await adminSql`insert into payment_entries (job_order_id, amount_minor, currency, method, confirmed_by, idempotency_key) values (${orderId}, 100000, 'PHP', 'bank-transfer', ${fixture.adminId}, ${randomUUID()})`;
   const brief = await getEventBrief(customerActor, orderId);
   await submitEventBrief(customerActor, orderId, { expectedRevision: brief.revision });
 });
@@ -56,7 +56,10 @@ afterAll(async () => {
     await sql`delete from audit_events where actor_account_id in (${fixture.adminId}, ${fixture.designerId}, ${fixture.customerId}, ${fixture.otherId})`;
     await sql`delete from review_requests where requested_by = ${fixture.customerId}`;
     await sql`delete from approvals where customer_id = ${fixture.customerId}`;
+    await sql`delete from background_jobs where kind = 'SEND_EMAIL' and payload->>'deliveryId' in (select id::text from notification_deliveries where job_order_id = ${orderId})`;
+    await sql`delete from notification_deliveries where job_order_id = ${orderId}`;
     await sql`delete from payment_entries where job_order_id = ${orderId}`;
+    await sql`delete from deletion_records where job_order_id = ${orderId}`;
     await sql`delete from job_orders where id = ${orderId}`;
     await sql`delete from packages where id = ${fixture.packageId}`;
     await sql`delete from staff_memberships where account_id in (${fixture.adminId}, ${fixture.designerId})`;
@@ -93,7 +96,7 @@ describe.sequential("Phase 5 review and publishing", () => {
 
   it("enforces payment and publishes only the current approved version", async () => {
     await expect(publishApprovedVersion(adminActor, invitationId, { versionId: secondVersionId })).rejects.toBeInstanceOf(PublicationBlockedError);
-    await adminSql`insert into payment_entries (job_order_id, amount_minor, currency, method, confirmed_by) values (${orderId}, 100000, 'PHP', 'bank-transfer', ${fixture.adminId})`;
+    await adminSql`insert into payment_entries (job_order_id, amount_minor, currency, method, confirmed_by, idempotency_key) values (${orderId}, 100000, 'PHP', 'bank-transfer', ${fixture.adminId}, ${randomUUID()})`;
     const published = await publishApprovedVersion(adminActor, invitationId, { versionId: secondVersionId });
     expect(published.invitation).toMatchObject({ liveVersionId: secondVersionId, availability: "LIVE" });
     expect((await getJobOrder(adminActor, orderId)).state).toBe("DELIVERED");
@@ -121,15 +124,18 @@ describe.sequential("Phase 5 review and publishing", () => {
     expect(rolledBack.invitation?.liveVersionId).toBe(secondVersionId);
   }, 40000);
 
-  it("audits suspension, resumption, and expiry transitions", async () => {
+  it("audits suspension, resumption, expiry, and immediate removal", async () => {
     expect((await changeInvitationAvailability(adminActor, invitationId, { action: "suspend", reason: "Host requested a temporary pause" })).invitation?.availability).toBe("SUSPENDED");
     expect((await changeInvitationAvailability(adminActor, invitationId, { action: "resume", reason: "Host confirmed access may resume" })).invitation?.availability).toBe("LIVE");
     expect((await changeInvitationAvailability(adminActor, invitationId, { action: "expire", reason: "Hosting period ended" })).invitation?.availability).toBe("EXPIRED");
+    expect((await changeInvitationAvailability(adminActor, invitationId, { action: "remove", reason: "Customer requested immediate removal" })).invitation?.availability).toBe("REMOVED");
     const auditRows = await adminSql<{ action: string }[]>`select action from audit_events
       where entity_type = 'invitation' and entity_id = ${invitationId}
-        and action in ('invitation.suspended', 'invitation.resumed', 'invitation.expired')
+        and action in ('invitation.suspended', 'invitation.resumed', 'invitation.expired', 'invitation.removed')
       order by created_at`;
-    expect(auditRows.map((row) => row.action)).toEqual(["invitation.suspended", "invitation.resumed", "invitation.expired"]);
+    expect(auditRows.map((row) => row.action)).toEqual(["invitation.suspended", "invitation.resumed", "invitation.expired", "invitation.removed"]);
+    const [deletion] = await adminSql<{ execute_after: Date }[]>`select execute_after from deletion_records where invitation_id = ${invitationId}`;
+    expect(deletion.execute_after.getTime()).toBeLessThanOrEqual(Date.now());
     await expect(publishApprovedVersion(adminActor, invitationId, { versionId: secondVersionId })).rejects.toBeInstanceOf(PublicationBlockedError);
     const history = await listReviewHistory(customerActor, orderId);
     expect(history.versions).toHaveLength(3);

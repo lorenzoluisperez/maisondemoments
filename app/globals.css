@@ -394,6 +394,11 @@ html { scroll-behavior:smooth; }
 .balance-due { color:#8a402d!important; }.balance-paid { color:#3d704f!important; }
 .availability-controls label { display:grid; gap:7px; font-size:11px; font-weight:700; }
 .availability-controls>div { display:flex; gap:7px; flex-wrap:wrap; }
+.availability-controls .danger { border-color:#bc655f; color:#8a2923; }
+.operations-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-top:20px; }
+.operations-grid article { padding:22px; }
+.operations-grid h2 { margin:0 0 14px; font:600 18px Georgia,serif; }
+.operations-grid p { margin:8px 0; color:#655b60; font:13px/1.5 Arial,sans-serif; }
 
 /* Order intake and household management */
 .order-form { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:start; }
@@ -549,6 +554,7 @@ html { scroll-behavior:smooth; }
   .review-publishing-panel { margin:14px; }
   .review-publishing-panel>header { align-items:flex-start; flex-direction:column; }
   .review-production-grid { grid-template-columns:1fr; }
+  .operations-grid { grid-template-columns:1fr; }
   .review-production-grid>div { border-right:0; border-bottom:1px solid #e3dcd6; }
   .availability-controls { grid-column:auto; }
   .catalog-intro { padding-top:8vh; }

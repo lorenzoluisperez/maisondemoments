@@ -126,6 +126,8 @@ describe.sequential("production media pipeline", () => {
     expect(worker.results).toContainEqual(expect.objectContaining({ mediaId: readyMediaId, outcome: "READY" }));
     const status = await getMediaStatus(customerActor, readyMediaId);
     expect(status).toMatchObject({ state: "READY", width: 1280, height: 853, failureCode: null });
+    const [backup] = await adminSql<{ state: string; job_state: string }[]>`select backup.state, job.state as job_state from media_backups backup join background_jobs job on job.payload->>'mediaId' = backup.media_id::text and job.kind = 'BACKUP_MEDIA' where backup.media_id = ${readyMediaId}`;
+    expect(backup).toEqual({ state: "PENDING", job_state: "PENDING" });
     await expect(getMediaStatus(otherCustomerActor, readyMediaId)).rejects.toBeInstanceOf(MediaAuthorizationError);
 
     const delivery = await getMediaDelivery(customerActor, readyMediaId, 900);

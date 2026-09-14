@@ -8,7 +8,7 @@ This document records the agreed product direction, architecture, release bounda
 
 ## Current position
 
-**The technical roadmap is entering Phase 7.** Phase 1 implementation and Phases 2 through 6 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
+**The technical roadmap is at the Phase 7 infrastructure gate.** Phase 1 implementation and Phases 2 through 7 implementation are complete. Phase 1 still requires its physical-device release gate. Phase 7 still requires production backup credentials, PITR configuration, and a successful isolated restore drill. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
 
 | Phase | Status | Evidence or remaining work |
 |---|---|---|
@@ -19,11 +19,11 @@ This document records the agreed product direction, architecture, release bounda
 | 4. Production slice | Complete | Persistent event briefs, incremental customer autosave, completeness checks, media attachment, automatic drafts, and the conflict-safe constrained studio pass live integration tests. |
 | 5. Review and publishing | Complete | Frozen reviews, exact-version customer decisions, material-change reporting, payment-gated admin publication, compatible rollback, availability controls, and audit history pass live integration tests. |
 | 6. Guests and RSVP | Complete | Household entry and CSV import, allocated seats, private link sessions, amendments, deadline enforcement, corrections, revocation, and safe exports pass live integration tests. |
-| 7. Operational hardening | **Next** | Add payments ledger workflows, queues, monitoring, backups, deletion, retention, and restore drills. |
+| 7. Operational hardening | Implementation complete, infrastructure gate pending | Append-only payments and reversals, queues, structured monitoring, private email tasks, backup-gated publication, removal, retention, and a guarded restore drill are implemented. Configure off-provider storage and an isolated restore database, enable PITR, then pass the drill. |
 | 8. Private pilot | Not started | Complete at least two real pilot orders for each event type and measure time, usability, and margins. |
 | 9. Public launch | Not started | Publish the marketing catalog and open controlled intake after all launch gates pass. |
 
-Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), [Phase 4 acceptance record](phase-4-acceptance.md), [Phase 5 acceptance record](phase-5-acceptance.md), and [Phase 6 acceptance record](phase-6-acceptance.md).
+Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), [Phase 4 acceptance record](phase-4-acceptance.md), [Phase 5 acceptance record](phase-5-acceptance.md), [Phase 6 acceptance record](phase-6-acceptance.md), and [Phase 7 acceptance record](phase-7-acceptance.md).
 
 ## Product definition
 
@@ -327,11 +327,26 @@ Phase 6 completed the private household distribution and response path for live 
 
 Live PostgreSQL tests prove forwarded-link behavior, private session exchange, allocated seats, idempotent writes, stale-write rejection, cross-household database enforcement, safe export, correction, rotation, and revocation. Purpose-specific APIs use private no-store responses, HttpOnly cookies, bounded request schemas, origin checks, and server-only secrets. Physical iPhone, Android, Messenger, and WhatsApp checks remain part of the Phase 1 release gate.
 
+## Phase 7: implementation record
+
+Phase 7 completed the application layer for operating, monitoring, backing up, expiring, and recovering the service.
+
+### Delivered
+
+1. Record append-only manual receipts and one exact reversal with admin authorization, idempotency, currency checks, derived balances, and audit history.
+2. Show actionable production, overdue-order, failed-task, backup, and notification queues to admins, with an audited retry action for failed durable tasks.
+3. Queue fixed customer review and publication emails, deliver them with provider idempotency, and keep private content out of templates and logs.
+4. Copy ready customer media to independent S3-compatible storage, verify bytes and checksums, and block publication until referenced media backups are verified.
+5. Revoke guest access on expiry or removal, export durable deletion tombstones, purge personal event and guest content, remove primary and backup media, and preserve financial records separately.
+6. Run bounded media, backup, email, retention, and cleanup work through one authenticated Vercel cron while retaining PostgreSQL leases and retries.
+7. Emit structured run telemetry and privacy-reduced Sentry events, and provide a guarded isolated restore drill that replays external deletion tombstones.
+8. Hide staff-only workspace navigation from customers after role resolution.
+
+### Exit evidence and remaining infrastructure gate
+
+Domain and PostgreSQL tests cover payment authorization, idempotency, balance derivation, reversal invariants, tenant controls, publication, media, and RSVP behavior. Database verification covers all 36 application tables and 20 migrations. Production credentials are intentionally absent from the repository, so the actual off-provider copy and isolated PITR restore still require infrastructure configuration and a recorded drill. Phase 8 must not begin until that gate, the Phase 1 device gate, and the Phase 0 sales blockers are resolved.
+
 ## Next phase and later phases
-
-### Phase 7: operational hardening
-
-Complete manual payment recording and reversals, production queues, alerts, email, background-task operations, PITR, separate media backups, deletion, retention, restoration, and removal replay. Exit after a successful isolated restore drill and end-to-end release check.
 
 ### Phase 8: private pilot
 
