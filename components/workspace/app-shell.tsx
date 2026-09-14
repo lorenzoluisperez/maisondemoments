@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Gem, Palette, UserRound } from "lucide-react";
+import { Gem, ListPlus, Palette, UserRound } from "lucide-react";
+import { LogoutButton } from "@/components/workspace/logout-button";
 
 export function AppShell({ area, children }: { area: "portal" | "studio"; children: ReactNode }) {
   return (
@@ -10,9 +11,10 @@ export function AppShell({ area, children }: { area: "portal" | "studio"; childr
         <nav aria-label="Workspace">
           <Link className={area === "portal" ? "active" : ""} href="/portal"><UserRound /> Customer portal</Link>
           <Link className={area === "studio" ? "active" : ""} href="/studio"><Palette /> Production studio</Link>
+          <Link href="/studio/orders/new"><ListPlus /> New job order</Link>
           <Link href="/catalog"><Gem /> Invitation previews</Link>
         </nav>
-        <p className="workspace-mode">Private workspace<br /><span>Changes are stored securely</span></p>
+        <div className="workspace-mode"><LogoutButton /><span>Private workspace<br />Changes are stored securely</span></div>
       </aside>
       <div className="workspace-main">{children}</div>
     </div>

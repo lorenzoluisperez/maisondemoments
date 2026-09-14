@@ -6,7 +6,9 @@ export const rsvpSubmissionSchema = z.object({
   expectedRevision: z.number().int().min(0),
   invitationVersion: z.number().int().positive(),
   note: z.string().trim().max(500).optional(),
+  attendeeNames: z.record(z.string().uuid(), z.string().trim().min(1).max(120)).default({}),
   idempotencyKey: z.string().uuid(),
+  website: z.string().max(0).optional(),
 }).strict().superRefine((value, context) => {
   if (value.status === "ATTENDING" && value.selectedSlotIds.length === 0) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["selectedSlotIds"], message: "Select at least one allocated guest slot" });
@@ -16,6 +18,9 @@ export const rsvpSubmissionSchema = z.object({
   }
   if (new Set(value.selectedSlotIds).size !== value.selectedSlotIds.length) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["selectedSlotIds"], message: "Guest slots must be unique" });
+  }
+  if (Object.keys(value.attendeeNames).some((slotId) => !value.selectedSlotIds.includes(slotId))) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["attendeeNames"], message: "Names may only be supplied for selected guest slots" });
   }
 });
 

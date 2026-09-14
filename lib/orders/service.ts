@@ -39,6 +39,17 @@ export class OrderNotFoundError extends Error {}
 export class OrderReferenceError extends Error {}
 export class OrderValidationError extends Error {}
 
+export async function listOrderCreationOptions(actor: Actor) {
+  if (!canCreateOrder(actor)) throw new OrderAuthorizationError("Admin permission required");
+  const db = getDb();
+  const [customers, packageRows, designers] = await Promise.all([
+    db.select({ id: accounts.id, name: accounts.displayName, email: accounts.email }).from(accounts).where(and(eq(accounts.type, "CUSTOMER"), eq(accounts.active, true))).orderBy(asc(accounts.displayName)),
+    db.select({ id: packages.id, code: packages.code, name: packages.name }).from(packages).where(eq(packages.active, true)).orderBy(asc(packages.name)),
+    db.select({ id: accounts.id, name: accounts.displayName }).from(accounts).innerJoin(staffMemberships, eq(staffMemberships.accountId, accounts.id)).where(and(eq(accounts.type, "STAFF"), eq(accounts.active, true), eq(staffMemberships.role, "DESIGNER"))).orderBy(asc(accounts.displayName)),
+  ]);
+  return { customers, packages: packageRows, designers };
+}
+
 export async function createJobOrder(
   actor: Actor,
   input: CreateJobOrderInput,
@@ -62,7 +73,7 @@ export async function createJobOrder(
     if (!customer) throw new OrderReferenceError("Active customer account not found");
 
     const [selectedPackage] = await transaction
-      .select({ id: packages.id })
+      .select({ id: packages.id, termsSnapshot: packages.termsSnapshot })
       .from(packages)
       .where(and(eq(packages.id, parsed.packageId), eq(packages.active, true)))
       .limit(1);
@@ -96,6 +107,7 @@ export async function createJobOrder(
         customerId: parsed.customerId,
         assignedDesignerId: parsed.assignedDesignerId,
         packageId: parsed.packageId,
+        packageTermsSnapshot: selectedPackage.termsSnapshot,
         currency: parsed.currency,
         quotedAmountMinor: parsed.quotedAmountMinor,
         depositRequiredMinor: parsed.depositRequiredMinor,
@@ -173,6 +185,7 @@ export async function getJobOrder(actor: Actor, orderId: string) {
       customerId: jobOrders.customerId,
       assignedDesignerId: jobOrders.assignedDesignerId,
       packageId: jobOrders.packageId,
+      packageTermsSnapshot: jobOrders.packageTermsSnapshot,
       packageCode: packages.code,
       packageName: packages.name,
       state: jobOrders.state,

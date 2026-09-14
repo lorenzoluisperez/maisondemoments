@@ -1,10 +1,11 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { accounts, staffMemberships } from "@/db/schema";
-import type { Actor } from "@/lib/auth/permissions";
+import { accounts, auditEvents, staffMemberships } from "@/db/schema";
+import { canCreateOrder, type Actor } from "@/lib/auth/permissions";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const customerProfileSchema = z.object({
   authUserId: z.string().uuid(),
@@ -13,6 +14,8 @@ const customerProfileSchema = z.object({
 }).strict();
 
 export class AccountNotFoundError extends Error {}
+export class AccountAuthorizationError extends Error {}
+export class AccountConflictError extends Error {}
 
 export async function syncCustomerAccount(input: z.input<typeof customerProfileSchema>) {
   const profile = customerProfileSchema.parse(input);
@@ -31,6 +34,33 @@ export async function syncCustomerAccount(input: z.input<typeof customerProfileS
     .returning();
 
   return account;
+}
+
+export async function createCustomerAccount(actor: Actor, input: { displayName: string; email: string }) {
+  if (!canCreateOrder(actor)) throw new AccountAuthorizationError("Admin permission required");
+  const profile = z.object({ displayName: z.string().trim().min(1).max(160), email: z.string().trim().email().max(320) }).strict().parse(input);
+  const normalizedEmail = profile.email.toLowerCase();
+  const [existing] = await getDb().select({ id: accounts.id }).from(accounts).where(sql`lower(${accounts.email}) = ${normalizedEmail}`).limit(1);
+  if (existing) throw new AccountConflictError("A customer account already uses this email address");
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.createUser({
+    email: normalizedEmail,
+    email_confirm: false,
+    user_metadata: { display_name: profile.displayName },
+  });
+  if (error || !data.user) throw new AccountConflictError(error?.message ?? "Customer sign-in record could not be created");
+
+  try {
+    return await getDb().transaction(async (transaction) => {
+      const [account] = await transaction.insert(accounts).values({ authUserId: data.user.id, displayName: profile.displayName, email: normalizedEmail, type: "CUSTOMER" }).returning();
+      await transaction.insert(auditEvents).values({ actorAccountId: actor.accountId, action: "customer.created", entityType: "account", entityId: account.id, metadata: { source: "admin_intake" } });
+      return account;
+    });
+  } catch (databaseError) {
+    await admin.auth.admin.deleteUser(data.user.id);
+    throw databaseError;
+  }
 }
 
 export async function loadActorForAuthUser(authUserId: string): Promise<Actor> {

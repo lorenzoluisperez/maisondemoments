@@ -1,0 +1,2 @@
+CREATE INDEX "guest_rate_limits_cleanup_idx" ON "guest_rate_limits" USING btree ("window_started_at");--> statement-breakpoint
+ALTER TABLE "guest_sessions" ADD CONSTRAINT "guest_session_values_valid" CHECK ("guest_sessions"."link_generation" > 0 AND "guest_sessions"."invitation_access_epoch" > 0);

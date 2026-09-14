@@ -6,6 +6,7 @@ import { AlertCircle, Check, Clock3, ImagePlus, Plus, RefreshCw, Trash2 } from "
 import { AppShell } from "@/components/workspace/app-shell";
 import { Progress } from "@/components/ui/progress";
 import { CustomerReviewBanner } from "@/components/portal/customer-review-banner";
+import { GuestManager } from "@/components/portal/guest-manager";
 import type { EventBriefDocument } from "@/lib/content/brief";
 import { uploadCustomerImage } from "@/lib/media/browser-upload";
 
@@ -48,7 +49,8 @@ export function PortalWorkspace() {
         if (!response.ok) throw new Error(response.status === 401 ? "Sign in to open your customer portal" : body.error ?? "Could not load orders");
         const nextOrders = body.orders ?? [];
         setOrders(nextOrders);
-        const first = nextOrders[0]?.id ?? null;
+        const requestedOrderId = new URLSearchParams(window.location.search).get("order");
+        const first = nextOrders.find((order) => order.id === requestedOrderId)?.id ?? nextOrders[0]?.id ?? null;
         setSelectedOrderId(first);
         if (first) await loadBrief(first);
       } catch (error) { setMessage(error instanceof Error ? error.message : "Could not load the portal"); }
@@ -138,7 +140,7 @@ export function PortalWorkspace() {
         {activeSection === "photos" ? <div className="photo-uploader"><label className="workspace-button secondary"><ImagePlus />{uploading ? "Uploading…" : "Add photos"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={uploading || brief.document.gallery.length >= 12} onChange={(change) => void addPhotos(change.target.files)} /></label><p>{brief.document.gallery.length} of 12 photographs selected</p>{brief.document.gallery.map((photo) => <div key={photo.mediaId}><input value={photo.alt} aria-label="Photo description" onChange={(change) => mutateDocument((document) => ({ ...document, gallery: document.gallery.map((item) => item.mediaId === photo.mediaId ? { ...item, alt: change.target.value } : item) }))} /><button aria-label="Remove photo" onClick={() => mutateDocument((document) => ({ ...document, gallery: document.gallery.filter((item) => item.mediaId !== photo.mediaId) }))}><Trash2 /></button></div>)}</div> : null}
         {brief.completion.issues.some((issue) => issue.section === activeSection) ? <div className="field-issues">{brief.completion.issues.filter((issue) => issue.section === activeSection).map((issue) => <p key={`${issue.path}-${issue.message}`}><AlertCircle />{issue.message}</p>)}</div> : null}
         <div className="form-actions"><span>{saveLabel(saveState)}</span><button className="workspace-button" disabled={!brief.completion.ready || saveState !== "saved" || submitting} onClick={() => void submitBrief()}>{submitting ? "Submitting…" : brief.submittedAt ? "Resubmit updated brief" : "Submit completed brief"}</button></div>
-      </section></div>
+      </section></div><GuestManager orderId={brief.order.id} />
   </AppShell>;
 }
 

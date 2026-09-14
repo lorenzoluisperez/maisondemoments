@@ -191,14 +191,25 @@ export async function resolveMediaReferences(actor: Actor, jobOrderId: string, r
   if (!order) throw new MediaNotFoundError("Job order not found");
   if (!canReadOrder(actor, order)) throw new MediaAuthorizationError("Forbidden");
 
+  return resolveAuthorizedOrderMedia(parsedOrderId, parsedReferences);
+}
+
+export async function resolveGuestMediaReferences(jobOrderId: string, references: SnapshotMediaReference[]): Promise<ResolvedMediaAsset[]> {
+  const parsedOrderId = z.string().uuid().parse(jobOrderId);
+  const parsedReferences = z.array(z.object({ mediaId: z.string().uuid(), alt: z.string().trim().max(300) }).strict()).max(12).parse(references);
+  return resolveAuthorizedOrderMedia(parsedOrderId, parsedReferences);
+}
+
+async function resolveAuthorizedOrderMedia(jobOrderId: string, parsedReferences: SnapshotMediaReference[]) {
+  if (!parsedReferences.length) return [];
   const ids = [...new Set(parsedReferences.map((reference) => reference.mediaId))];
-  const media = await db.select().from(mediaObjects).where(and(
+  const media = await getDb().select().from(mediaObjects).where(and(
     inArray(mediaObjects.id, ids),
-    eq(mediaObjects.jobOrderId, parsedOrderId),
+    eq(mediaObjects.jobOrderId, jobOrderId),
     eq(mediaObjects.state, "READY"),
   ));
   if (media.length !== ids.length) throw new MediaConflictError("One or more media references are unavailable for this order");
-  const variants = await db.select().from(mediaVariants)
+  const variants = await getDb().select().from(mediaVariants)
     .where(inArray(mediaVariants.sourceMediaId, ids))
     .orderBy(asc(mediaVariants.width));
   const paths = variants.map((variant) => variant.storageKey);

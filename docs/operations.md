@@ -39,6 +39,9 @@ Run expiry and deletion as idempotent background jobs. Keep deletion tombstones 
 
 ## Customer brief and studio operations
 
+- Admins create job orders at `/studio/orders/new`. A new customer may be created there without sending an email. The customer then requests an OTP with the same email address. Only the server-side Supabase secret key may create that Auth record.
+- The seeded `SEMI_CUSTOM_MVP` package records two revision rounds, 90-day post-event hosting, 12 gallery photos, 500 households, and the balance-before-publication rule. Order creation copies those package terms into an immutable commercial snapshot so later catalog edits cannot alter an existing agreement.
+
 - Customers and admins may edit an order brief. Assigned designers may read customer facts but cannot change them.
 - Brief and studio writes include the revision the browser last read. HTTP 409 means another session saved first. Reload the current revision before continuing.
 - Brief submission validates all required event facts and attached media, replaces normalized activities, participants, and content in one transaction, then creates or resets the collection-pinned draft.
@@ -56,6 +59,17 @@ Run expiry and deletion as idempotent background jobs. Keep deletion tombstones 
 - Rollback may target only a previously customer-approved version of the same invitation with a compatible renderer. It changes the live-version pointer without changing responses, payments, or prior audit records.
 - Suspension immediately changes availability and increments the access epoch. Resume requires an unexpired invitation with a live version. Expiry is terminal until a future explicit extension workflow is implemented.
 - Every review, decision, publication, rollback, suspension, resumption, and expiry writes bounded audit metadata. Reasons are required for availability changes.
+
+## Household access and RSVP operations
+
+- Customers and admins manage households from the selected order in `/portal`. Enter one household or import CSV with the exact columns `household,adults,children,additional_guests`. Separate multiple names with semicolons.
+- Each household receives allocated adult, child, and explicit additional-guest slots. Guests cannot add seats. Removing an occupied seat requires an admin response correction first.
+- Copying a household link reveals its bearer credential to the authorized host. Anyone with that link has the same household access. Rotate a forwarded link to invalidate its old link and every session from that generation.
+- Link exchange stores the guest credential in an HttpOnly, secure production cookie. The invitation fragment is removed from browser history after exchange. Never place private facts in pre-authentication metadata.
+- RSVP submissions require the live invitation version, the browser's current response revision, and a unique idempotency key. HTTP 409 requires a reload before retrying with changed data.
+- Guest writes close after the event-local RSVP deadline. Admins may record a correction with a reason after the deadline. Every correction remains in audit history.
+- CSV response exports prefix spreadsheet-formula characters before quoting cells. Keep exports private and do not grant designers unrestricted guest-list access.
+- Delete expired rate-limit rows during Phase 7 cleanup. Alert on repeated exchange failures and RSVP errors without logging tokens, cookies, names, notes, or request bodies.
 
 ## Media operations
 

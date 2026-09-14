@@ -18,6 +18,15 @@ export function issueGuestCredential(secrets: { pepper: string; encryptionKey: s
   };
 }
 
+export function issueGuestSession(pepper: string) {
+  const token = randomBytes(TOKEN_BYTES).toString("base64url");
+  return { token, digest: digestGuestToken(`session:${token}`, pepper) };
+}
+
+export function digestGuestSession(token: string, pepper: string) {
+  return digestGuestToken(`session:${token}`, pepper);
+}
+
 export function digestGuestToken(token: string, pepper: string) {
   requireSecret(pepper, "GUEST_TOKEN_PEPPER", 32);
   return createHmac("sha256", pepper).update(token).digest("base64url");

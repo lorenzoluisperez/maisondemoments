@@ -41,6 +41,7 @@ export const jobOrders = pgTable("job_orders", {
   id: uuid("id").primaryKey().defaultRandom(), jobNumber: text("job_number").notNull().unique(),
   customerId: uuid("customer_id").notNull().references(() => accounts.id), assignedDesignerId: uuid("assigned_designer_id").references(() => accounts.id),
   packageId: uuid("package_id").notNull().references(() => packages.id), state: productionState("state").notNull().default("NEW"),
+  packageTermsSnapshot: jsonb("package_terms_snapshot").notNull().default({}),
   currency: text("currency").notNull(), quotedAmountMinor: bigint("quoted_amount_minor", { mode: "number" }).notNull(),
   depositRequiredMinor: bigint("deposit_required_minor", { mode: "number" }).notNull(), dueDate: date("due_date"),
   collectionKey: text("collection_key").notNull().default("midnight-garden"),
@@ -194,37 +195,63 @@ export const reviewItems = pgTable("review_items", {
 
 export const guestGroups = pgTable("guest_groups", {
   id: uuid("id").primaryKey().defaultRandom(), invitationId: uuid("invitation_id").notNull().references(() => invitations.id, { onDelete: "cascade" }),
-  label: text("label").notNull(), active: boolean("active").notNull().default(true), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [index("guest_groups_invitation_idx").on(table.invitationId)]);
+  label: text("label").notNull(), active: boolean("active").notNull().default(true), revision: integer("revision").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("guest_groups_invitation_idx").on(table.invitationId),
+  check("guest_group_values_valid", sql`char_length(btrim(${table.label})) BETWEEN 1 AND 160 AND ${table.revision} > 0`),
+]);
 
 export const guestSlots = pgTable("guest_slots", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().references(() => guestGroups.id, { onDelete: "cascade" }),
   type: guestSlotType("type").notNull(), assignedName: text("assigned_name"), isAdditionalGuest: boolean("is_additional_guest").notNull().default(false), displayOrder: integer("display_order").notNull(),
-}, (table) => [uniqueIndex("guest_slot_order_unique").on(table.groupId, table.displayOrder)]);
+}, (table) => [
+  uniqueIndex("guest_slot_order_unique").on(table.groupId, table.displayOrder),
+  check("guest_slot_values_valid", sql`${table.displayOrder} >= 0 AND (${table.assignedName} IS NULL OR char_length(btrim(${table.assignedName})) BETWEEN 1 AND 120)`),
+]);
 
 export const guestLinks = pgTable("guest_links", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().references(() => guestGroups.id, { onDelete: "cascade" }),
   tokenDigest: text("token_digest").notNull().unique(), encryptedToken: text("encrypted_token").notNull(), generation: integer("generation").notNull().default(1),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), revokedAt: timestamp("revoked_at", { withTimezone: true }),
-}, (table) => [index("guest_links_group_idx").on(table.groupId)]);
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("guest_links_group_idx").on(table.groupId),
+  uniqueIndex("guest_links_active_group_unique").on(table.groupId).where(sql`${table.revokedAt} IS NULL`),
+  check("guest_link_generation_positive", sql`${table.generation} > 0`),
+]);
 
 export const guestSessions = pgTable("guest_sessions", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().references(() => guestGroups.id, { onDelete: "cascade" }),
-  linkGeneration: integer("link_generation").notNull(), sessionDigest: text("session_digest").notNull().unique(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  revokedAt: timestamp("revoked_at", { withTimezone: true }),
-}, (table) => [index("guest_sessions_group_idx").on(table.groupId)]);
+  linkGeneration: integer("link_generation").notNull(), invitationAccessEpoch: integer("invitation_access_epoch").notNull(), sessionDigest: text("session_digest").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("guest_sessions_group_idx").on(table.groupId),
+  check("guest_session_values_valid", sql`${table.linkGeneration} > 0 AND ${table.invitationAccessEpoch} > 0`),
+]);
 
 export const rsvps = pgTable("rsvps", {
   id: uuid("id").primaryKey().defaultRandom(), groupId: uuid("group_id").notNull().unique().references(() => guestGroups.id, { onDelete: "cascade" }),
   status: rsvpStatus("status").notNull(), revision: integer("revision").notNull().default(1), submittedInvitationVersion: integer("submitted_invitation_version").notNull(),
-  note: text("note"), submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+  note: text("note"), lastIdempotencyKey: uuid("last_idempotency_key").notNull().unique(),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [check("rsvp_values_valid", sql`${table.revision} > 0 AND ${table.submittedInvitationVersion} > 0 AND (${table.note} IS NULL OR char_length(${table.note}) <= 500)`)]);
 
 export const rsvpAttendees = pgTable("rsvp_attendees", {
-  rsvpId: uuid("rsvp_id").notNull().references(() => rsvps.id, { onDelete: "cascade" }), slotId: uuid("slot_id").notNull().references(() => guestSlots.id),
+  rsvpId: uuid("rsvp_id").notNull().references(() => rsvps.id, { onDelete: "cascade" }), slotId: uuid("slot_id").notNull().references(() => guestSlots.id), displayName: text("display_name"),
 }, (table) => [
   primaryKey({ columns: [table.rsvpId, table.slotId] }),
-  index("rsvp_attendees_slot_idx").on(table.slotId),
+  uniqueIndex("rsvp_attendees_slot_unique").on(table.slotId),
+  check("rsvp_attendee_name_valid", sql`${table.displayName} IS NULL OR char_length(btrim(${table.displayName})) BETWEEN 1 AND 120`),
+]);
+
+export const guestRateLimits = pgTable("guest_rate_limits", {
+  keyDigest: text("key_digest").notNull(), action: text("action").notNull(), windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull(), attempts: integer("attempts").notNull().default(1),
+}, (table) => [
+  primaryKey({ columns: [table.keyDigest, table.action, table.windowStartedAt] }),
+  index("guest_rate_limits_cleanup_idx").on(table.windowStartedAt),
+  check("guest_rate_limit_values_valid", sql`${table.attempts} > 0 AND char_length(${table.action}) BETWEEN 1 AND 40`),
 ]);
 
 export const paymentEntries = pgTable("payment_entries", {

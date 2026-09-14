@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { CalendarDays, ChevronDown, Clock3, MapPin, Menu, Sparkles, X } from "lucide-react";
 import Image from "next/image";
 import type { InvitationConfig, InvitationSnapshot } from "@/lib/invitation/config";
@@ -28,7 +28,7 @@ declare global {
 type SceneKey = "opening" | "welcome" | "details" | "participants" | "rsvp";
 type RsvpChoice = "ATTENDING" | "DECLINED" | null;
 
-export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderModel }) {
+export function TheatricalInvitation({ snapshot, rsvpContent }: { snapshot: InvitationRenderModel; rsvpContent?: ReactNode }) {
   const sceneKeys = useMemo<SceneKey[]>(
     () => ["opening", "welcome", "details", ...(snapshot.participants.length ? ["participants" as const] : []), "rsvp"],
     [snapshot.participants.length],
@@ -227,8 +227,8 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
           <CollectionArtwork asset={sceneArtwork(snapshot.config, "rsvp")} placement="rsvp" />
           <div className="story-content rsvp-scene">
             <p className="eyebrow" data-reveal>Kindly respond by {snapshot.rsvpDeadlineLabel}</p>
-            <h2 id="rsvp-heading" data-reveal>{rsvp ? "Your reply is saved" : "Will you celebrate with us?"}</h2>
-            <p className="household-note" data-reveal>The Flores household · 2 seats reserved</p>
+            <h2 id="rsvp-heading" data-reveal>{rsvpContent ? "Will you celebrate with us?" : rsvp ? "Your reply is saved" : "Will you celebrate with us?"}</h2>
+            {rsvpContent ?? <><p className="household-note" data-reveal>The Flores household · 2 seats reserved</p>
             {rsvp ? (
               <div className="rsvp-confirmation" role="status" data-reveal>
                 <strong>{rsvp === "ATTENDING" ? "Joyfully attending · 2 guests" : "Regretfully declined"}</strong>
@@ -239,7 +239,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
                 <button className="primary-action" onClick={() => submitRsvp("ATTENDING")}>Joyfully accepts</button>
                 <button className="secondary-action" onClick={() => submitRsvp("DECLINED")}>Regretfully declines</button>
               </div>
-            )}
+            )}</>}
             <p className="scene-copy" data-reveal>Your response can be updated until the RSVP deadline.</p>
             <div className="closing-mark" data-reveal><span>MM</span><p>Made with care by Maison de Moments</p></div>
           </div>
@@ -286,6 +286,7 @@ function CollectionArtwork({ asset, placement, priority = false }: { asset?: Ass
         height={catalogAsset.metadata.height}
         alt=""
         priority={priority}
+        loading={priority ? "eager" : "lazy"}
         style={placementStyle}
       />
     </div>

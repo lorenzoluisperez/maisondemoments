@@ -107,6 +107,7 @@ describe.sequential("persistent order boundary", () => {
 
     orderId = order.id;
     expect(order.jobNumber).toMatch(/^JO-2097-\d{6}$/);
+    expect(order.packageTermsSnapshot).toEqual({ revisions: 2, hostingDays: 90 });
     expect(order.event.type).toBe("wedding");
     expect(order.event.activities).toHaveLength(2);
     expect(order.event.participants).toHaveLength(4);

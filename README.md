@@ -9,6 +9,9 @@ Designer-operated software for producing premium interactive invitations. The fi
 - Persistent event-specific customer portal with incremental autosave, completeness guidance, photo attachments, and explicit submission
 - Automatic collection-pinned draft generation and a constrained production studio with conflict-safe autosave, undo/redo, responsive previews, and bounded design controls
 - Frozen client reviews with exact-version approval, consolidated feedback, material-change labels, payment-gated admin publication, compatible rollback, and access controls
+- Admin job-order intake with in-place customer account creation, package terms, event baselines, assignment, and commercial amounts
+- Household entry and CSV import, allocated adult and child seats, revocable private links, guest sessions, deadline-aware RSVP amendments, audited corrections, and formula-safe exports
+- Customer and staff sign-out from every private workspace
 - Strict Zod event, invitation, upload, and RSVP contracts
 - PostgreSQL schema for accounts, orders, catalog, immutable versions, reviews, households, seats, payments, audit history, and durable tasks
 - Persistent account and order APIs with Supabase Auth session verification and normalized event storage
@@ -20,7 +23,7 @@ Designer-operated software for producing premium interactive invitations. The fi
 - 256-bit household token generation, keyed digest lookup, encrypted reissue storage, and timing-safe comparison
 - Domain and database integration tests for event types, snapshots, content persistence, generated drafts, studio conflicts, permissions, tenant isolation, JO concurrency, RSVP rules, and credentials
 
-The portal and studio use authenticated PostgreSQL data through purpose-specific server APIs. Public demos and the guest RSVP interaction remain synthetic until the household access and RSVP work in Phase 6.
+The portal and studio use authenticated PostgreSQL data through purpose-specific server APIs. Public demos remain synthetic. Published invitations use household bearer links and server-verified guest sessions for real RSVP data.
 
 ## Run locally
 
@@ -38,6 +41,7 @@ Open:
 - `/i/wedding-midnight-garden-demo` for a guest experience
 - `/portal` for the customer workflow
 - `/studio` for the designer queue and constrained editor
+- `/studio/orders/new` for admin job-order intake
 
 Run validation:
 
@@ -64,4 +68,4 @@ npm run guest:verify
 
 Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.
 
-See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [Phase 4 acceptance record](docs/phase-4-acceptance.md), [Phase 5 acceptance record](docs/phase-5-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).
+See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [Phase 4 acceptance record](docs/phase-4-acceptance.md), [Phase 5 acceptance record](docs/phase-5-acceptance.md), [Phase 6 acceptance record](docs/phase-6-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).

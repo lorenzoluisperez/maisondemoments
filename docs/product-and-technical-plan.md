@@ -8,7 +8,7 @@ This document records the agreed product direction, architecture, release bounda
 
 ## Current position
 
-**The technical roadmap is entering Phase 6.** Phase 1 implementation and Phases 2 through 5 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
+**The technical roadmap is entering Phase 7.** Phase 1 implementation and Phases 2 through 6 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
 
 | Phase | Status | Evidence or remaining work |
 |---|---|---|
@@ -18,12 +18,12 @@ This document records the agreed product direction, architecture, release bounda
 | 3. Media and renderer | Complete | Private signed uploads, durable Sharp processing, immutable variants, signed delivery, cleanup, persistent artwork metadata, renderer asset bindings, live integration tests, and budgets pass. |
 | 4. Production slice | Complete | Persistent event briefs, incremental customer autosave, completeness checks, media attachment, automatic drafts, and the conflict-safe constrained studio pass live integration tests. |
 | 5. Review and publishing | Complete | Frozen reviews, exact-version customer decisions, material-change reporting, payment-gated admin publication, compatible rollback, availability controls, and audit history pass live integration tests. |
-| 6. Guests and RSVP | **Next** | Implement household import, seat allocation, private link exchange, RSVP amendments, deadlines, and exports. Domain and credential primitives already exist. |
-| 7. Operational hardening | Not started | Add payments ledger workflows, queues, monitoring, backups, deletion, retention, and restore drills. |
+| 6. Guests and RSVP | Complete | Household entry and CSV import, allocated seats, private link sessions, amendments, deadline enforcement, corrections, revocation, and safe exports pass live integration tests. |
+| 7. Operational hardening | **Next** | Add payments ledger workflows, queues, monitoring, backups, deletion, retention, and restore drills. |
 | 8. Private pilot | Not started | Complete at least two real pilot orders for each event type and measure time, usability, and margins. |
 | 9. Public launch | Not started | Publish the marketing catalog and open controlled intake after all launch gates pass. |
 
-Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), [Phase 4 acceptance record](phase-4-acceptance.md), and [Phase 5 acceptance record](phase-5-acceptance.md).
+Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), [Phase 4 acceptance record](phase-4-acceptance.md), [Phase 5 acceptance record](phase-5-acceptance.md), and [Phase 6 acceptance record](phase-6-acceptance.md).
 
 ## Product definition
 
@@ -308,11 +308,26 @@ Phase 5 completed the controlled path from a mutable production draft to an immu
 
 Live PostgreSQL integration tests prove customer ownership, review locking, stale and superseded decision rejection, payment blocking, exact publication, material correction publication, compatible rollback, and availability transitions. Database triggers preserve immutable versions, approval ownership, and same-invitation live pointers. Editing draft-dependent content increments the aggregate revision, so it cannot alter or silently replace the live snapshot.
 
+## Phase 6: implementation record
+
+Phase 6 completed the private household distribution and response path for live invitations.
+
+### Delivered
+
+1. Create households individually or import bounded CSV with named adults, children, and allocated additional guests.
+2. Issue one 256-bit bearer credential per household, retain only its keyed digest for lookup, encrypt its reissue copy, and exchange it for an HttpOnly guest session.
+3. Render live immutable snapshots through the shared invitation engine after verifying invitation availability, expiry, link generation, access epoch, and household state.
+4. Enforce allocated seats, required unnamed-adult names, server-side RSVP deadlines, response revisions, idempotency keys, and per-credential rate limits.
+5. Support response amendments, admin corrections with reasons, host link rotation and revocation, and immediate invalidation of prior sessions.
+6. Derive response totals and export formula-safe CSV without exposing raw database rows.
+7. Add admin job-order intake, in-place customer account creation, a default sellable package snapshot, and workspace sign-out.
+8. Add database guards for one active household link, positive credential generations, and same-household RSVP attendee seats.
+
+### Exit evidence
+
+Live PostgreSQL tests prove forwarded-link behavior, private session exchange, allocated seats, idempotent writes, stale-write rejection, cross-household database enforcement, safe export, correction, rotation, and revocation. Purpose-specific APIs use private no-store responses, HttpOnly cookies, bounded request schemas, origin checks, and server-only secrets. Physical iPhone, Android, Messenger, and WhatsApp checks remain part of the Phase 1 release gate.
+
 ## Next phase and later phases
-
-### Phase 6: next implementation scope
-
-Implement household import and entry, allocated slots, token issuance and rotation, session exchange, response amendments, deadlines, concurrency protection, admin corrections, and safe CSV export. Exit when forwarding, revocation, stale writes, seat totals, and deadline behavior pass integration and browser tests.
 
 ### Phase 7: operational hardening
 

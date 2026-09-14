@@ -78,6 +78,34 @@
       "when": 1789356603000,
       "tag": "0010_phase_5_publication_invariants",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789366527627,
+      "tag": "0011_phase_6_guests_rsvp",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789367210895,
+      "tag": "0012_phase_6_session_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789367211000,
+      "tag": "0013_phase_6_guest_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789368582992,
+      "tag": "0014_order_terms_snapshot",
+      "breakpoints": true
     }
   ]
 }
