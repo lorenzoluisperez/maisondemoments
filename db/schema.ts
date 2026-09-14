@@ -43,6 +43,7 @@ export const jobOrders = pgTable("job_orders", {
   packageId: uuid("package_id").notNull().references(() => packages.id), state: productionState("state").notNull().default("NEW"),
   currency: text("currency").notNull(), quotedAmountMinor: bigint("quoted_amount_minor", { mode: "number" }).notNull(),
   depositRequiredMinor: bigint("deposit_required_minor", { mode: "number" }).notNull(), dueDate: date("due_date"),
+  collectionKey: text("collection_key").notNull().default("midnight-garden"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -52,6 +53,18 @@ export const jobOrders = pgTable("job_orders", {
   index("job_orders_package_idx").on(table.packageId),
   check("job_order_amounts_valid", sql`${table.quotedAmountMinor} >= 0 AND ${table.depositRequiredMinor} >= 0 AND ${table.depositRequiredMinor} <= ${table.quotedAmountMinor}`),
   check("job_order_currency_iso", sql`${table.currency} ~ '^[A-Z]{3}$'`),
+  check("job_order_collection_supported", sql`${table.collectionKey} IN ('midnight-garden', 'luminous-parchment')`),
+]);
+
+export const eventBriefs = pgTable("event_briefs", {
+  jobOrderId: uuid("job_order_id").primaryKey().references(() => jobOrders.id, { onDelete: "cascade" }),
+  eventType: eventType("event_type").notNull(),
+  document: jsonb("document").notNull(),
+  revision: integer("revision").notNull().default(1),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  check("event_brief_revision_positive", sql`${table.revision} > 0`),
 ]);
 
 export const events = pgTable("events", {

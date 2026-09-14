@@ -37,6 +37,15 @@ Run expiry and deletion as idempotent background jobs. Keep deletion tombstones 
 - Run `npm run test:db` only against development or staging. It creates isolated fixtures, verifies concurrency and tenant isolation, and removes its rows afterward.
 - Run `npm run db:verify` after every schema migration and before deployment.
 
+## Customer brief and studio operations
+
+- Customers and admins may edit an order brief. Assigned designers may read customer facts but cannot change them.
+- Brief and studio writes include the revision the browser last read. HTTP 409 means another session saved first. Reload the current revision before continuing.
+- Brief submission validates all required event facts and attached media, replaces normalized activities, participants, and content in one transaction, then creates or resets the collection-pinned draft.
+- A resubmitted brief returns the draft to `EDITING` and increments its revision. Any future review version must therefore be recreated and approved in Phase 5.
+- Only assigned designers and admins may edit presentation. The API accepts released typography, motion, layout, and existing decorative placement fields. It rejects arbitrary CSS, HTML, scripts, theme changes, new assets, and cross-collection artwork.
+- Review states other than `EDITING` and `CHANGES_REQUESTED` lock studio autosave. Admin publication remains unavailable until Phase 5 is implemented.
+
 ## Media operations
 
 - Run `npm run storage:setup` once per environment and after changing bucket policy. Both `maison-quarantine` and `maison-private-media` must remain private.

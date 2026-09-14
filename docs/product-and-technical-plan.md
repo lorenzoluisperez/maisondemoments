@@ -8,7 +8,7 @@ This document records the agreed product direction, architecture, release bounda
 
 ## Current position
 
-**The technical roadmap is entering Phase 4.** Phase 1 implementation, Phase 2, and Phase 3 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
+**The technical roadmap is entering Phase 5.** Phase 1 implementation and Phases 2 through 4 are complete. Phase 1 still requires its physical-device release gate. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
 
 | Phase | Status | Evidence or remaining work |
 |---|---|---|
@@ -16,14 +16,14 @@ This document records the agreed product direction, architecture, release bounda
 | 1. Guest experience proof | Implementation complete, release gate pending | The shared scrollable renderer, eight presets, shortcuts, long-content behavior, and reduced motion are implemented. Physical iPhone, Android, and in-app-browser testing remains. |
 | 2. Domain foundation | Complete | Four event schemas, live database model, ownership checks, JO generation, least-privilege runtime access, RLS, API boundaries, integration tests, and production build pass. |
 | 3. Media and renderer | Complete | Private signed uploads, durable Sharp processing, immutable variants, signed delivery, cleanup, persistent artwork metadata, renderer asset bindings, live integration tests, and budgets pass. |
-| 4. Production slice | **Next** | Connect customer content collection to generated drafts and the constrained studio. |
-| 5. Review and publishing | Not started | Implement frozen review versions, exact-version approval, publication, and rollback in the application. Database foundations already exist. |
+| 4. Production slice | Complete | Persistent event briefs, incremental customer autosave, completeness checks, media attachment, automatic drafts, and the conflict-safe constrained studio pass live integration tests. |
+| 5. Review and publishing | **Next** | Implement frozen review versions, exact-version approval, publication, and rollback in the application. Database foundations already exist. |
 | 6. Guests and RSVP | Not started | Implement household import, seat allocation, private link exchange, RSVP amendments, deadlines, and exports. Domain and credential primitives already exist. |
 | 7. Operational hardening | Not started | Add payments ledger workflows, queues, monitoring, backups, deletion, retention, and restore drills. |
 | 8. Private pilot | Not started | Complete at least two real pilot orders for each event type and measure time, usability, and margins. |
 | 9. Public launch | Not started | Publish the marketing catalog and open controlled intake after all launch gates pass. |
 
-Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), and [Phase 3 acceptance record](phase-3-acceptance.md).
+Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), and [Phase 4 acceptance record](phase-4-acceptance.md).
 
 ## Product definition
 
@@ -268,13 +268,30 @@ An authorized customer image now travels from direct private upload through dura
 
 The physical-device gate remains separate and still requires real target devices and relevant in-app browsers.
 
+## Phase 4: implementation record
+
+Phase 4 completed the production path from customer facts to a designer-editable invitation draft.
+
+### Delivered
+
+1. Persist versioned, incomplete customer briefs for all four event types without weakening the normalized event model used after submission.
+2. Provide an authenticated customer workspace for identity, schedule, participants, wording, and up to 12 ready photographs.
+3. Save customer changes incrementally with aggregate revisions and reject stale writes with a reload path.
+4. Validate submission with section-specific issues, verify attached media readiness, and normalize the accepted brief into event tables.
+5. Generate one stable invitation and a released, collection-pinned draft without copying customer facts into designer text overrides.
+6. Provide a staff queue and assigned-order studio using the same invitation renderer as the guest experience.
+7. Save typography, motion, scene layout, and decorative placement through a strict allowlist with revision conflicts, session undo/redo, mobile and wide preview, and review-state locking.
+8. Keep customers from editing presentation and designers from changing customer content, theme versions, or cross-collection artwork.
+
+### Exit evidence
+
+All four event types round-trip between normalized event data and editable briefs. Live PostgreSQL tests prove customer ownership, designer assignment, stale-write rejection, automatic draft generation, normalized submission, and bounded studio updates. The shared renderer visibly applies all allowed studio controls. A designer can work from customer-submitted facts without retyping names, dates, venues, participant lists, wording, or media references.
+
+The order-creation API currently starts from a valid event baseline. It remains an admin workflow, while customers can clear, revise, and resubmit the editable brief. A future sales-intake workflow may create a less complete shell if operational evidence shows that is needed.
+
 ## Next phase and later phases
 
-### Phase 4: next implementation scope
-
-Connect event-specific portal forms, incremental persistence, completeness validation, generated drafts, autosave, conflict handling, and constrained studio controls. Exit when a designer can produce a complete invitation without retyping customer facts.
-
-### Phase 5: review and publishing
+### Phase 5: next implementation scope
 
 Implement immutable review creation, consolidated feedback, exact-version approval, material-change handling, admin publication, rollback, suspension, expiry, and audit history. Exit when draft changes cannot alter a live invitation.
 

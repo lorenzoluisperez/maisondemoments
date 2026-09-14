@@ -48,11 +48,11 @@ try {
   const unsafeRole = !role || role.rolsuper || role.rolcreaterole || role.rolcreatedb || role.rolreplication || role.rolbypassrls;
   if (runtime.role !== "maison_app") throw new Error(`Unexpected runtime role: ${runtime.role}`);
   if (unsafeRole) throw new Error("maison_app has elevated PostgreSQL privileges");
-  if (tables.total !== 30 || tables.rls_enabled !== 30) throw new Error("Every application table must have RLS enabled");
+  if (tables.total !== 31 || tables.rls_enabled !== 31) throw new Error("Every application table must have RLS enabled");
   if (browserGrants.total !== 0) throw new Error("Browser database roles still have application table grants");
   if (functionGrants.total !== 0) throw new Error("Public database roles can execute private functions");
   if (missingIndexes.length) throw new Error("One or more foreign-key columns are missing an index");
-  if (migrations.total < 7) throw new Error("Expected Phase 3 migrations are not applied");
+  if (migrations.total < 9) throw new Error("Expected Phase 4 migrations are not applied");
 
   console.log(JSON.stringify({
     runtimeRole: runtime.role,

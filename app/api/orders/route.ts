@@ -4,6 +4,19 @@ import { AccountSetupRequiredError, AuthenticationRequiredError, requireCurrentA
 import { isTrustedMutationRequest, PayloadTooLargeError, readBoundedJson } from "@/lib/http/request-security";
 import { createJobOrderSchema } from "@/lib/orders/contracts";
 import { createJobOrder, OrderAuthorizationError, OrderReferenceError, OrderValidationError } from "@/lib/orders/service";
+import { listContentOrders } from "@/lib/content/service";
+
+export async function GET() {
+  try {
+    const actor = await requireCurrentActor();
+    const orders = await listContentOrders(actor);
+    return NextResponse.json({ orders }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) {
+    if (error instanceof AuthenticationRequiredError) return NextResponse.json({ error: error.message }, { status: 401 });
+    if (error instanceof AccountSetupRequiredError) return NextResponse.json({ error: error.message }, { status: 403 });
+    throw error;
+  }
+}
 
 export async function POST(request: Request) {
   if (!isTrustedMutationRequest(request)) {

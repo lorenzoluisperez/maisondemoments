@@ -7,6 +7,7 @@ import {
   accounts,
   auditEvents,
   eventActivities,
+  eventBriefs,
   eventContent,
   eventParticipants,
   events,
@@ -16,6 +17,7 @@ import {
 } from "@/db/schema";
 import { canCreateOrder, canReadOrder, type Actor } from "@/lib/auth/permissions";
 import { eventSchema, validateEventForSubmission, type Event } from "@/lib/domain/event";
+import { briefFromEvent } from "@/lib/content/brief";
 import { createJobOrderSchema, type CreateJobOrderInput } from "@/lib/orders/contracts";
 
 const storedPersonSchema = z.object({
@@ -98,6 +100,7 @@ export async function createJobOrder(
         quotedAmountMinor: parsed.quotedAmountMinor,
         depositRequiredMinor: parsed.depositRequiredMinor,
         dueDate: parsed.dueDate,
+        collectionKey: parsed.collectionKey,
       })
       .returning({ id: jobOrders.id, jobNumber: jobOrders.jobNumber });
 
@@ -140,6 +143,12 @@ export async function createJobOrder(
     const content = eventContentRows(storedEvent.id, event);
     if (content.length) await transaction.insert(eventContent).values(content);
 
+    await transaction.insert(eventBriefs).values({
+      jobOrderId: order.id,
+      eventType: event.type,
+      document: briefFromEvent(event),
+    });
+
     await transaction.insert(auditEvents).values({
       actorAccountId: actor.accountId,
       action: "order.created",
@@ -171,6 +180,7 @@ export async function getJobOrder(actor: Actor, orderId: string) {
       quotedAmountMinor: jobOrders.quotedAmountMinor,
       depositRequiredMinor: jobOrders.depositRequiredMinor,
       dueDate: jobOrders.dueDate,
+      collectionKey: jobOrders.collectionKey,
       createdAt: jobOrders.createdAt,
       updatedAt: jobOrders.updatedAt,
     })
@@ -197,7 +207,7 @@ export async function getJobOrder(actor: Actor, orderId: string) {
   };
 }
 
-function serializeEventDetails(event: Event) {
+export function serializeEventDetails(event: Event) {
   const common = event.hostWording ? { hostWording: event.hostWording } : {};
   switch (event.type) {
     case "wedding": return { type: event.type, ...common, partners: event.partners };
@@ -207,14 +217,14 @@ function serializeEventDetails(event: Event) {
   }
 }
 
-function participantGroupKey(type: Event["type"]) {
+export function participantGroupKey(type: Event["type"]) {
   if (type === "wedding") return "wedding_party";
   if (type === "debut") return "candles";
   if (type === "christening") return "godparents";
   return "participants";
 }
 
-function eventContentRows(eventId: string, event: Event) {
+export function eventContentRows(eventId: string, event: Event) {
   return [
     event.story ? { eventId, moduleKey: "story", schemaVersion: 1, content: { text: event.story } } : null,
     event.dressCode ? { eventId, moduleKey: "dress_code", schemaVersion: 1, content: { text: event.dressCode } } : null,

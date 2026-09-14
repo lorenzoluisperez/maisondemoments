@@ -50,6 +50,20 @@
       "when": 1789325756592,
       "tag": "0006_phase_3_storage_purge_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789327777913,
+      "tag": "0007_phase_4_content_studio",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789327778000,
+      "tag": "0008_phase_4_database_security",
+      "breakpoints": true
     }
   ]
 }

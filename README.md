@@ -6,7 +6,8 @@ Designer-operated software for producing premium interactive invitations. The fi
 
 - Eight event and collection presets with one semantic, naturally scrollable, reduced-motion-aware renderer
 - Always-available Details and RSVP controls, long participant-list handling, and synthetic public demos
-- Customer content portal and constrained production studio prototypes
+- Persistent event-specific customer portal with incremental autosave, completeness guidance, photo attachments, and explicit submission
+- Automatic collection-pinned draft generation and a constrained production studio with conflict-safe autosave, undo/redo, responsive previews, and bounded design controls
 - Strict Zod event, invitation, upload, and RSVP contracts
 - PostgreSQL schema for accounts, orders, catalog, immutable versions, reviews, households, seats, payments, audit history, and durable tasks
 - Persistent account and order APIs with Supabase Auth session verification and normalized event storage
@@ -16,9 +17,9 @@ Designer-operated software for producing premium interactive invitations. The fi
 - Transaction-safe JO allocation, exact-version publication gate, immutable version trigger, and leased task claiming
 - Role checks for customers, assigned designers, and admins
 - 256-bit household token generation, keyed digest lookup, encrypted reissue storage, and timing-safe comparison
-- Domain and database integration tests for event types, snapshots, permissions, tenant isolation, JO concurrency, RSVP rules, and credentials
+- Domain and database integration tests for event types, snapshots, content persistence, generated drafts, studio conflicts, permissions, tenant isolation, JO concurrency, RSVP rules, and credentials
 
-The visible portal, studio, and RSVP interactions still use synthetic in-browser data. Persistent account, order, and media APIs now exist behind `/api/account`, `/api/orders`, and `/api/media`; connecting them to customer forms belongs to the production slice in Phase 4.
+The portal and studio use authenticated PostgreSQL data through purpose-specific server APIs. Public demos and the guest RSVP interaction remain synthetic until the household access and RSVP work in Phase 6.
 
 ## Run locally
 
@@ -62,4 +63,4 @@ npm run guest:verify
 
 Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.
 
-See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).
+See the [canonical product and technical plan](docs/product-and-technical-plan.md), [Phase 1 acceptance record](docs/phase-1-acceptance.md), [Phase 2 acceptance record](docs/phase-2-acceptance.md), [Phase 3 acceptance record](docs/phase-3-acceptance.md), [Phase 4 acceptance record](docs/phase-4-acceptance.md), [architecture decisions](docs/adr/README.md), and [production runbook](docs/operations.md).

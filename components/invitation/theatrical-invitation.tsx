@@ -55,6 +55,12 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
     const root = storyRef.current;
     if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    const motion = snapshot.config.animationIntensity === "subtle"
+      ? { duration: 0.32, stagger: 0.03, y: 12 }
+      : snapshot.config.animationIntensity === "standard"
+        ? { duration: 0.55, stagger: 0.06, y: 22 }
+        : { duration: 0.78, stagger: 0.09, y: 30 };
+
     let active = true;
     const animationLibrary = import("gsap").then((module) => module.gsap);
     const animated = new WeakSet<Element>();
@@ -65,7 +71,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
         const items = entry.target.querySelectorAll("[data-reveal]");
         void animationLibrary.then((gsap) => {
           if (!active) return;
-          gsap.fromTo(items, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.78, stagger: 0.09, ease: "power3.out", clearProps: "transform,opacity,visibility" });
+          gsap.fromTo(items, { autoAlpha: 0, y: motion.y }, { autoAlpha: 1, y: 0, duration: motion.duration, stagger: motion.stagger, ease: "power3.out", clearProps: "transform,opacity,visibility" });
         }).catch(() => {
           items.forEach((item) => (item as HTMLElement).removeAttribute("style"));
         });
@@ -78,7 +84,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
       active = false;
       observer.disconnect();
     };
-  }, []);
+  }, [snapshot.config.animationIntensity]);
 
   useEffect(() => {
     const sections = sceneKeys
@@ -140,7 +146,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
   }, [goTo, sceneKeys, submitRsvp]);
 
   return (
-    <main className={`invitation-shell scrollable-invitation ${collectionClass}`}>
+    <main className={`invitation-shell scrollable-invitation ${collectionClass} typography-${snapshot.config.typography} motion-${snapshot.config.animationIntensity}`}>
       <nav className="invitation-nav" aria-label="Invitation controls">
         <button className="brand-mark" onClick={() => goTo("opening")} aria-label="Return to invitation opening">
           <span>MM</span><span className="brand-name">Maison de Moments</span>
@@ -160,7 +166,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
       </div>
 
       <div className="scroll-story" ref={storyRef}>
-        <section id="scene-opening" className="story-section opening-section" data-story-section aria-labelledby="opening-label">
+        <section id="scene-opening" className={`story-section opening-section ${sceneLayout(snapshot.config, "opening")}`} data-story-section aria-labelledby="opening-label">
           <CollectionArtwork asset={sceneArtwork(snapshot.config, "opening")} placement="opening" priority />
           <div className="story-content opening-content">
             <p className="eyebrow" id="opening-label" data-reveal>You are warmly invited</p>
@@ -171,7 +177,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
           </div>
         </section>
 
-        <section id="scene-welcome" className="story-section welcome-section" data-story-section aria-labelledby="invitation-title">
+        <section id="scene-welcome" className={`story-section welcome-section ${sceneLayout(snapshot.config, "welcome")}`} data-story-section aria-labelledby="invitation-title">
           <CollectionArtwork asset={sceneArtwork(snapshot.config, "welcome")} placement="welcome" />
           <div className="story-content hero-scene">
             <p className="eyebrow" data-reveal>{snapshot.hostWording}</p>
@@ -184,7 +190,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
           </div>
         </section>
 
-        <section id="scene-details" className="story-section details-section" data-story-section aria-labelledby="details-heading">
+        <section id="scene-details" className={`story-section details-section ${sceneLayout(snapshot.config, "details")}`} data-story-section aria-labelledby="details-heading">
           <CollectionArtwork asset={sceneArtwork(snapshot.config, "details")} placement="details" />
           <div className="story-content details-scene">
             <p className="eyebrow" data-reveal>The celebration</p>
@@ -205,7 +211,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
         </section>
 
         {snapshot.participants.length > 0 && (
-          <section id="scene-participants" className="story-section participants-section" data-story-section aria-labelledby="participants-heading">
+          <section id="scene-participants" className={`story-section participants-section ${sceneLayout(snapshot.config, "participants")}`} data-story-section aria-labelledby="participants-heading">
             <CollectionArtwork asset={sceneArtwork(snapshot.config, "participants")} placement="participants" />
             <div className="story-content entourage-scene">
               <p className="eyebrow" data-reveal>With love and guidance</p>
@@ -217,7 +223,7 @@ export function TheatricalInvitation({ snapshot }: { snapshot: InvitationRenderM
           </section>
         )}
 
-        <section id="scene-rsvp" className="story-section rsvp-section" data-story-section aria-labelledby="rsvp-heading">
+        <section id="scene-rsvp" className={`story-section rsvp-section ${sceneLayout(snapshot.config, "rsvp")}`} data-story-section aria-labelledby="rsvp-heading">
           <CollectionArtwork asset={sceneArtwork(snapshot.config, "rsvp")} placement="rsvp" />
           <div className="story-content rsvp-scene">
             <p className="eyebrow" data-reveal>Kindly respond by {snapshot.rsvpDeadlineLabel}</p>
@@ -266,21 +272,21 @@ function CollectionArtwork({ asset, placement, priority = false }: { asset?: Ass
   const catalogAsset = getCatalogArtwork(asset.assetKey);
   if (!catalogAsset) return null;
   const luminous = catalogAsset.collectionKey === "luminous-parchment";
-  const style = {
-    "--art-x": `${asset.x}%`,
-    "--art-y": `${asset.y}%`,
-    "--art-scale": asset.scale,
-    "--art-rotation": `${asset.rotation}deg`,
-    zIndex: asset.zIndex,
+  const layerStyle = { zIndex: asset.zIndex } as CSSProperties;
+  const placementStyle = {
+    translate: `${asset.x - 50}vw ${asset.y - 50}vh`,
+    scale: String(asset.scale),
+    rotate: `${asset.rotation}deg`,
   } as CSSProperties;
   return (
-    <div className={`${luminous ? "luminous-backdrop" : "botanical-frame"} ${luminous ? "luminous" : "botanical"}-${placement}`} style={style} aria-hidden="true">
+    <div className={`${luminous ? "luminous-backdrop" : "botanical-frame"} ${luminous ? "luminous" : "botanical"}-${placement}`} style={layerStyle} aria-hidden="true">
       <Image
         src={catalogAsset.metadata.delivery.path}
         width={catalogAsset.metadata.width}
         height={catalogAsset.metadata.height}
         alt=""
         priority={priority}
+        style={placementStyle}
       />
     </div>
   );
@@ -307,8 +313,13 @@ function sceneArtwork(config: InvitationConfig, sceneId: SceneKey) {
   return config.scenes.find((scene) => scene.id === sceneId)?.assets.find((asset) => !asset.hidden);
 }
 
+function sceneLayout(config: InvitationConfig, sceneId: SceneKey) {
+  return `layout-${config.scenes.find((scene) => scene.id === sceneId)?.layoutVariant ?? "centered"}`;
+}
+
 function participantHeading(type: InvitationSnapshot["eventType"]) {
-  if (type === "debut") return "The 18 candles";
+  if (type === "debut") return "Her celebration circle";
   if (type === "christening") return "Our godparents";
+  if (type === "birthday") return "Celebrating with us";
   return "Our wedding party";
 }

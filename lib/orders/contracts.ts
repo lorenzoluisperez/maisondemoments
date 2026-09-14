@@ -9,6 +9,7 @@ export const createJobOrderSchema = z.object({
   quotedAmountMinor: z.number().int().nonnegative().safe(),
   depositRequiredMinor: z.number().int().nonnegative().safe(),
   dueDate: z.string().date().nullable().default(null),
+  collectionKey: z.enum(["midnight-garden", "luminous-parchment"]).default("midnight-garden"),
   event: eventSchema,
 }).strict().superRefine((value, context) => {
   if (value.depositRequiredMinor > value.quotedAmountMinor) {

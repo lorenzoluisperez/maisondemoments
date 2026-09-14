@@ -12,7 +12,7 @@ export function AppShell({ area, children }: { area: "portal" | "studio"; childr
           <Link className={area === "studio" ? "active" : ""} href="/studio"><Palette /> Production studio</Link>
           <Link href="/catalog"><Gem /> Invitation previews</Link>
         </nav>
-        <p className="workspace-mode">Demo workspace<br /><span>Production data adapters are disabled</span></p>
+        <p className="workspace-mode">Private workspace<br /><span>Changes are stored securely</span></p>
       </aside>
       <div className="workspace-main">{children}</div>
     </div>
