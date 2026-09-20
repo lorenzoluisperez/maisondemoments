@@ -62,15 +62,30 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       flapMaterial.side = T.FrontSide;
       const inside = new T.MeshBasicMaterial({ map: paperMap, color: 0xe3d9c7, side: T.DoubleSide });
       const flapReverseMaterial = new T.MeshBasicMaterial({ map: paperMap, side: T.BackSide });
+      const interiorLightMap = makeInteriorLightTexture(T);
+      const interiorLightMaterial = new T.MeshBasicMaterial({
+        map: interiorLightMap,
+        transparent: true,
+        opacity: 0,
+        depthTest: false,
+        depthWrite: false,
+        side: T.BackSide,
+        toneMapped: false,
+      });
       const back = new T.Mesh(new T.PlaneGeometry(1, 1), inside);
       back.position.z = -.08;
       stage.add(back);
-
-      let cardMap = makeCardTexture(T, 1, paperMap.image);
-      const cardMaterial = new T.MeshBasicMaterial({ map: cardMap });
-      const card = new T.Mesh(new T.PlaneGeometry(1, 1), cardMaterial);
-      card.position.z = -.01;
-      stage.add(card);
+      const backLightMaterial = new T.MeshBasicMaterial({
+        color: 0xfffdf5,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: T.DoubleSide,
+        toneMapped: false,
+      });
+      const backLight = new T.Mesh(new T.PlaneGeometry(1, 1), backLightMaterial);
+      backLight.position.z = -.07;
+      stage.add(backLight);
 
       const front = new T.Mesh(new T.BufferGeometry(), face);
       front.position.z = .025;
@@ -78,16 +93,19 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       const flap = new T.Group();
       const flapFace = new T.Mesh(new T.BufferGeometry(), flapMaterial);
       const flapReverse = new T.Mesh(new T.BufferGeometry(), flapReverseMaterial);
+      const interiorLight = new T.Mesh(new T.BufferGeometry(), interiorLightMaterial);
+      interiorLight.renderOrder = 4;
       flap.add(flapFace);
       flap.add(flapReverse);
+      flap.add(interiorLight);
       stage.add(flap);
-      const sealMaterial = new T.MeshBasicMaterial({ map: sealMap, transparent: true, depthWrite: false });
+      const sealMaterial = new T.MeshBasicMaterial({ map: sealMap, transparent: true, depthWrite: false, side: T.DoubleSide });
       const seal = new T.Mesh(new T.PlaneGeometry(1, 1), sealMaterial);
-      stage.add(seal);
       const shadowMap = makeShadowTexture(T);
       const shadowMaterial = new T.MeshBasicMaterial({ map: shadowMap, transparent: true, opacity: .45, depthWrite: false });
       const sealShadow = new T.Mesh(new T.PlaneGeometry(1, 1), shadowMaterial);
-      stage.add(sealShadow);
+      flap.add(sealShadow);
+      flap.add(seal);
 
       let width = 1;
       let height = 1;
@@ -126,12 +144,9 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
         camera.updateProjectionMatrix();
         height = 2 * 14 * Math.tan(T.MathUtils.degToRad(35 / 2)) * 1.012;
         width = height * camera.aspect;
-        cardMap.dispose();
-        cardMap = makeCardTexture(T, camera.aspect, paperMap.image);
-        cardMaterial.map = cardMap;
         sealSize = Math.min(height * .184, width * .315);
         back.scale.set(width, height, 1);
-        card.scale.set(width * .92, height * .92, 1);
+        backLight.scale.set(width, height, 1);
         front.geometry.dispose();
         // A small overlap behind the curved flap prevents the card peeking out.
         front.geometry = geometry([[0, .35], [0.5, .645], [1, .35], [1, 1], [0, 1]]);
@@ -139,10 +154,12 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
         flapFace.geometry = geometry(flapOutline, true);
         flapReverse.geometry.dispose();
         flapReverse.geometry = flapFace.geometry.clone();
+        interiorLight.geometry.dispose();
+        interiorLight.geometry = flapFace.geometry.clone();
         flap.position.set(0, height / 2, .05);
-        seal.position.set(0, -height * .149, .115);
+        seal.position.set(0, -height * .649, .115);
         seal.scale.set(sealSize, sealSize, 1);
-        sealShadow.position.set(sealSize * .04, -height * .149 - sealSize * .08, .08);
+        sealShadow.position.set(sealSize * .04, -height * .649 - sealSize * .08, .08);
         sealShadow.scale.set(sealSize * 1.18, sealSize * 1.18, 1);
         requestRender();
       };
@@ -152,12 +169,15 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
         timeline?.kill();
         playing = false;
         stage.position.set(0, 0, 0);
+        stage.scale.set(1, 1, 1);
         stage.rotation.set(0, 0, 0);
+        camera.position.set(0, 0, 14);
         flap.rotation.x = 0;
         flapMaterial.color.set(0xffffff);
-        card.position.set(0, 0, -.01);
+        backLightMaterial.opacity = 0;
+        interiorLightMaterial.opacity = 0;
         sealMaterial.opacity = 1;
-        sealShadow.material.opacity = .45;
+        shadowMaterial.opacity = .45;
         seal.rotation.set(0, 0, 0);
         renderer.domElement.style.opacity = "1";
         fit();
@@ -165,24 +185,17 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       const play = () => {
         if (playing) return;
         playing = true;
-        const restingSealY = -height * .149;
         timeline = gsap.timeline({ onUpdate: requestRender });
         timeline
-          .to(seal.scale, { x: sealSize * .94, y: sealSize * .94, duration: .16, ease: "power2.in" }, 0)
-          .to(seal.position, { z: 2.3, y: restingSealY + .15, duration: .64, ease: "power2.out" }, .16)
-          .to(seal.scale, { x: sealSize * 1.04, y: sealSize * 1.04, duration: .5 }, .16)
-          .to(seal.rotation, { z: -.13, duration: .64 }, .16)
-          .to(sealShadow.scale, { x: sealSize * 1.6, y: sealSize * 1.6, duration: .55 }, .16)
-          .to(shadowMaterial, { opacity: 0, duration: .5 }, .3)
-          .to(sealMaterial, { opacity: 0, duration: .3 }, .62)
-          .to(flap.rotation, { x: -Math.PI * .97, duration: 1.6, ease: "power2.inOut" }, .74)
-          .to(flapMaterial.color, { r: .76, g: .73, b: .68, duration: .65, yoyo: true, repeat: 1 }, .76)
-          .to(card.position, { y: height * .38, duration: 1.0, ease: "power2.inOut" }, 2.0)
-          // Lift clear of the pocket before moving toward the camera.
-          .to(card.position, { z: .5, duration: .2 }, 2.95)
-          .to(stage.position, { y: -height * .42, duration: 1.25, ease: "power2.inOut" }, 3.0)
-          .to(card.position, { y: height * .43, z: 5.9, duration: 1.25, ease: "power2.inOut" }, 3.0)
-          .to(renderer.domElement, { opacity: 0, duration: .45, onComplete: () => { playing = false; onComplete(); } }, 4.0);
+          .to(flap.rotation, { x: -Math.PI * .96, duration: 5.6, ease: "power2.inOut" }, .2)
+          .to(flapMaterial.color, { r: .82, g: .79, b: .74, duration: 2.65, yoyo: true, repeat: 1 }, .28)
+          .to(backLightMaterial, { opacity: .96, duration: 1.25, ease: "sine.out" }, .12)
+          .to(interiorLightMaterial, { opacity: .96, duration: 1.35, ease: "sine.out" }, .12)
+          .to(stage.position, { y: -height * .18, duration: 7.7, ease: "power1.inOut" }, .66)
+          .to(camera.position, { z: 2.25, duration: 7.7, ease: "power2.inOut" }, .66)
+          .to(interiorLightMaterial, { opacity: 1, duration: 3.4, ease: "power1.in" }, 3.9)
+          .to(renderer.domElement, { opacity: .55, duration: 2, ease: "power1.out" }, 2.2)
+          .to(renderer.domElement, { opacity: 0, duration: 4.6, ease: "none", onComplete: () => { playing = false; onComplete(); } }, 4.2);
         requestRender();
       };
       const stop = () => {
@@ -196,8 +209,11 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
         else if (activeRef.current) { if (playing) timeline?.resume(); requestRender(); }
       };
       const resize = () => {
-        if (playing) { stop(); onComplete(); }
-        else fit();
+        if (!playing) { fit(); return; }
+        renderer.setSize(host.clientWidth, host.clientHeight);
+        camera.aspect = host.clientWidth / host.clientHeight;
+        camera.updateProjectionMatrix();
+        requestRender();
       };
       const contextLost = (event: Event) => { event.preventDefault(); stop(); onUnavailable(); };
       window.addEventListener("resize", resize);
@@ -213,8 +229,8 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
         scene.traverse((object) => {
           if (object instanceof T.Mesh) object.geometry.dispose();
         });
-        [face, flapMaterial, flapReverseMaterial, inside, cardMaterial, sealMaterial, shadowMaterial].forEach((material) => material.dispose());
-        [...textures, cardMap, shadowMap].forEach((texture) => texture.dispose());
+        [face, flapMaterial, flapReverseMaterial, backLightMaterial, interiorLightMaterial, inside, sealMaterial, shadowMaterial].forEach((material) => material.dispose());
+        [...textures, interiorLightMap, shadowMap].forEach((texture) => texture.dispose());
         renderer.dispose();
         renderer.domElement.remove();
       };
@@ -229,39 +245,38 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
   return <div ref={hostRef} style={{ width: "100%", height: "100%" }} />;
 }
 
-function makeCardTexture(T: typeof import("three"), aspect: number, paperImage: CanvasImageSource) {
+function makeInteriorLightTexture(T: typeof import("three")) {
   const canvas = document.createElement("canvas");
-  canvas.height = 1500;
-  canvas.width = Math.round(1500 * Math.min(2.2, Math.max(.4, aspect)));
-  const width = canvas.width;
-  const height = canvas.height;
-  const typeSize = Math.min(width, height);
+  canvas.width = canvas.height = 512;
   const c = canvas.getContext("2d")!;
-  c.drawImage(paperImage, 0, 0, width, height);
-  c.fillStyle = "rgba(255, 248, 230, .16)";
-  c.fillRect(0, 0, width, height);
-  const edgeShade = c.createLinearGradient(0, 0, width, height);
-  edgeShade.addColorStop(0, "rgba(104,78,38,.13)");
-  edgeShade.addColorStop(.12, "rgba(104,78,38,0)");
-  edgeShade.addColorStop(.88, "rgba(104,78,38,0)");
-  edgeShade.addColorStop(1, "rgba(104,78,38,.12)");
-  c.fillStyle = edgeShade;
-  c.fillRect(0, 0, width, height);
-  c.strokeStyle = "#c8b69a";
-  c.lineWidth = 2;
-  c.strokeRect(46, 46, width - 92, height - 92);
-  c.textAlign = "center";
-  c.fillStyle = "#514b3d";
-  c.font = `${typeSize * .023}px Georgia`;
-  c.fillText("TOGETHER WITH OUR FAMILIES", width / 2, height * .287);
-  c.font = `${typeSize * .098}px Georgia`;
-  c.fillText("Lorenzo", width / 2, height * .407);
-  c.font = `italic ${typeSize * .058}px Georgia`;
-  c.fillText("&", width / 2, height * .47);
-  c.font = `${typeSize * .098}px Georgia`;
-  c.fillText("Cham", width / 2, height * .54);
-  c.font = `${typeSize * .029}px Georgia`;
-  c.fillText("14 · 06 · 2027", width / 2, height * .65);
+
+  c.fillStyle = "rgba(255,253,245,.98)";
+  c.fillRect(0, 0, 512, 512);
+
+  const main = c.createRadialGradient(256, 296, 12, 256, 296, 460);
+  main.addColorStop(0, "rgba(255,255,244,.98)");
+  main.addColorStop(.28, "rgba(255,241,190,.84)");
+  main.addColorStop(.62, "rgba(255,225,146,.46)");
+  main.addColorStop(.84, "rgba(255,241,205,.18)");
+  main.addColorStop(1, "rgba(255,244,214,.12)");
+  c.fillStyle = main;
+  c.fillRect(0, 0, 512, 512);
+
+  c.globalCompositeOperation = "lighter";
+  const left = c.createRadialGradient(184, 286, 10, 184, 286, 220);
+  left.addColorStop(0, "rgba(255,248,214,.52)");
+  left.addColorStop(.5, "rgba(255,224,145,.2)");
+  left.addColorStop(1, "rgba(255,255,255,0)");
+  c.fillStyle = left;
+  c.fillRect(0, 0, 512, 512);
+
+  const right = c.createRadialGradient(338, 270, 10, 338, 270, 235);
+  right.addColorStop(0, "rgba(255,255,232,.48)");
+  right.addColorStop(.52, "rgba(255,236,177,.18)");
+  right.addColorStop(1, "rgba(255,255,255,0)");
+  c.fillStyle = right;
+  c.fillRect(0, 0, 512, 512);
+
   const texture = new T.CanvasTexture(canvas);
   texture.colorSpace = T.SRGBColorSpace;
   return texture;

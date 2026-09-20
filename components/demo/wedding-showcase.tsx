@@ -12,12 +12,13 @@ const ThreeEnvelope = dynamic(() => import("./three-envelope").then((module) => 
   loading: () => null,
 });
 
-type OpeningState = "waiting" | "opening" | "open";
+type OpeningState = "waiting" | "opening" | "intro" | "open";
 
 export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }) {
   const rootRef = useRef<HTMLElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const openingLock = useRef(false);
+  const animationStarted = useRef(false);
   const openingTimer = useRef<number | null>(null);
   const [openingState, setOpeningState] = useState<OpeningState>("waiting");
   const [run, setRun] = useState(0);
@@ -27,7 +28,7 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
   const [reducedMotion, setReducedMotion] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
-  const [musicPreferred, setMusicPreferred] = useState(false);
+  const [musicPreferred, setMusicPreferred] = useState(true);
   const [revealMoving, setRevealMoving] = useState(false);
   const [rsvp, setRsvp] = useState<"yes" | "no" | null>(null);
 
@@ -40,6 +41,12 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
   useEffect(() => () => {
     if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
   }, []);
+
+  useEffect(() => {
+    if (openingState !== "intro") return;
+    const timer = window.setTimeout(() => setOpeningState("open"), reducedMotion ? 120 : 10_800);
+    return () => window.clearTimeout(timer);
+  }, [openingState, reducedMotion]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -108,7 +115,7 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
     };
   }, [openingState, reducedMotion]);
 
-  const finishOpening = useCallback(() => setOpeningState("open"), []);
+  const finishEnvelope = useCallback(() => setOpeningState("intro"), []);
   const unavailable = useCallback(() => { setFallback(true); setCanvasReady(true); }, []);
   const ready = useCallback(() => setCanvasReady(true), []);
 
@@ -120,15 +127,26 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
       audioRef.current.volume = 0.36;
       void audioRef.current.play().then(() => setMusicOn(true)).catch(() => setMusicOn(false));
     }
-    if (reducedMotion || fallback || !canvasReady) openingTimer.current = window.setTimeout(finishOpening, 420);
-    else setRun((value) => value + 1);
-  }, [canvasReady, fallback, finishOpening, musicPreferred, openingState, reducedMotion]);
+    if (reducedMotion) openingTimer.current = window.setTimeout(() => setOpeningState("open"), 120);
+    else if (fallback) openingTimer.current = window.setTimeout(finishEnvelope, 2_800);
+    else if (canvasReady) {
+      animationStarted.current = true;
+      setRun((value) => value + 1);
+    } else openingTimer.current = window.setTimeout(finishEnvelope, 5_000);
+  }, [canvasReady, fallback, finishEnvelope, musicPreferred, openingState, reducedMotion]);
+
+  useEffect(() => {
+    if (openingState !== "opening" || !canvasReady || fallback || reducedMotion || animationStarted.current) return;
+    if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
+    animationStarted.current = true;
+    setRun((value) => value + 1);
+  }, [canvasReady, fallback, openingState, reducedMotion]);
 
   useEffect(() => {
     if (openingState !== "opening" || (!fallback && !reducedMotion)) return;
-    const timer = window.setTimeout(finishOpening, 420);
+    const timer = window.setTimeout(reducedMotion ? () => setOpeningState("open") : finishEnvelope, reducedMotion ? 120 : 2_800);
     return () => window.clearTimeout(timer);
-  }, [fallback, finishOpening, openingState, reducedMotion]);
+  }, [fallback, finishEnvelope, openingState, reducedMotion]);
 
   const skipOpening = useCallback(() => {
     setOpeningState("open");
@@ -137,11 +155,12 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
   const replay = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
     openingLock.current = false;
+    animationStarted.current = false;
     if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
     audioRef.current?.pause();
     if (audioRef.current) audioRef.current.currentTime = 0;
     setMusicOn(false);
-    setMusicPreferred(false);
+    setMusicPreferred(true);
     setOpeningState("waiting");
     setReset((value) => value + 1);
   }, []);
@@ -166,7 +185,7 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
 
   return (
     <main className={`${styles.showcase} ${!revealMoving || reducedMotion ? styles.pauseAmbience : ""}`} ref={rootRef}>
-      <audio ref={audioRef} src="/wedding-showcase/canon-in-d-major.mp3" loop preload="none" />
+      <audio ref={audioRef} src="/wedding-showcase/there-is-romance.mp3" loop preload="none" />
 
       {openingState === "open" && <nav className={styles.nav} aria-label="Invitation controls">
         <button className={styles.monogram} onClick={() => goTo("opening")} aria-label="Return to the opening">L <i>&amp;</i> C</button>
@@ -179,10 +198,10 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
       </nav>}
 
       <section id="opening" className={`${styles.opening} ${openingState === "open" ? styles.opened : ""} ${openingState === "opening" ? styles.openingInMotion : ""}`} aria-label={openingState === "open" ? "Your invitation" : "A sealed envelope"}>
-        {openingState !== "waiting" && <RevealSetting />}
-        {openingState !== "open" && (!canvasReady || reducedMotion || fallback) && <StaticEnvelope />}
-        {!reducedMotion && !fallback && <div className={styles.canvasWrap} style={{ opacity: canvasReady && openingState !== "open" ? 1 : 0 }} aria-hidden="true"><ThreeEnvelope run={run} reset={reset} active={openingState !== "open"} onReady={ready} onComplete={finishOpening} onUnavailable={unavailable} /></div>}
-        {openingState !== "open" && <>
+        {(openingState === "intro" || openingState === "open") && <RevealSetting />}
+        {(openingState === "waiting" || openingState === "opening") && (!canvasReady || reducedMotion || fallback) && <StaticEnvelope />}
+        {!reducedMotion && !fallback && <div className={styles.canvasWrap} style={{ opacity: canvasReady && (openingState === "waiting" || openingState === "opening") ? 1 : 0 }} aria-hidden="true"><ThreeEnvelope run={run} reset={reset} active={openingState === "waiting" || openingState === "opening"} onReady={ready} onComplete={finishEnvelope} onUnavailable={unavailable} /></div>}
+        {(openingState === "waiting" || openingState === "opening") && <>
           <div className={styles.foregroundLeft} aria-hidden="true"><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill loading="eager" sizes="(max-width: 700px) 70vw, 40vw" /></div>
           <div className={styles.foregroundRight} aria-hidden="true"><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill loading="eager" sizes="(max-width: 700px) 54vw, 30vw" /></div>
         </>}
@@ -202,7 +221,14 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
           </>
         )}
 
-        {openingState === "opening" && <p className={styles.srOnly} role="status">Opening your envelope…</p>}
+        {openingState === "opening" && <>
+          <p className={styles.srOnly} role="status">Opening your envelope…</p>
+        </>}
+
+        {openingState === "intro" && <>
+          <CinematicIntro date={fixture.dateLabel} />
+          <p className={styles.srOnly} role="status">Introducing the wedding of {fixture.couple.first} and {fixture.couple.second}</p>
+        </>}
 
         {openingState === "open" && (
           <div className={styles.revealCardWrap}><div className={styles.titleCard}>
@@ -250,7 +276,7 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
 
       <footer className={styles.footer}>
         <p>Same people. A brighter tomorrow.</p><span>L <i>&amp;</i> C</span>
-        <small>“Canon in D Major” by Kevin MacLeod, licensed under <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>.</small>
+        <small><a href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100044" target="_blank" rel="noreferrer">“There Is Romance”</a> by Kevin MacLeod, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.</small>
       </footer>
       </>}
 
@@ -265,6 +291,24 @@ function RevealSetting() {
     <div className={styles.revealLight} />
     <div className={styles.revealFloralLeft}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="(max-width: 700px) 70vw, 40vw" /></div>
     <div className={styles.revealFloralRight}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="(max-width: 700px) 70vw, 40vw" /></div>
+  </div>;
+}
+
+function CinematicIntro({ date }: { date: string }) {
+  return <div className={styles.cinematicIntro} aria-hidden="true">
+    <div className={styles.introWash} />
+    <div className={styles.introFloralLeft}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="55vw" /></div>
+    <div className={styles.introFloralRight}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="55vw" /></div>
+    <div className={styles.introAura}><i /><i /></div>
+    <div className={styles.introRibbons}><i /><i /><i /></div>
+    <div className={styles.introPetals}>{Array.from({ length: 12 }, (_, index) => <i key={index} />)}</div>
+    <p className={styles.introDate}>{date}</p>
+    <div className={styles.introPhrase}>
+      <span>Two stories</span>
+      <span>One forever</span>
+    </div>
+    <div className={styles.introMonogram}><span>L</span><i>&amp;</i><span>C</span></div>
+    <p className={styles.introOverture}>The wedding of</p>
   </div>;
 }
 
