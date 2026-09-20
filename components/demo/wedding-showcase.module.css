@@ -68,7 +68,8 @@
 .pauseAmbience .revealBackdrop, .pauseAmbience .revealLight, .pauseAmbience .revealFloralLeft, .pauseAmbience .revealFloralRight { animation-play-state: paused; }
 
 .cinematicIntro { position: absolute; z-index: 10; inset: 0; display: grid; place-items: center; overflow: hidden; color: #fffbed; background: #303827; }
-.introWash { position: absolute; z-index: 9; inset: 0; pointer-events: none; background: linear-gradient(135deg,#fff 0%,#fffdf5 48%,#fffaf0 100%); animation: introWash 1s cubic-bezier(.4,0,.2,1) forwards; }
+.handoffWash { position: absolute; z-index: 20; inset: 0; pointer-events: none; opacity: 0; background: linear-gradient(135deg,#fff 0%,#fffdf5 48%,#fffaf0 100%); animation: handoffIn 2s cubic-bezier(.4,0,.2,1) forwards; }
+.handoffReveal { opacity: 1; animation: handoffOut .85s cubic-bezier(.4,0,.2,1) forwards; }
 .introFloralLeft, .introFloralRight { position: absolute; z-index: 2; width: min(58vw, 760px); height: 120%; filter: brightness(.8) saturate(.72) drop-shadow(18px 24px 18px #0007); opacity: 0; }
 .introFloralLeft { left: -17%; top: -23%; transform-origin: 20% 20%; animation: introFloralLeft 10.5s .45s cubic-bezier(.2,.7,.2,1) both; }
 .introFloralRight { right: -20%; bottom: -31%; transform-origin: 80% 80%; animation: introFloralRight 10.5s .45s cubic-bezier(.2,.7,.2,1) both; }
@@ -209,7 +210,8 @@
 @keyframes floralLeftSway { from { transform: rotate(-11deg) translateY(-4px); } to { transform: rotate(-7deg) translateY(8px); } }
 @keyframes floralRightSway { from { transform: rotate(171deg) translateY(-6px); } to { transform: rotate(175deg) translateY(9px); } }
 @keyframes panelIn { from { transform: translateX(100%); } to { transform: none; } }
-@keyframes introWash { 0%,10% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes handoffIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes handoffOut { from { opacity: 1; } to { opacity: 0; } }
 @keyframes introFloralLeft { 0% { opacity: 0; transform: translate(-22%,-16%) rotate(-24deg) scale(1.14); } 18% { opacity: .78; } 70% { opacity: .72; transform: translate(2%,2%) rotate(-9deg) scale(1); } 100% { opacity: 0; transform: translate(-10%,-5%) rotate(-4deg) scale(1.08); } }
 @keyframes introFloralRight { 0% { opacity: 0; transform: translate(24%,18%) rotate(190deg) scale(1.14); } 18% { opacity: .72; } 70% { opacity: .67; transform: translate(-2%,-2%) rotate(173deg) scale(1); } 100% { opacity: 0; transform: translate(10%,5%) rotate(166deg) scale(1.08); } }
 @keyframes auraBreathe { 0% { opacity: 0; transform: scale(.5) rotate(-12deg); filter: blur(9px); } 24%,72% { opacity: .9; filter: blur(0); } 100% { opacity: 0; transform: scale(1.46) rotate(28deg); filter: blur(5px); } }

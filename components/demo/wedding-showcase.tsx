@@ -12,7 +12,7 @@ const ThreeEnvelope = dynamic(() => import("./three-envelope").then((module) => 
   loading: () => null,
 });
 
-type OpeningState = "waiting" | "opening" | "intro" | "open";
+type OpeningState = "waiting" | "opening" | "handoff" | "intro" | "open";
 
 export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }) {
   const rootRef = useRef<HTMLElement>(null);
@@ -41,6 +41,12 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
   useEffect(() => () => {
     if (openingTimer.current !== null) window.clearTimeout(openingTimer.current);
   }, []);
+
+  useEffect(() => {
+    if (openingState !== "handoff") return;
+    const timer = window.setTimeout(() => setOpeningState("intro"), 2_000);
+    return () => window.clearTimeout(timer);
+  }, [openingState]);
 
   useEffect(() => {
     if (openingState !== "intro") return;
@@ -115,7 +121,7 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
     };
   }, [openingState, reducedMotion]);
 
-  const finishEnvelope = useCallback(() => setOpeningState("intro"), []);
+  const finishEnvelope = useCallback(() => setOpeningState("handoff"), []);
   const unavailable = useCallback(() => { setFallback(true); setCanvasReady(true); }, []);
   const ready = useCallback(() => setCanvasReady(true), []);
 
@@ -197,11 +203,11 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
         </div>
       </nav>}
 
-      <section id="opening" className={`${styles.opening} ${openingState === "open" ? styles.opened : ""} ${openingState === "opening" ? styles.openingInMotion : ""}`} aria-label={openingState === "open" ? "Your invitation" : "A sealed envelope"}>
+      <section id="opening" className={`${styles.opening} ${openingState === "open" ? styles.opened : ""} ${openingState === "opening" || openingState === "handoff" ? styles.openingInMotion : ""}`} aria-label={openingState === "open" ? "Your invitation" : "A sealed envelope"}>
         {(openingState === "intro" || openingState === "open") && <RevealSetting />}
-        {(openingState === "waiting" || openingState === "opening") && (!canvasReady || reducedMotion || fallback) && <StaticEnvelope />}
-        {!reducedMotion && !fallback && <div className={styles.canvasWrap} style={{ opacity: canvasReady && (openingState === "waiting" || openingState === "opening") ? 1 : 0 }} aria-hidden="true"><ThreeEnvelope run={run} reset={reset} active={openingState === "waiting" || openingState === "opening"} onReady={ready} onComplete={finishEnvelope} onUnavailable={unavailable} /></div>}
-        {(openingState === "waiting" || openingState === "opening") && <>
+        {(openingState === "waiting" || openingState === "opening" || openingState === "handoff") && (!canvasReady || reducedMotion || fallback) && <StaticEnvelope />}
+        {!reducedMotion && !fallback && <div className={styles.canvasWrap} style={{ opacity: canvasReady && (openingState === "waiting" || openingState === "opening" || openingState === "handoff") ? 1 : 0 }} aria-hidden="true"><ThreeEnvelope run={run} reset={reset} active={openingState === "waiting" || openingState === "opening" || openingState === "handoff"} onReady={ready} onComplete={finishEnvelope} onUnavailable={unavailable} /></div>}
+        {(openingState === "waiting" || openingState === "opening" || openingState === "handoff") && <>
           <div className={styles.foregroundLeft} aria-hidden="true"><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill loading="eager" sizes="(max-width: 700px) 70vw, 40vw" /></div>
           <div className={styles.foregroundRight} aria-hidden="true"><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill loading="eager" sizes="(max-width: 700px) 54vw, 30vw" /></div>
         </>}
@@ -229,6 +235,8 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
           <CinematicIntro date={fixture.dateLabel} />
           <p className={styles.srOnly} role="status">Introducing the wedding of {fixture.couple.first} and {fixture.couple.second}</p>
         </>}
+
+        {(openingState === "handoff" || openingState === "intro") && <div className={`${styles.handoffWash} ${openingState === "intro" ? styles.handoffReveal : ""}`} aria-hidden="true" />}
 
         {openingState === "open" && (
           <div className={styles.revealCardWrap}><div className={styles.titleCard}>
@@ -296,7 +304,6 @@ function RevealSetting() {
 
 function CinematicIntro({ date }: { date: string }) {
   return <div className={styles.cinematicIntro} aria-hidden="true">
-    <div className={styles.introWash} />
     <div className={styles.introFloralLeft}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="55vw" /></div>
     <div className={styles.introFloralRight}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="55vw" /></div>
     <div className={styles.introAura}><i /><i /></div>

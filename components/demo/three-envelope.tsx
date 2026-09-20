@@ -194,9 +194,7 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
           .to(stage.position, { y: -height * .18, duration: 9.2, ease: "power1.inOut" }, .66)
           .to(camera.position, { z: 2.25, duration: 9.2, ease: "power2.inOut" }, .66)
           .to(interiorLightMaterial, { opacity: 1, duration: 3.4, ease: "power1.in" }, 3.9)
-          .to(renderer.domElement, { opacity: .55, duration: 3, ease: "power1.out" }, 3.3)
-          .to(renderer.domElement, { opacity: 0, duration: 3.56, ease: "none" }, 6.3)
-          .call(() => { playing = false; onComplete(); }, [], 5.66);
+          .call(() => { onComplete(); }, [], 3);
         requestRender();
       };
       const stop = () => {
