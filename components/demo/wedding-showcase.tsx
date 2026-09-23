@@ -154,10 +154,6 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
     return () => window.clearTimeout(timer);
   }, [fallback, finishEnvelope, openingState, reducedMotion]);
 
-  const skipOpening = useCallback(() => {
-    setOpeningState("open");
-  }, []);
-
   const replay = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
     openingLock.current = false;
@@ -222,7 +218,6 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
               <button className={styles.soundChoice} onClick={() => setMusicPreferred((value) => !value)} aria-pressed={musicPreferred}>
                 <Music2 />{musicPreferred ? "Music on" : "Music off"}
               </button>
-              <button className={styles.skipButton} onClick={skipOpening}>Skip opening</button>
             </div>
           </>
         )}
@@ -297,18 +292,13 @@ function RevealSetting() {
   return <div className={styles.revealSetting} aria-hidden="true">
     <div className={styles.revealBackdrop}><Image src="/wedding-showcase/olive-silk.webp" alt="" fill loading="eager" sizes="100vw" /></div>
     <div className={styles.revealLight} />
-    <div className={styles.revealFloralLeft}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="(max-width: 700px) 70vw, 40vw" /></div>
-    <div className={styles.revealFloralRight}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="(max-width: 700px) 70vw, 40vw" /></div>
+    <div className={styles.revealWatercolor}><Image src="/wedding-showcase/painted-botanical-frame-v1.png" alt="" fill loading="eager" sizes="100vw" /></div>
   </div>;
 }
 
 function CinematicIntro({ date }: { date: string }) {
   return <div className={styles.cinematicIntro} aria-hidden="true">
-    <div className={styles.introFloralLeft}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="55vw" /></div>
-    <div className={styles.introFloralRight}><Image src="/wedding-showcase/flowers-ribbon-v3.webp" alt="" fill sizes="55vw" /></div>
-    <div className={styles.introAura}><i /><i /></div>
-    <div className={styles.introRibbons}><i /><i /><i /></div>
-    <div className={styles.introPetals}>{Array.from({ length: 12 }, (_, index) => <i key={index} />)}</div>
+    <div className={styles.introWatercolor}><Image src="/wedding-showcase/painted-botanical-frame-v1.png" alt="" fill priority sizes="100vw" /></div>
     <p className={styles.introDate}>{date}</p>
     <div className={styles.introPhrase}>
       <span>Two stories</span>
@@ -320,9 +310,23 @@ function CinematicIntro({ date }: { date: string }) {
 }
 
 function StoryScene({ id, image, eyebrow, title, copy, align, warm = false }: { id: string; image: string; eyebrow: string; title: string; copy: string; align: "left" | "right"; warm?: boolean }) {
-  return <section id={id} className={`${styles.storyScene} ${styles[align]} ${id === "proposal" ? styles.proposal : ""} ${warm ? styles.warm : ""}`} data-story-scene aria-labelledby={`${id}-title`}>
-    <div className={styles.sceneArt} data-scene-art><Image src={image} alt="" fill sizes="100vw" /></div><div className={styles.sceneShade} />
-    <div className={styles.storyCopy}><p className={styles.kicker} data-reveal>{eyebrow}</p><h2 id={`${id}-title`} data-reveal>{title}</h2><p data-reveal>{copy}</p><span className={styles.chapterMark} data-reveal>Maison de Moments · A New Chapter</span></div>
+  const chapter = id === "bookshop" ? "I" : id === "proposal" ? "II" : "III";
+  return <section id={id} className={`${styles.storyScene} ${styles[align]} ${styles[id]} ${warm ? styles.warm : ""}`} data-story-scene aria-labelledby={`${id}-title`}>
+    <div className={styles.storyPaper} />
+    <div className={styles.storyWatercolor} aria-hidden="true"><Image src="/wedding-showcase/painted-botanical-frame-v1.png" alt="" fill sizes="100vw" /></div>
+    <div className={styles.storyLayout}>
+      <div className={styles.storyCopy}>
+        <span className={styles.sceneNumber} data-reveal>Chapter {chapter}</span>
+        <p className={styles.kicker} data-reveal>{eyebrow}</p>
+        <h2 id={`${id}-title`} data-reveal>{title}</h2>
+        <p data-reveal>{copy}</p>
+        <span className={styles.chapterMark} data-reveal>Maison de Moments · A New Chapter</span>
+      </div>
+      <figure className={styles.storyKeepsake} data-reveal>
+        <div className={styles.sceneArt} data-scene-art><Image src={image} alt="" fill sizes="(max-width: 820px) 78vw, 42vw" /></div>
+        <figcaption>{eyebrow}</figcaption>
+      </figure>
+    </div>
   </section>;
 }
 

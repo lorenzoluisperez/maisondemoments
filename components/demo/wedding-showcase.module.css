@@ -36,7 +36,7 @@
 .openingUi { position: absolute; z-index: 6; left: 50%; top: 81%; display: grid; justify-items: center; color: #655641; transform: translate(-50%, -50%); pointer-events: none; }
 .tapLabel { margin: 0; white-space: nowrap; text-transform: uppercase; letter-spacing: .31em; font: 700 .58rem/1.4 Arial, sans-serif; }
 .tapPulse { position: absolute; top: 50%; left: 50%; width: clamp(92px, 17vw, 150px); aspect-ratio: 1; border: 1px solid rgba(96,80,65,.32); border-radius: 50%; transform: translate(-50%,-50%); animation: sealPulse 2.3s ease-out infinite; }
-.openingChoices { position: absolute; z-index: 8; right: clamp(16px, 3vw, 42px); bottom: max(18px, env(safe-area-inset-bottom)); left: clamp(16px, 3vw, 42px); display: flex; align-items: center; justify-content: space-between; }
+.openingChoices { position: absolute; z-index: 8; right: clamp(16px, 3vw, 42px); bottom: max(18px, env(safe-area-inset-bottom)); left: clamp(16px, 3vw, 42px); display: flex; align-items: center; justify-content: flex-start; }
 .soundChoice { min-height: 42px; display: inline-flex; align-items: center; gap: 8px; padding: 0 15px; border: 1px solid rgba(76,71,64,.3); border-radius: 999px; color: #4b4741; background: rgba(242,239,232,.58); backdrop-filter: blur(10px); cursor: pointer; text-transform: uppercase; letter-spacing: .13em; font: 700 .58rem Arial, sans-serif !important; }
 .soundChoice svg { width: 14px; }
 .foregroundLeft, .foregroundRight { position: absolute; z-index: 5; pointer-events: none; transition: transform 1.8s cubic-bezier(.2,.65,.2,1), opacity 1.5s; filter: drop-shadow(9px 13px 8px #5d442029); }
@@ -53,7 +53,6 @@
 .primaryButton:hover, .secondaryButton:hover { transform: translateY(-2px); }
 .primaryButton:disabled, .secondaryButton:disabled { opacity: .48; cursor: wait; transform: none; }
 .primaryButton svg { width: 16px; }
-.skipButton { padding: 8px 10px; border: 0; color: #4b4741; background: none; cursor: pointer; text-transform: uppercase; letter-spacing: .16em; font: 700 .59rem Arial, sans-serif !important; text-decoration: underline; text-underline-offset: 5px; }
 .openingStatus { position: absolute; z-index: 7; bottom: 7vh; margin: 0; color: #4b4741; text-transform: uppercase; letter-spacing: .28em; font: 700 .62rem Arial, sans-serif; animation: pulse 1.6s ease-in-out infinite; }
 
 .opened { padding: 105px 0 65px; }
@@ -61,31 +60,15 @@
 .revealBackdrop { position: absolute; inset: -5%; animation: silkDrift 20s ease-in-out infinite alternate; }
 .revealBackdrop img { object-fit: cover; filter: saturate(.74) brightness(.8); }
 .revealLight { position: absolute; inset: -25%; background: linear-gradient(125deg, transparent 20%, #fff0c526 34%, transparent 48%, #fff1cb18 64%, transparent 76%); mix-blend-mode: screen; animation: sunlightDrift 16s ease-in-out infinite alternate; }
-.revealFloralLeft, .revealFloralRight { position: absolute; width: min(48vw, 600px); height: 105%; filter: drop-shadow(15px 24px 14px #0004); transform-origin: 25% 20%; }
-.revealFloralLeft { left: -8%; top: -10%; animation: floralLeftSway 11s ease-in-out infinite alternate; }
-.revealFloralRight { right: -13%; bottom: -25%; animation: floralRightSway 13s ease-in-out infinite alternate; }
-.revealFloralLeft img, .revealFloralRight img { object-fit: contain; }
-.pauseAmbience .revealBackdrop, .pauseAmbience .revealLight, .pauseAmbience .revealFloralLeft, .pauseAmbience .revealFloralRight { animation-play-state: paused; }
+.revealWatercolor { position: absolute; inset: -3%; opacity: .88; filter: drop-shadow(12px 18px 12px #0005); animation: watercolorDrift 18s ease-in-out infinite alternate; }
+.revealWatercolor img { object-fit: cover; }
+.pauseAmbience .revealBackdrop, .pauseAmbience .revealLight, .pauseAmbience .revealWatercolor { animation-play-state: paused; }
 
 .cinematicIntro { position: absolute; z-index: 10; inset: 0; display: grid; place-items: center; overflow: hidden; color: #fffbed; background: #303827; }
 .handoffWash { position: absolute; z-index: 20; inset: 0; pointer-events: none; opacity: 0; background: linear-gradient(135deg,#fff 0%,#fffdf5 48%,#fffaf0 100%); animation: handoffIn 2s cubic-bezier(.4,0,.2,1) forwards; }
 .handoffReveal { opacity: 1; animation: handoffOut .85s cubic-bezier(.4,0,.2,1) forwards; }
-.introFloralLeft, .introFloralRight { position: absolute; z-index: 2; width: min(58vw, 760px); height: 120%; filter: brightness(.8) saturate(.72) drop-shadow(18px 24px 18px #0007); opacity: 0; }
-.introFloralLeft { left: -17%; top: -23%; transform-origin: 20% 20%; animation: introFloralLeft 10.5s .45s cubic-bezier(.2,.7,.2,1) both; }
-.introFloralRight { right: -20%; bottom: -31%; transform-origin: 80% 80%; animation: introFloralRight 10.5s .45s cubic-bezier(.2,.7,.2,1) both; }
-.introFloralLeft img, .introFloralRight img { object-fit: contain; }
-.introAura { position: absolute; z-index: 3; width: min(68vmin, 620px); aspect-ratio: 1.15; filter: drop-shadow(0 0 28px rgba(255,224,150,.2)); animation: auraBreathe 10.2s .3s ease-in-out both; }
-.introAura i { position: absolute; display: block; border: 1px solid rgba(255,239,194,.28); border-radius: 48% 52% 58% 42% / 57% 44% 56% 43%; }
-.introAura i:first-child { inset: 2%; transform: rotate(-18deg); }
-.introAura i:last-child { inset: 17%; border-color: rgba(255,250,229,.38); transform: rotate(27deg); }
-.introRibbons { position: absolute; z-index: 3; inset: 0; overflow: hidden; }
-.introRibbons i { position: absolute; left: 50%; top: 50%; width: 86vw; height: 42vh; border-top: 1px solid rgba(232,196,137,.38); border-radius: 50%; opacity: 0; transform-origin: center; animation: ribbonSweep 9.8s .55s cubic-bezier(.2,.7,.2,1) both; }
-.introRibbons i:nth-child(1) { transform: translate(-50%,-50%) rotate(-18deg); }
-.introRibbons i:nth-child(2) { animation-delay: .9s; transform: translate(-50%,-50%) rotate(17deg) scale(.78); }
-.introRibbons i:nth-child(3) { animation-delay: 1.2s; transform: translate(-50%,-50%) rotate(52deg) scale(.58); }
-.introPetals { position: absolute; z-index: 5; inset: 0; overflow: hidden; pointer-events: none; }
-.introPetals i { position: absolute; top: -12%; width: 13px; height: 8px; border-radius: 80% 10% 80% 10%; background: linear-gradient(135deg, #fff8e9, #d9b892); box-shadow: 0 0 8px rgba(255,240,200,.28); opacity: 0; animation: petalFall 6.4s linear both; }
-.introPetals i:nth-child(1) { left: 8%; animation-delay: .25s; }.introPetals i:nth-child(2) { left: 17%; animation-delay: 1.45s; animation-duration: 5.7s; }.introPetals i:nth-child(3) { left: 26%; animation-delay: .72s; }.introPetals i:nth-child(4) { left: 37%; animation-delay: 2.1s; animation-duration: 5.2s; }.introPetals i:nth-child(5) { left: 45%; animation-delay: 1.05s; }.introPetals i:nth-child(6) { left: 54%; animation-delay: .45s; animation-duration: 7s; }.introPetals i:nth-child(7) { left: 63%; animation-delay: 1.78s; }.introPetals i:nth-child(8) { left: 72%; animation-delay: .9s; animation-duration: 5.5s; }.introPetals i:nth-child(9) { left: 81%; animation-delay: 2.35s; }.introPetals i:nth-child(10) { left: 91%; animation-delay: .6s; animation-duration: 6.8s; }.introPetals i:nth-child(11) { left: 32%; animation-delay: 3.05s; }.introPetals i:nth-child(12) { left: 68%; animation-delay: 2.75s; }
+.introWatercolor { position: absolute; z-index: 2; inset: -4%; opacity: 0; filter: saturate(.86) brightness(.82) drop-shadow(14px 20px 15px #0006); animation: introWatercolor 10.5s .25s cubic-bezier(.2,.7,.2,1) both; }
+.introWatercolor img { object-fit: cover; }
 .introDate { position: absolute; z-index: 5; top: 12%; margin: 0; text-transform: uppercase; letter-spacing: .38em; font: 600 .62rem Arial, sans-serif; animation: datePass 2.75s .9s both; }
 .introPhrase { position: relative; z-index: 6; width: 100%; height: 1.2em; text-align: center; font-size: clamp(2.6rem, 8vw, 7.8rem); font-weight: 400; line-height: 1; letter-spacing: -.045em; }
 .introPhrase span { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; text-wrap: balance; }
@@ -114,18 +97,27 @@
 .scrollCue { display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; padding: 10px; border: 0; color: var(--olive); background: none; cursor: pointer; text-transform: uppercase; letter-spacing: .17em; font: 700 .61rem Arial, sans-serif !important; }
 .scrollCue svg { width: 17px; animation: bounce 1.8s ease-in-out infinite; }
 
-.storyScene { position: relative; isolation: isolate; min-height: 112svh; display: flex; align-items: center; overflow: hidden; color: #fff9e8; }
-.sceneArt { position: absolute; z-index: -4; inset: -6%; }
-.sceneArt img { object-fit: cover; }
-.sceneShade { position: absolute; z-index: -3; inset: 0; background: linear-gradient(90deg, rgba(14,17,11,.76) 0%, rgba(14,17,11,.28) 53%, transparent 80%); }
-.storyScene.right .sceneShade { transform: scaleX(-1); }
-.storyCopy { width: min(580px, calc(100% - 44px)); margin-left: clamp(24px, 9vw, 150px); text-shadow: 0 3px 24px rgba(0,0,0,.5); }
-.right .storyCopy { margin-left: auto; margin-right: clamp(24px, 9vw, 150px); text-align: right; }
+.storyScene { position: relative; isolation: isolate; min-height: 100svh; display: grid; place-items: center; overflow: hidden; padding: clamp(105px, 10vw, 150px) clamp(24px, 7vw, 110px); color: var(--ink); background: #eee3ce; }
+.storyPaper { position: absolute; z-index: -4; inset: 0; background: #eee3ce url("/wedding-showcase/cotton-card-v4.webp") center/760px; }
+.proposal .storyPaper { background-color: #d9c9aa; filter: sepia(.08); }
+.venue .storyPaper { background-color: #e7dac1; }
+.storyWatercolor { position: absolute; z-index: -3; inset: -12%; opacity: .17; mix-blend-mode: multiply; transform: rotate(-4deg) scale(1.08); pointer-events: none; }
+.right .storyWatercolor { transform: rotate(5deg) scaleX(-1.08) scaleY(1.08); }
+.storyWatercolor img { object-fit: cover; }
+.storyLayout { width: min(1180px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .82fr); align-items: center; gap: clamp(55px, 8vw, 125px); }
+.storyCopy { width: min(560px, 100%); }
+.right .storyCopy { order: 2; }
+.right .storyKeepsake { order: 1; }
+.sceneNumber { display: block; margin-bottom: clamp(42px, 7vh, 80px); color: rgba(48,56,39,.45); text-transform: uppercase; letter-spacing: .3em; font: 600 .68rem/1 Arial, sans-serif; }
 .storyCopy h2, .sectionHeader h2, .rsvpContent h2, .detailsPanel h2 { margin: 0; font-weight: 400; line-height: .95; letter-spacing: -.045em; font-size: clamp(3rem, 7vw, 6.8rem); text-wrap: balance; }
 .storyCopy > p:not(.kicker) { max-width: 440px; margin: 27px 0 0; font-size: clamp(1rem, 1.6vw, 1.2rem); line-height: 1.8; }
-.right .storyCopy > p:not(.kicker) { margin-left: auto; }
-.chapterMark { display: inline-block; margin-top: 38px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .18em; font: 600 .58rem Arial, sans-serif; }
-.warm .sceneShade { background: linear-gradient(90deg, rgba(52,26,15,.76), rgba(52,26,15,.15) 64%, transparent); }
+.chapterMark { display: inline-block; margin-top: 38px; padding-top: 16px; border-top: 1px solid rgba(48,56,39,.35); text-transform: uppercase; letter-spacing: .18em; font: 600 .58rem Arial, sans-serif; }
+.storyKeepsake { position: relative; width: min(455px, 100%); margin: 0; justify-self: center; padding: 15px 15px 48px; background: #f7efe0 url("/wedding-showcase/cotton-card-v4.webp") center/620px; box-shadow: 0 28px 55px rgba(62,47,29,.22), 0 2px 2px rgba(62,47,29,.14); transform: rotate(-2.2deg); }
+.right .storyKeepsake { transform: rotate(2.4deg); }
+.sceneArt { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: #d4c6aa; }
+.sceneArt::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(79,64,42,.18), inset 0 0 50px rgba(46,39,26,.12); pointer-events: none; }
+.sceneArt img { object-fit: cover; filter: saturate(.72) sepia(.1) contrast(.92); }
+.storyKeepsake figcaption { position: absolute; right: 18px; bottom: 17px; left: 18px; overflow: hidden; color: #5d523f; text-align: center; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; letter-spacing: .18em; font: 600 .58rem/1 Arial, sans-serif; }
 
 .celebration { position: relative; isolation: isolate; min-height: 100svh; padding: clamp(110px, 13vw, 170px) clamp(20px, 6vw, 90px); background: #eee2c9; }
 .paperTexture { position: absolute; z-index: -1; inset: 0; opacity: .36; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.62' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E"); mix-blend-mode: multiply; }
@@ -207,16 +199,11 @@
 @keyframes inkReveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes silkDrift { from { transform: scale(1.02) translate(-.5%, -.4%); } to { transform: scale(1.07) translate(.8%, .5%); } }
 @keyframes sunlightDrift { from { opacity: .4; transform: translateX(-4%) rotate(-4deg); } to { opacity: .9; transform: translateX(6%) rotate(3deg); } }
-@keyframes floralLeftSway { from { transform: rotate(-11deg) translateY(-4px); } to { transform: rotate(-7deg) translateY(8px); } }
-@keyframes floralRightSway { from { transform: rotate(171deg) translateY(-6px); } to { transform: rotate(175deg) translateY(9px); } }
+@keyframes watercolorDrift { from { transform: scale(1.015) rotate(-.4deg); } to { transform: scale(1.045) rotate(.45deg); } }
 @keyframes panelIn { from { transform: translateX(100%); } to { transform: none; } }
 @keyframes handoffIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes handoffOut { from { opacity: 1; } to { opacity: 0; } }
-@keyframes introFloralLeft { 0% { opacity: 0; transform: translate(-22%,-16%) rotate(-24deg) scale(1.14); } 18% { opacity: .78; } 70% { opacity: .72; transform: translate(2%,2%) rotate(-9deg) scale(1); } 100% { opacity: 0; transform: translate(-10%,-5%) rotate(-4deg) scale(1.08); } }
-@keyframes introFloralRight { 0% { opacity: 0; transform: translate(24%,18%) rotate(190deg) scale(1.14); } 18% { opacity: .72; } 70% { opacity: .67; transform: translate(-2%,-2%) rotate(173deg) scale(1); } 100% { opacity: 0; transform: translate(10%,5%) rotate(166deg) scale(1.08); } }
-@keyframes auraBreathe { 0% { opacity: 0; transform: scale(.5) rotate(-12deg); filter: blur(9px); } 24%,72% { opacity: .9; filter: blur(0); } 100% { opacity: 0; transform: scale(1.46) rotate(28deg); filter: blur(5px); } }
-@keyframes ribbonSweep { 0% { opacity: 0; margin-left: -14vw; filter: blur(4px); } 25%,70% { opacity: .7; filter: blur(0); } 100% { opacity: 0; margin-left: 16vw; filter: blur(3px); } }
-@keyframes petalFall { 0% { opacity: 0; transform: translate3d(0,-5vh,0) rotate(0deg); } 12% { opacity: .72; } 82% { opacity: .6; } 100% { opacity: 0; transform: translate3d(8vw,112vh,0) rotate(520deg); } }
+@keyframes introWatercolor { 0% { opacity: 0; transform: scale(1.16); filter: saturate(.7) brightness(.95) blur(7px); } 18%,76% { opacity: .9; transform: scale(1.02); filter: saturate(.86) brightness(.82) blur(0); } 100% { opacity: .35; transform: scale(1.08); filter: saturate(.78) brightness(.72) blur(2px); } }
 @keyframes datePass { 0% { opacity: 0; transform: translateY(-22px); letter-spacing: .65em; } 24%,68% { opacity: .9; transform: none; } 100% { opacity: 0; transform: translateY(18px); letter-spacing: .28em; } }
 @keyframes phraseSweep { 0% { opacity: 0; transform: translateY(55px) skewY(4deg); filter: blur(12px); } 24%,66% { opacity: 1; transform: none; filter: blur(0); } 100% { opacity: 0; transform: translateY(-45px) skewY(-3deg); filter: blur(8px); } }
 @keyframes monogramBloom { 0% { opacity: 0; transform: scale(.55) rotate(-3deg); filter: blur(15px); } 32%,78% { opacity: 1; transform: scale(1); filter: blur(0); } 100% { opacity: 0; transform: scale(1.1); filter: blur(6px); } }
@@ -233,24 +220,19 @@
   .openingUi { top: 81%; }
   .titleCard { padding-block: 52px; }
   .revealCardWrap { width: min(540px, calc(100% - 46px)); }
-  .revealFloralLeft, .revealFloralRight { width: 75vw; height: 95%; }
-  .revealFloralLeft { left: -34%; }
-  .revealFloralRight { right: -35%; bottom: -32%; }
+  .revealWatercolor { inset: -8%; }
   .titleCard h1 { font-size: clamp(3.4rem, 18vw, 6rem); }
-  .introFloralLeft, .introFloralRight { width: 90vw; height: 110%; }
-  .introFloralLeft { left: -45%; }
-  .introFloralRight { right: -48%; }
+  .introWatercolor { inset: -10%; }
   .introPhrase { padding: 0 22px; font-size: clamp(3rem, 14vw, 6.5rem); }
   .introDate { top: 15%; max-width: 80%; text-align: center; line-height: 1.7; }
   .introOverture { bottom: 18%; letter-spacing: .36em; }
-  .storyScene { min-height: 100svh; align-items: end; padding-bottom: 10vh; }
-  .sceneArt { inset: -3%; }
-  .sceneArt img { object-position: 56% center; }
-  .proposal .sceneArt img { object-position: 62% center; }
-  .sceneShade, .warm .sceneShade, .storyScene.right .sceneShade { transform: none; background: linear-gradient(to top, rgba(13,16,10,.88), rgba(13,16,10,.2) 70%, transparent); }
-  .storyCopy, .right .storyCopy { width: calc(100% - 36px); margin: 0 18px; text-align: left; }
+  .storyScene { min-height: auto; padding: 105px 22px; }
+  .storyLayout { grid-template-columns: 1fr; gap: 62px; }
+  .storyCopy, .right .storyCopy { order: 1; width: min(570px, 100%); margin: auto; text-align: left; }
+  .storyKeepsake, .right .storyKeepsake { order: 2; width: min(420px, 88vw); transform: rotate(-1.4deg); }
+  .right .storyKeepsake { transform: rotate(1.5deg); }
+  .sceneNumber { margin-bottom: 38px; }
   .storyCopy h2 { font-size: clamp(3rem, 13vw, 5rem); }
-  .right .storyCopy > p:not(.kicker) { margin-left: 0; }
   .eventGrid { grid-template-columns: 1fr; }
   .eventGrid article { min-height: 350px; border-right: 0; border-bottom: 1px solid rgba(48,56,39,.2); }
   .eventGrid article:last-child { border-bottom: 0; }
