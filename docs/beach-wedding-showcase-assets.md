@@ -1,0 +1,12 @@
+# Beach wedding showcase artwork
+
+`/demo/wedding-beach` is a separate fixture-driven wedding product study. It uses the existing synthetic couple, date, times, entourage, program, RSVP deadline, and story, with Boracay ceremony and reception locations in `lib/demo/beach-wedding-showcase.ts`. Venue names are fictional sample entries, not claims about real businesses.
+
+- `public/beach-wedding/shoreline-watercolor.webp` is original generated artwork for this project, created on 2026-09-25 from a prompt for a pale watercolor tropical shoreline, palm fronds, frangipani, warm sand, and clear sky for live typography. The supplied screenshots informed mood and medium only. Their images, watermarks, and layouts were not copied into the asset.
+- `surf-frame-2.webp` through `surf-frame-4.webp` are individually generated edits of the original illustration. Each advances or recedes the painted wave crests and foam while preserving the surrounding scene. The page crossfades only the water region in the deliberate order 1 → 2 → 3 → 2 → 1 → 4, then repeats. Reduced motion keeps the original watercolor still.
+- `blue-envelope.webp` and `blue-envelope-desktop.webp` are original generated full-frame embossed blue stationery for portrait and landscape viewports. `shell-seal.webp` is an original generated transparent pearlescent seashell. CSS layers use the photographed fold and shell for a nine-second opening and zoom into watercolor scenery. A separate four-second overture precedes the names.
+- `palm-walkway.webp`, `shoreline-dinner.webp`, `beach-ceremony.webp`, and `frangipani-corner.webp` are original generated artwork for the story, celebration, entourage, program, and RSVP settings. They supply scenery without turning event facts into images.
+- The soundtrack is reused from the first demo: `there-is-romance.mp3`, with its license in `public/wedding-showcase/MUSIC-LICENSE.txt`. Playback begins only after the guest opens the envelope; music controls remain available after reveal.
+- Invitation headings, names, event facts, and RSVP controls are live semantic text and buttons. The sealed state does not render post-reveal content; the RSVP is a demo and submits nothing.
+
+Browser checks cover layout and interaction. Physical iPhone, Android, and in-app-browser review is still required before treating the showcase as device-verified.

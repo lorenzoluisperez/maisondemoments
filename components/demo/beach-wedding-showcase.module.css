@@ -1,0 +1,199 @@
+.showcase { --deep:#244f61; --ink:#345263; --sea:#428b9e; --pale:#f8f5ec; --coral:#c77e70; min-height:100svh; overflow:clip; color:var(--ink); background:var(--pale); font-family:Georgia,"Times New Roman",serif; }
+.showcase * { box-sizing:border-box; }
+.showcase button { cursor:pointer; }
+.smallCaps,.eyebrow { text-transform:uppercase; letter-spacing:.27em; font:600 .65rem/1.5 Arial,sans-serif; }
+.eyebrow { color:#6c8e8b; }
+.opening { position:relative; min-height:100svh; display:flex; flex-direction:column; justify-content:space-between; align-items:center; overflow:hidden; padding:clamp(28px,5vh,50px) 24px clamp(43px,7vh,70px); perspective:1300px; background:#82b1c3; }
+.openingPaper { position:absolute; inset:0; pointer-events:none; background:#81b0c0; }
+.openingTop,.openingBottom { z-index:2; width:min(900px,100%); text-align:center; }
+.openingTop { display:flex; justify-content:space-between; color:#f7f8ee; text-shadow:0 1px 7px #244a5c88; }
+.openingNumber { font:italic .8rem Georgia,serif; }
+.openingBottom { color:#f7f8ee; text-shadow:0 1px 7px #244a5c99; }
+.openingBottom .smallCaps { display:block; margin-top:14px; }
+.scriptLine { margin:0; font-size:clamp(1.65rem,3.8vw,2.4rem); font-style:italic; }
+.envelopeStage { position:absolute; inset:0; pointer-events:none; }
+.envelopeInside { position:absolute; inset:0; background:linear-gradient(#f9fbf5b0,#faf7e755),url("/beach-wedding/shoreline-watercolor.webp") center 63%/cover no-repeat; }
+.envelopeInside::after { content:"A sea of love"; position:absolute; left:0; right:0; top:28%; color:#507381; text-align:center; font:italic clamp(1.8rem,5vw,3.8rem) Georgia,serif; text-shadow:0 2px 12px #ffffffe8; }
+.envelopeFront,.envelopeFlap { position:absolute; inset:0; background:url("/beach-wedding/blue-envelope.webp") center/cover no-repeat; }
+.envelopeFront { clip-path:polygon(0 0,50% 70%,100% 0,100% 100%,0 100%); }
+.envelopeFlap { transform-origin:50% 0; clip-path:polygon(0 0,100% 0,50% 70%); transition:transform .95s cubic-bezier(.2,.72,.2,1); }
+.seal { position:absolute; left:50%; top:70%; width:clamp(125px,17vw,195px); aspect-ratio:1; transform:translate(-50%,-50%); background:url("/beach-wedding/shell-seal.webp") center/contain no-repeat; filter:drop-shadow(0 10px 12px #173e4d60); }
+.sealTarget { position:absolute; z-index:5; inset:0; width:100%; border:0; background:transparent; }
+.sealTarget:focus-visible { outline:3px solid var(--coral); outline-offset:9px; }
+.openingActive .envelopeStage { animation:envelopeJourney 9.4s cubic-bezier(.27,.12,.2,1) both; }
+.openingActive .envelopeFlap { animation:flapUnfold 6.2s .7s cubic-bezier(.36,.02,.18,1) both; }
+.openingActive .seal { animation:shellLift 2.7s .15s cubic-bezier(.2,.65,.2,1) both; }
+.openingActive .envelopeFront { animation:frontRecede 4s 2.5s cubic-bezier(.34,.1,.25,1) both; }
+.openingActive .envelopeInside::after { animation:innerCaptionOut 2s 4s both; }
+.openingActive .openingTop,.openingActive .openingBottom { animation:openingCopyOut 1.4s 2.1s both; }
+.musicPreference { position:absolute; z-index:7; right:clamp(20px,4vw,55px); bottom:22px; display:flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; border:1px solid #ffffff9c; border-radius:99px; color:#fff; background:#214f5a54; backdrop-filter:blur(9px); text-transform:uppercase; letter-spacing:.12em; font:600 .61rem Arial,sans-serif; }
+.skipOpening { position:absolute; z-index:8; top:clamp(25px,5vh,52px); right:clamp(20px,4vw,55px); padding:9px 0; border:0; border-bottom:1px solid currentColor; color:#fffdf6; background:transparent; text-shadow:0 1px 7px #244a5c; text-transform:uppercase; letter-spacing:.16em; font:600 .62rem Arial,sans-serif; }
+.overture { position:relative; min-height:100svh; display:grid; place-content:center; justify-items:center; gap:22px; overflow:hidden; padding:90px 24px; color:#315b66; text-align:center; background:#eff5f0; }
+.overtureArt { position:absolute; inset:0; z-index:0; background:linear-gradient(#f9fbf794,#f9fbf75e),url("/beach-wedding/shoreline-watercolor.webp") center 62%/cover; animation:overtureZoom 4s ease-out both; }
+.overtureLine { position:relative; z-index:1; margin:0; font-size:clamp(2.8rem,7vw,6rem); font-style:italic; line-height:1.04; text-shadow:0 2px 18px #fff; opacity:0; }
+.overtureLine:nth-of-type(1) { animation:overtureLine 2.2s .2s both; }
+.overtureLine:nth-of-type(2) { animation:overtureLine 2.2s 1.7s both; }
+.overture .skipOpening { color:#315b66; text-shadow:none; }
+.nav { position:fixed; z-index:30; top:0; left:0; right:0; height:66px; display:flex; justify-content:space-between; align-items:center; padding:0 clamp(16px,4vw,48px); background:rgba(250,250,244,.91); border-bottom:1px solid #94b9bd66; backdrop-filter:blur(16px); }
+.brand { border:0; color:var(--deep); background:transparent; font-size:1.3rem; letter-spacing:.13em; }
+.brand span { font-style:italic; color:var(--coral); }
+.navActions { display:flex; align-items:center; gap:7px; }
+.navActions button { min-width:44px; min-height:40px; display:flex; align-items:center; justify-content:center; gap:7px; padding:0 14px; border:1px solid #8cb2b5; border-radius:99px; color:var(--deep); background:#ffffffc9; text-transform:uppercase; letter-spacing:.11em; font:600 .62rem Arial,sans-serif; }
+.navActions button:last-child { border-color:var(--deep); color:#fff; background:var(--deep); }
+.hero { position:relative; min-height:100svh; isolation:isolate; display:grid; place-items:center; padding:110px 20px 95px; overflow:hidden; text-align:center; background:#dbeef1; }
+.heroArt { position:absolute; z-index:-2; inset:0; background:url("/beach-wedding/shoreline-watercolor.webp") center 65%/cover no-repeat; animation:heroArrive 7s ease-out both; }
+.hero::before { content:""; position:absolute; z-index:-1; inset:0; background:linear-gradient(to bottom,#f8fbf9aa 0%,#f8fbf97d 39%,transparent 80%); }
+.heroContent { width:min(800px,100%); margin-top:-7vh; animation:heroCopyIn 1.8s .1s both; }
+.heroPrelude { margin:22px 0 12px; color:#8e7563; font:italic clamp(1.6rem,3.5vw,2.5rem) Georgia,serif; }
+.hero h1 { display:flex; flex-direction:column; align-items:center; margin:0; color:#315664; font-size:clamp(4.2rem,11vw,8.5rem); font-weight:400; line-height:.76; letter-spacing:-.065em; text-shadow:0 2px 18px #fff9; }
+.hero h1 span { margin:.16em 0 .2em; color:#b87b6b; font-size:.36em; font-style:italic; font-weight:400; }
+.heroDate { display:flex; align-items:center; justify-content:center; gap:18px; margin:30px auto 0; color:#375b66; text-transform:uppercase; letter-spacing:.23em; font:600 .68rem Arial,sans-serif; }
+.heroDate span { width:40px; height:1px; background:#527b80; }
+.heroInvitation { max-width:510px; margin:24px auto 0; color:#365764; font-size:clamp(.98rem,2vw,1.18rem); line-height:1.6; }
+.heroScroll { display:flex; align-items:center; gap:10px; margin:28px auto 0; padding:11px 0; border:0; border-bottom:1px solid #47757c; color:#315d69; background:transparent; text-transform:uppercase; letter-spacing:.19em; font:600 .67rem Arial,sans-serif; }
+.heroFootnote { position:absolute; left:0; right:0; bottom:15px; margin:0; color:#335763; font:italic .72rem Georgia,serif; text-shadow:0 1px 5px #fff; }
+.paintedSurf { position:absolute; z-index:-1; inset:0; pointer-events:none; -webkit-mask-image:linear-gradient(to bottom,transparent 44%,#000 57%,#000 84%,transparent 94%); mask-image:linear-gradient(to bottom,transparent 44%,#000 57%,#000 84%,transparent 94%); }
+.surfFrame { position:absolute; inset:0; opacity:0; background-position:center 65%; background-size:cover; transition:opacity 1.15s ease-in-out; }
+.surfFrameActive { opacity:1; }
+.sectionIntro { max-width:690px; margin:0 auto 58px; text-align:center; }
+.sectionIntro h2,.celebration h2,.rsvp h2 { margin:12px 0 18px; color:var(--deep); font-size:clamp(2.8rem,6vw,5.2rem); font-weight:400; line-height:.98; letter-spacing:-.045em; }
+.sectionIntro > p:last-child,.celebrationHead > p:not(.eyebrow) { margin:0 auto; max-width:510px; line-height:1.7; }
+.shellMotif { display:block; width:64px; height:64px; margin:0 auto 12px; background:url("/beach-wedding/shell-seal.webp") center/contain no-repeat; }
+.story,.entourage,.program { padding:clamp(100px,12vw,155px) clamp(22px,7vw,110px); }
+.story { background:linear-gradient(180deg,#fffdf7,#f7f2e6); }
+.storyLayout { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:clamp(35px,7vw,100px); align-items:start; max-width:1250px; margin:auto; }
+.storyArtwork { position:sticky; top:86px; width:100%; aspect-ratio:.7; max-height:780px; margin:0; overflow:hidden; background:#f9f7ef; box-shadow:0 22px 50px #2f5b6423; }
+.storyArtwork img { object-fit:cover; }
+.storyArtwork figcaption { position:absolute; bottom:24px; left:25px; right:25px; padding:9px 15px; color:#2e5b67; text-align:center; background:#fffdf6dd; font:italic 1.15rem Georgia,serif; }
+.storyChapters { width:100%; border-top:1px solid #b7c8c2; }
+.chapter { position:relative; display:grid; grid-template-columns:45px 1fr; gap:20px; align-items:center; min-height:245px; padding:38px 0; border-bottom:1px solid #b7c8c2; }
+.chapterNumber { align-self:start; color:#a97969; font-size:1.1rem; }
+.chapter h3 { max-width:610px; margin:12px 0 15px; color:#2c5665; font-size:clamp(2rem,3.4vw,3.3rem); font-weight:400; line-height:1.08; }
+.chapter p:last-child { max-width:590px; line-height:1.7; }
+.celebration { padding:clamp(95px,11vw,145px) clamp(22px,7vw,110px); background:linear-gradient(180deg,#e1efec,#f8f4e9 58%); }
+.celebrationHead { max-width:680px; margin:0 auto 35px; text-align:center; }
+.dateStamp { width:135px; height:135px; display:flex; flex-direction:column; justify-content:center; margin:38px auto 0; border:1px solid #92afb0; border-radius:50%; transform:rotate(-8deg); color:#436a73; }
+.dateStamp small { text-transform:uppercase; letter-spacing:.2em; font:.62rem Arial,sans-serif; }
+.dateStamp strong { font-size:3.1rem; font-weight:400; line-height:1; }
+.dinnerArtwork { position:relative; width:min(1000px,100%); aspect-ratio:1.5; margin:0 auto 55px; background:#faf7ee; }
+.dinnerArtwork img { object-fit:contain; }
+.dinnerArtwork figcaption { position:absolute; bottom:0; left:0; right:0; color:#45616a; text-align:center; font:italic clamp(1rem,2vw,1.4rem) Georgia,serif; }
+.eventCards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; max-width:1050px; margin:auto; }
+.eventCards article { min-height:310px; padding:40px clamp(23px,3vw,45px); background:#fffdf6; border:1px solid #c8d6ce; box-shadow:0 15px 30px #285c6710; }
+.eventCards article:nth-child(3) { grid-column:1 / -1; min-height:210px; text-align:center; }
+.eventCards article > span { color:#9d776c; text-transform:uppercase; letter-spacing:.18em; font:600 .63rem Arial,sans-serif; }
+.eventCards h3 { margin:48px 0 20px; color:#315c68; font-size:clamp(1.75rem,2.8vw,2.8rem); font-weight:400; line-height:1.08; }
+.eventCards article:nth-child(3) h3 { margin:20px 0 6px; }
+.eventCards article:nth-child(3) p { margin:8px auto; }
+.eventCards strong { font-size:1.1rem; font-weight:400; }
+.eventCards p { line-height:1.65; }
+.swatches { display:flex; justify-content:center; gap:9px; margin-top:20px; }
+.swatches i { width:21px; height:21px; border:1px solid #635b4930; border-radius:50%; }
+.entourage { background:radial-gradient(circle at 50% 5%,#edf5ec,#d8e9e8 78%); }
+.entouragePaper { position:relative; width:min(1120px,100%); margin:auto; padding:clamp(70px,8vw,110px) clamp(25px,7vw,100px); background:#fffdf7; box-shadow:0 25px 70px #2b5a6523; overflow:hidden; }
+.entourageOrnament,.entouragePaper::after { position:absolute; width:clamp(170px,25vw,330px); aspect-ratio:1; background:url("/beach-wedding/frangipani-corner.webp") center/contain no-repeat; opacity:.84; pointer-events:none; }
+.entourageOrnament { left:-35px; bottom:-32px; }
+.entouragePaper::after { content:""; right:-35px; top:-32px; transform:rotate(180deg); }
+.entouragePaper .sectionIntro,.entourageGrid,.entouragePaper .note { position:relative; z-index:1; }
+.entourageGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:clamp(30px,5vw,75px); max-width:900px; margin:auto; }
+.entourageGrid article { padding:28px 8px; border-top:1px solid #b7ccca; }
+.entourageGrid h3 { margin:0 0 15px; color:#37626a; font-size:1.65rem; font-weight:400; }
+.entourageGrid ul { display:grid; gap:8px; margin:0; padding:0; list-style:none; line-height:1.55; }
+.note { max-width:900px; margin:34px auto 0; text-align:center; color:#6c7870; font:italic .85rem/1.5 Georgia,serif; }
+.program { background:#d4e8e4; }
+.programLayout { display:grid; grid-template-columns:minmax(0,.76fr) minmax(0,1.24fr); max-width:1320px; margin:auto; background:#fffdf7; box-shadow:0 22px 60px #315a6321; }
+.programScenery { position:relative; min-height:850px; background:linear-gradient(to top,#244b5eb8,transparent 50%),url("/beach-wedding/beach-ceremony.webp") center/cover; }
+.programScenery span { position:absolute; right:25px; bottom:35px; left:25px; color:#fff9e9; text-align:center; font:italic clamp(1.4rem,2.6vw,2.4rem)/1.25 Georgia,serif; }
+.programContent { padding:clamp(40px,6vw,85px); }
+.programContent .sectionIntro { margin-bottom:35px; text-align:left; }
+.programContent .sectionIntro > p:last-child { margin-left:0; }
+.program ol { max-width:760px; margin:auto; padding:0; border-top:1px solid #9ebbbb; list-style:none; }
+.program li { display:grid; grid-template-columns:34px 90px 1fr; gap:17px; align-items:baseline; padding:18px 0; border-bottom:1px solid #9ebbbb; }
+.programNumber { color:#aa8270; font:.73rem Arial,sans-serif; }
+.program time { padding-top:5px; color:#577b79; font:600 .7rem Arial,sans-serif; letter-spacing:.1em; }
+.program h3 { margin:0; color:#305967; font-size:clamp(1.2rem,2vw,1.55rem); font-weight:400; }
+.program li p { margin:5px 0 0; }
+.rsvp { min-height:100svh; display:grid; place-items:center; padding:110px 20px; background:linear-gradient(#f3eadb77,#f3eadba8),url("/beach-wedding/shoreline-dinner.webp") center/cover; }
+.rsvpCard { width:min(660px,100%); padding:clamp(35px,6vw,75px); border:1px solid #c4cdc1; text-align:center; background:#fffcf5ee; box-shadow:0 25px 60px #32515b1f; }
+.rsvpSun { display:block; width:55px; height:55px; margin:0 auto 20px; background:url("/beach-wedding/shell-seal.webp") center/contain no-repeat; }
+.rsvpCard > p:not(.eyebrow) { max-width:460px; margin:20px auto; line-height:1.7; }
+.rsvpActions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:28px; }
+.rsvpActions button,.dialog > button:not(.close),.reply button { min-height:46px; padding:0 22px; border:1px solid #416c75; color:#fff; background:#416c75; text-transform:uppercase; letter-spacing:.12em; font:600 .62rem Arial,sans-serif; }
+.rsvpActions button:last-child { color:#416c75; background:transparent; }
+.reply svg { color:#438276; }
+.reply p { font-size:1.15rem; line-height:1.55; }
+.reply small { display:block; margin-bottom:20px; }
+.reply button { background:transparent; color:#416c75; }
+.footer { min-height:260px; display:grid; place-content:center; justify-items:center; gap:16px; padding:55px 20px; color:#e6f2ee; text-align:center; background:#285664; }
+.footer p { margin:0; text-transform:uppercase; letter-spacing:.25em; font:600 .63rem Arial,sans-serif; }
+.footer span { font-size:3rem; font-style:italic; }
+.footer small { font:.65rem Arial,sans-serif; }
+.dialogBackdrop { position:fixed; z-index:100; inset:0; display:grid; justify-items:end; background:#183b4878; backdrop-filter:blur(6px); }
+.dialog { position:relative; width:min(460px,100%); height:100%; overflow-y:auto; padding:85px clamp(27px,5vw,50px) 45px; background:#fcf8ee; box-shadow:-20px 0 70px #163b4c3d; }
+.dialog h2 { margin:14px 0 30px; color:var(--deep); font-size:3rem; font-weight:400; }
+.close { position:absolute; top:20px; right:20px; width:43px; height:43px; display:grid; place-items:center; border:1px solid #9ab9ba; border-radius:50%; background:transparent; }
+.dialog dl { margin:0 0 30px; }
+.dialog dl div { padding:16px 0; border-top:1px solid #b4c9c5; }
+.dialog dt { margin-bottom:8px; text-transform:uppercase; letter-spacing:.16em; font:600 .62rem Arial,sans-serif; }
+.dialog dd { margin:0; line-height:1.6; }
+.dialog > button:not(.close) { display:block; width:100%; margin-top:9px; color:#416c75; background:transparent; }
+.dialog > button.dialogPrimary { color:#fff; background:#416c75; }
+@keyframes envelopeJourney { 0%,12% { transform:scale(1); } 52% { transform:scale(1.23) translateY(-3%); } 78% { transform:scale(1.9) translateY(-8%); } 100% { transform:scale(3.45) translateY(-13%); } }
+@keyframes flapUnfold { 0%,9% { opacity:1; transform:rotateX(0); } 72% { opacity:1; transform:rotateX(162deg); } 100% { opacity:0; transform:rotateX(180deg); } }
+@keyframes shellLift { 0%,28% { opacity:1; transform:translate(-50%,-50%) scale(1); } 75% { opacity:.65; transform:translate(-50%,-68%) scale(.8) rotate(15deg); } 100% { opacity:0; transform:translate(-50%,-84%) scale(.6) rotate(22deg); } }
+@keyframes frontRecede { 0%,30% { opacity:1; transform:none; } 100% { opacity:0; transform:translateY(18%); } }
+@keyframes openingCopyOut { 0%,30% { opacity:1; } 100% { opacity:0; } }
+@keyframes innerCaptionOut { 0%,25% { opacity:1; } 100% { opacity:0; } }
+@keyframes overtureZoom { from { opacity:.5; transform:scale(1.18); } to { opacity:1; transform:scale(1.02); } }
+@keyframes overtureLine { 0% { opacity:0; transform:translateY(16px); } 22%,68% { opacity:1; transform:none; } 100% { opacity:0; transform:translateY(-12px); } }
+@keyframes heroArrive { from { transform:scale(1.12); } to { transform:scale(1); } }
+@keyframes heroCopyIn { from { opacity:0; transform:translateY(25px); } to { opacity:1; transform:none; } }
+@media (min-width:701px) {
+  .envelopeFront,.envelopeFlap { background-image:url("/beach-wedding/blue-envelope-desktop.webp"); }
+  .envelopeFront { clip-path:polygon(0 0,50% 72%,100% 0,100% 100%,0 100%); }
+  .envelopeFlap { clip-path:polygon(0 0,100% 0,50% 72%); }
+  .seal { top:72%; }
+}
+@media (max-width:700px) {
+  .openingTop { display:grid; gap:8px; }
+  .openingBottom { padding-bottom:34px; }
+  .skipOpening { top:auto; bottom:19px; right:20px; }
+  .musicPreference { right:20px; bottom:18px; }
+  .overture .skipOpening { top:auto; bottom:24px; }
+  .nav { padding:0 10px; }
+  .navActions { gap:4px; }
+  .navActions button { padding:0 9px; }
+  .navActions button:nth-child(3) { padding:0 9px; }
+  .heroArt,.surfFrame { background-position:center bottom; }
+  .paintedSurf { -webkit-mask-image:linear-gradient(to bottom,transparent 57%,#000 65%,#000 84%,transparent 96%); mask-image:linear-gradient(to bottom,transparent 57%,#000 65%,#000 84%,transparent 96%); }
+  .hero { padding-top:100px; padding-bottom:100px; }
+  .heroContent { margin-top:-5vh; }
+  .hero h1 { font-size:clamp(4rem,19vw,6.5rem); }
+  .heroDate { gap:9px; letter-spacing:.12em; font-size:.57rem; }
+  .heroDate span { width:20px; }
+  .heroInvitation { max-width:335px; padding:0 7px; background:#f8fbf966; }
+  .storyLayout { grid-template-columns:1fr; gap:35px; }
+  .storyArtwork { position:relative; top:auto; width:min(100%,450px); aspect-ratio:.8; max-height:560px; margin:auto; }
+  .chapter { grid-template-columns:37px 1fr; gap:12px; min-height:235px; }
+  .dinnerArtwork { width:calc(100% + 44px); margin:0 -22px 35px; aspect-ratio:1.14; }
+  .dinnerArtwork img { object-fit:cover; }
+  .dinnerArtwork figcaption { bottom:3px; padding:8px; background:#fffdf5cc; }
+  .eventCards,.entourageGrid { grid-template-columns:1fr; }
+  .eventCards article { min-height:240px; }
+  .eventCards article:nth-child(3) { grid-column:auto; }
+  .eventCards h3 { margin-top:32px; }
+  .entouragePaper { padding:78px 25px; }
+  .entourageGrid article { padding:24px 3px; }
+  .entourageOrnament,.entouragePaper::after { opacity:.4; }
+  .programLayout { grid-template-columns:1fr; }
+  .programScenery { min-height:360px; background-position:center 65%; }
+  .programContent { padding:55px 26px; }
+  .program li { grid-template-columns:23px 74px 1fr; gap:9px; }
+  .program time { font-size:.62rem; }
+  .program h3 { font-size:1.3rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .envelopeStage,.envelopeFlap,.seal,.envelopeFront,.openingTop,.openingBottom,.overtureArt,.overtureLine,.heroArt,.heroContent { animation:none!important; }
+  .surfFrame { transition:none; }
+  .showcase :global(*) { scroll-behavior:auto!important; }
+}
