@@ -61,6 +61,13 @@ npm run guest:verify
 npm run ops:restore-drill
 ```
 
+Check the wedding demo in desktop and mobile Chromium. Playwright starts the local server automatically for the browser check.
+
+```bash
+npm run test:e2e:setup
+npm run test:e2e
+```
+
 ## Production setup
 
 1. Create separate Supabase projects for staging and production.

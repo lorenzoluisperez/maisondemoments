@@ -11,13 +11,17 @@ type Props = {
   onUnavailable: () => void;
 };
 
-// UV coordinates follow the actual folded edge in envelope-cotton-v3.webp.
-// Every surface uses the same photograph, so the closed envelope has no seams
-// between independently generated materials.
-const flapOutline: Array<[number, number]> = [
+// Each artwork has its own photographed fold. Matching those coordinates keeps
+// the embossing continuous while the flap opens at either viewport size.
+const mobileFlapOutline: Array<[number, number]> = [
   [0, 0], [1, 0], [1, .372], [.985, .401], [.94, .43],
   [.57, .642], [.53, .656], [.5, .66], [.47, .656], [.43, .642],
   [.06, .43], [.015, .401], [0, .372],
+];
+const desktopFlapOutline: Array<[number, number]> = [
+  [0, 0], [1, 0], [1, .29], [.985, .315], [.94, .35],
+  [.57, .67], [.53, .685], [.5, .69], [.47, .685], [.43, .67],
+  [.06, .35], [.015, .315], [0, .29],
 ];
 
 export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnavailable }: Props) {
@@ -34,8 +38,9 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
     void Promise.all([import("three"), import("gsap")]).then(async ([T, { gsap }]) => {
       const loader = new T.TextureLoader();
       const loaded = await Promise.allSettled([
-        loader.loadAsync("/wedding-showcase/envelope-cotton-v3.webp"),
-        loader.loadAsync("/wedding-showcase/wax-lc-v3.webp"),
+        loader.loadAsync("/wedding-showcase/envelope-victorian-ivory-v1.webp"),
+        loader.loadAsync("/wedding-showcase/envelope-victorian-desktop-v1.webp"),
+        loader.loadAsync("/wedding-showcase/wax-lc-pearl-v1.webp"),
         loader.loadAsync("/wedding-showcase/cotton-card-v4.webp"),
       ]);
       const textures = loaded.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
@@ -44,8 +49,14 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
         if (!cancelled) onUnavailable();
         return;
       }
-      const [envelopeMap, sealMap, paperMap] = textures;
+      const [mobileEnvelopeMap, desktopEnvelopeMap, sealMap, paperMap] = textures;
       textures.forEach((texture) => { texture.colorSpace = T.SRGBColorSpace; texture.anisotropy = 4; });
+      // Continue the paper below the viewport when the mobile composition
+      // raises the flap. Mirroring the last portion avoids a hard lower edge.
+      for (const envelopeMap of [mobileEnvelopeMap, desktopEnvelopeMap]) {
+        envelopeMap.wrapT = T.MirroredRepeatWrapping;
+        envelopeMap.needsUpdate = true;
+      }
       const renderer = new T.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
       renderer.outputColorSpace = T.SRGBColorSpace;
@@ -57,7 +68,7 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       const stage = new T.Group();
       scene.add(stage);
       // Texture lighting is already photographic. Avoid lighting it twice.
-      const face = new T.MeshBasicMaterial({ map: envelopeMap, side: T.DoubleSide });
+      const face = new T.MeshBasicMaterial({ map: desktopEnvelopeMap, side: T.DoubleSide });
       const flapMaterial = face.clone();
       flapMaterial.side = T.FrontSide;
       const inside = new T.MeshBasicMaterial({ map: paperMap, color: 0xe3d9c7, side: T.DoubleSide });
@@ -139,27 +150,38 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       };
       const requestRender = () => { if (!frame) frame = requestAnimationFrame(render); };
       const fit = () => {
+        const mobile = host.clientWidth <= 700;
+        const fold = mobile ? mobileFlapOutline : desktopFlapOutline;
+        const tip = mobile ? .66 : .69;
+        const side = mobile ? .372 : .29;
+        const envelopeMap = mobile ? mobileEnvelopeMap : desktopEnvelopeMap;
+        face.map = envelopeMap;
+        flapMaterial.map = envelopeMap;
+        face.needsUpdate = true;
+        flapMaterial.needsUpdate = true;
         renderer.setSize(host.clientWidth, host.clientHeight);
         camera.aspect = host.clientWidth / host.clientHeight;
         camera.updateProjectionMatrix();
         height = 2 * 14 * Math.tan(T.MathUtils.degToRad(35 / 2)) * 1.012;
         width = height * camera.aspect;
         sealSize = Math.min(height * .184, width * .315);
+        const mobileEnvelopeOffset = mobile ? height * .149 : 0;
+        stage.position.y = mobileEnvelopeOffset;
         back.scale.set(width, height, 1);
         backLight.scale.set(width, height, 1);
         front.geometry.dispose();
         // A small overlap behind the curved flap prevents the card peeking out.
-        front.geometry = geometry([[0, .35], [0.5, .645], [1, .35], [1, 1], [0, 1]]);
+        front.geometry = geometry([[0, side - .02], [0.5, tip - .015], [1, side - .02], [1, 1.19], [0, 1.19]]);
         flapFace.geometry.dispose();
-        flapFace.geometry = geometry(flapOutline, true);
+        flapFace.geometry = geometry(fold, true);
         flapReverse.geometry.dispose();
         flapReverse.geometry = flapFace.geometry.clone();
         interiorLight.geometry.dispose();
         interiorLight.geometry = flapFace.geometry.clone();
         flap.position.set(0, height / 2, .05);
-        seal.position.set(0, -height * .649, .115);
+        seal.position.set(0, -height * (tip - .011), .115);
         seal.scale.set(sealSize, sealSize, 1);
-        sealShadow.position.set(sealSize * .04, -height * .649 - sealSize * .08, .08);
+        sealShadow.position.set(sealSize * .04, -height * (tip - .011) - sealSize * .08, .08);
         sealShadow.scale.set(sealSize * 1.18, sealSize * 1.18, 1);
         requestRender();
       };
@@ -191,7 +213,7 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
           .to(flapMaterial.color, { r: .82, g: .79, b: .74, duration: 3.4, yoyo: true, repeat: 1 }, .28)
           .to(backLightMaterial, { opacity: .96, duration: 1.25, ease: "sine.out" }, .12)
           .to(interiorLightMaterial, { opacity: .96, duration: 1.35, ease: "sine.out" }, .12)
-          .to(stage.position, { y: -height * .18, duration: 9.2, ease: "power1.inOut" }, .66)
+          .to(stage.position, { y: (host.clientWidth <= 700 ? height * .149 : 0) - height * .18, duration: 9.2, ease: "power1.inOut" }, .66)
           .to(camera.position, { z: 2.25, duration: 9.2, ease: "power2.inOut" }, .66)
           .to(interiorLightMaterial, { opacity: 1, duration: 3.4, ease: "power1.in" }, 3.9)
           .call(() => { onComplete(); }, [], 3);
