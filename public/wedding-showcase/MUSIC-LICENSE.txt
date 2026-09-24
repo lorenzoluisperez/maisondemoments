@@ -1,13 +1,13 @@
-Track: Canon in D Major
-Creator and performer: Kevin MacLeod (incompetech.com)
-Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100301
-Recording: https://commons.wikimedia.org/wiki/File:Canon_in_D_Major_(ISRC_USUAN1100301).mp3
-License: Creative Commons Attribution 3.0 Unported
-License URL: https://creativecommons.org/licenses/by/3.0/
+Track: There is Romance
+Creator: Kevin MacLeod (incompetech.com)
+Track page: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100044
+ISRC: USUAN1100044
+License stated on track page: Creative Commons Attribution 4.0 International
+License URL: https://creativecommons.org/licenses/by/4.0/
 
-Required attribution:
-"Canon in D Major" Kevin MacLeod (incompetech.com)
-Licensed under Creative Commons: By Attribution 3.0 License
-https://creativecommons.org/licenses/by/3.0/
+Attribution:
+"There is Romance" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License
+https://creativecommons.org/licenses/by/4.0/
 
-No modifications were made to the downloaded recording.
+The repository does not record where the MP3 was downloaded or whether it was modified. Verify the file's provenance and modification status before public release.

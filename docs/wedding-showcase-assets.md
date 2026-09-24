@@ -1,15 +1,24 @@
 # Wedding showcase asset provenance
 
-Artwork under `public/wedding-showcase` was generated with the built-in image-generation tool for this project. The current opening uses a macro envelope photograph, a separate transparent wax seal, and separate transparent foreground flowers/ribbon. The user reference informed the edge-to-edge framing, not its swan ornament. The seal includes the requested L & C initials; page headings and other invitation text remain semantic HTML.
+Artwork under `public/wedding-showcase` was generated for this project. This page keeps both the current asset map and earlier prompt history. `components/demo/three-envelope.tsx`, `components/demo/wedding-showcase.tsx`, and `components/demo/wedding-showcase.module.css` determine which assets the showcase actually loads. Page headings and invitation text remain semantic HTML.
 
-## Current opening and reveal, revision 4
+## Current showcase assets
+
+- The opening loads `envelope-victorian-ivory-v1.webp` on mobile, `envelope-victorian-desktop-v1.webp` on desktop, `wax-lc-pearl-v1.webp` for the seal, and `cotton-card-v4.webp` for paper texture. The static opening uses the matching envelope and seal images.
+- The reveal and later scenes use the Tagaytay invitation backgrounds and watercolor illustrations in `public/wedding-showcase`; the component and stylesheet select the exact files at each viewport.
+- The soundtrack is `there-is-romance.mp3`. Its track and license information is in [MUSIC-LICENSE.txt](../public/wedding-showcase/MUSIC-LICENSE.txt), and the showcase footer credits it.
+- The closed envelope exposes only the seal initials, opening prompt, and music choice. Names, event information, and Details/RSVP navigation render after opening. Post-reveal content is absent from keyboard and accessibility navigation until then.
+
+The exact generation prompts for the newer Victorian envelope, pearl seal, Tagaytay backgrounds, and watercolor illustrations are not recorded in this file. Do not treat the older prompts below as provenance for those assets.
+
+## Historical opening and reveal, revision 4
 
 - `public/wedding-showcase/envelope-cotton-v3.webp`: full-bleed cotton-paper envelope, 329,426 bytes.
 - `public/wedding-showcase/wax-lc-v3.webp`: transparent bronze seal with impressed initials, 136,332 bytes.
 - `public/wedding-showcase/flowers-ribbon-v3.webp`: transparent foreground flowers and silk ribbon, 179,008 bytes.
 - `public/wedding-showcase/cotton-card-v4.webp`: generated cotton-rag paper texture, 1,000 × 1,000 pixels, 241,154 bytes. Used for the inner lining, flap reverse, extracted card, and revealed stationery.
 
-The closed envelope exposes only the seal initials, opening prompt, music preference, and skip control. Names, event information, and Details/RSVP navigation appear after opening. Hidden story content is excluded from keyboard and accessibility navigation. The reveal uses olive silk, layered stationery, swaying flowers/ribbon, and a drifting light treatment. Ambient movement pauses when the reveal is offscreen or the tab is hidden, and respects reduced motion.
+This revision used olive silk, layered stationery, and flowers/ribbon. The newer showcase uses different envelope and seal art. Keep these prompts for historical asset provenance.
 
 These are original generated assets, not photographs of real stationery. The opening uses photographic textures on separately animated Three.js surfaces. Its lighting detail is partly baked into those textures; it is not a physically simulated paper/wax material. A matching HTML poster appears immediately during loading and is also the reduced-motion/WebGL fallback.
 
@@ -33,7 +42,7 @@ Generated source: `/Users/lorenzoperez/.codex/generated_images/01a09a46-f2f9-703
 
 ## Verification notes
 
-Browser checks at 390 × 844 and 1440 × 900 verified the closed composition and replay. Intermediate screenshots inspected the seal departure, hinged flap, partially extracted card, and forward card transition. Revision 4 checks confirmed the anonymous initial accessibility tree, textured extracted card, layered reveal, and replay returning to the anonymous envelope. Audio starts only from a user action and does not gate the animation. Rotation during the sequence finishes the opening; the guest can replay afterward. The render loop stops after opening and when the tab is hidden.
+These recorded browser checks covered revision 4 at 390 × 844 and 1440 × 900, including the closed composition, replay, and intermediate envelope states. They do not certify the newer artwork or soundtrack. Current validation belongs in the showcase's current test and device evidence.
 
 Physical iPhone, lower-powered Android, Messenger, and WhatsApp validation remains outstanding. Browser viewport checks do not establish physical-device performance or visual approval by the customer.
 
@@ -59,4 +68,4 @@ Wide Tuscan villa wedding reception in the same editorial illustration style, wi
 
 ## Music
 
-`canon-in-d-major.mp3` is “Canon in D Major” by Kevin MacLeod, downloaded from Wikimedia Commons. The recording is licensed under Creative Commons Attribution 3.0 Unported. The exact attribution and source URLs are retained in `public/wedding-showcase/MUSIC-LICENSE.txt` and displayed in the showcase footer.
+The earlier `canon-in-d-major.mp3` was removed. The current showcase loads `there-is-romance.mp3` and credits “There is Romance” by Kevin MacLeod under CC BY 4.0 in its footer. Keep `public/wedding-showcase/MUSIC-LICENSE.txt` aligned with the track used in code.
