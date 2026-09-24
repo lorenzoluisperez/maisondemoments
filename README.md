@@ -2,6 +2,10 @@
 
 Designer-operated software for producing premium interactive invitations. The first release supports weddings, birthdays, debuts, and christenings across two versioned artwork collections.
 
+## Current focus
+
+Build polished sample invitation products before expanding backend editability for those designs. `/demo/wedding` is the first fixture-driven, AI-assisted proof of concept. The existing eight presets, portal, and constrained studio are implemented foundations; they do not mean the new showcase is editable there or that the sample-product portfolio is complete. After enough finished examples exist, define reusable fields and bounded controls from those products, then integrate selected designs with the existing backend. The sample count and editable scope remain open decisions. See the [product-first build sequence](docs/product-and-technical-plan.md#product-first-build-sequence).
+
 ## Implemented foundation
 
 - Eight event and collection presets with one semantic, naturally scrollable, reduced-motion-aware renderer

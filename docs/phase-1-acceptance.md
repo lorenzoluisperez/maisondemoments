@@ -1,5 +1,7 @@
 # Phase 1 guest-experience acceptance
 
+This record covers the shared renderer and eight event and collection presets. The later fixture-driven `/demo/wedding` showcase is a separate AI-assisted product proof of concept. Its opening withholds post-reveal content until the reveal finishes; it is not one of the eight backend-editable presets. Track its product quality and device evidence separately before treating it as a finished sample product.
+
 ## Implemented proof
 
 - The invitation is one naturally scrollable document. Opening the seal scrolls forward but never gates content.

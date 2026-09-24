@@ -2,13 +2,15 @@
 
 Status: active source of truth
 
-Last updated: 2026-09-14
+Last updated: 2026-09-25
 
 This document records the agreed product direction, architecture, release boundaries, implementation phases, and current status. Update it whenever scope, architecture, or phase status changes.
 
 ## Current position
 
-**The technical roadmap is at the Phase 7 infrastructure gate.** Phase 1 implementation and Phases 2 through 7 implementation are complete. Phase 1 still requires its physical-device release gate. Phase 7 still requires production backup credentials, PITR configuration, and a successful isolated restore drill. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
+**The current creative priority is building finished sample invitation products.** The fixture-driven wedding showcase at `/demo/wedding` is the first AI-assisted proof of concept. It is separate from the eight earlier event and collection presets and is not yet editable through the backend. More sample products should be designed and validated before choosing how to make these finished designs editable. No target number of samples has been agreed.
+
+The technical roadmap remains at the Phase 7 infrastructure gate. Phase 1 implementation and Phases 2 through 7 implementation are complete. The portal and constrained studio already exist for the earlier preset system; the product-first priority does not erase that work. Phase 1 still requires its physical-device release gate. Phase 7 still requires production backup credentials, PITR configuration, and a successful isolated restore drill. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
 
 | Phase | Status | Evidence or remaining work |
 |---|---|---|
@@ -24,6 +26,15 @@ This document records the agreed product direction, architecture, release bounda
 | 9. Public launch | Not started | Publish the marketing catalog and open controlled intake after all launch gates pass. |
 
 Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), [Phase 4 acceptance record](phase-4-acceptance.md), [Phase 5 acceptance record](phase-5-acceptance.md), [Phase 6 acceptance record](phase-6-acceptance.md), and [Phase 7 acceptance record](phase-7-acceptance.md).
+
+## Product-first build sequence
+
+1. Create distinctive, complete sample invitations as guest-facing products. Use the wedding showcase to test the quality and feasibility of AI-assisted art, interaction, and implementation; do not assume its one-off code is already a reusable template.
+2. Review each sample as a product on relevant mobile and desktop devices, including its content, accessibility, motion fallback, navigation, and visual quality. Record what has actually passed. A browser preview alone does not close the physical-device gate.
+3. After a sufficient portfolio exists, compare the finished products and identify which event facts can be structured, which presentation choices can be safely bounded, and which design elements must remain product-specific. Decide the portfolio threshold and editable scope with the user at that point.
+4. Then adapt selected finished products to the existing portal, studio, review, publishing, and guest infrastructure. Preserve the immutable review and publication rules. Maintain existing backend behavior as needed while sample work proceeds.
+
+The eight implemented event and collection presets prove the shared foundation; they are not a claim that eight polished showcase products are complete. Adding backend fields or generic editor controls before the product patterns are clear is not the current priority.
 
 ## Product definition
 
@@ -348,6 +359,8 @@ Domain and PostgreSQL tests cover payment authorization, idempotency, balance de
 
 ## Next phase and later phases
 
+The immediate creative work is the sample-product sequence above. The pilot and launch phases below remain gated by business terms, device verification, and production recovery evidence.
+
 ### Phase 8: private pilot
 
 Complete at least two real orders for each event type. Measure staff touch time, revision count, device behavior, guest completion, support load, and contribution margin. Adjust package boundaries and pricing from evidence.
@@ -379,7 +392,7 @@ Working defaults remain a manual quote, 50 percent deposit, balance before first
 
 ## Documentation maintenance
 
-At each phase boundary:
+When a product priority, showcase milestone, architecture decision, release gate, or operational procedure changes, update the affected documentation in the same change. At each phase boundary:
 
 1. Update the status table and next-phase section in this document.
 2. Add or update a phase acceptance record with verified evidence and explicit remaining gates.
@@ -387,3 +400,5 @@ At each phase boundary:
 4. Add or revise an ADR when an architectural decision changes.
 5. Update the production runbook for new operational dependencies.
 6. Commit the documentation with the implementation it describes.
+
+Keep `AGENTS.md` as a short current orientation, this plan as the canonical product and status record, and acceptance records as evidence of completed gates. Do not mark a sample product, backend integration, pilot, or launch complete based on intent alone.
