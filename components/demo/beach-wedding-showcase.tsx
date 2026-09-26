@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, Check, Menu, Music2, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import type { WeddingShowcaseFixture } from "@/lib/demo/wedding-showcase";
+import { BeachEnvelope } from "./beach-envelope";
 import styles from "./beach-wedding-showcase.module.css";
 
 type Chapter = WeddingShowcaseFixture["scenes"][number];
@@ -33,12 +34,21 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
   const [reducedMotion, setReducedMotion] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
   const [musicPreferred, setMusicPreferred] = useState(true);
+  const [envelopeReady, setEnvelopeReady] = useState(false);
+  const [envelopeFailed, setEnvelopeFailed] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReducedMotion(media.matches);
+    const update = () => {
+      setReducedMotion(media.matches);
+      if (media.matches) {
+        timers.current.forEach(window.clearTimeout);
+        timers.current = [];
+        setOpeningState((current) => current === "opening" || current === "overture" ? "revealed" : current);
+      }
+    };
     update();
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
@@ -60,6 +70,19 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
     return () => window.removeEventListener("keydown", close);
   }, [detailsOpen]);
 
+  const finishEnvelope = useCallback(() => {
+    setOpeningState("overture");
+    timers.current.push(window.setTimeout(() => setOpeningState("revealed"), 4_000));
+  }, []);
+  const envelopeDidLoad = useCallback(() => setEnvelopeReady(true), []);
+  const envelopeUnavailable = useCallback(() => { setEnvelopeReady(false); setEnvelopeFailed(true); }, []);
+
+  useEffect(() => {
+    if (openingState !== "opening" || !envelopeFailed) return;
+    const timer = window.setTimeout(finishEnvelope, 2_800);
+    return () => window.clearTimeout(timer);
+  }, [openingState, envelopeFailed, finishEnvelope]);
+
   const open = useCallback(() => {
     if (openingState !== "sealed") return;
     if (musicPreferred && audioRef.current) {
@@ -68,10 +91,6 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
     }
     if (reducedMotion) { setOpeningState("revealed"); return; }
     setOpeningState("opening");
-    timers.current = [
-      window.setTimeout(() => setOpeningState("overture"), 9_400),
-      window.setTimeout(() => setOpeningState("revealed"), 13_400),
-    ];
   }, [openingState, musicPreferred, reducedMotion]);
 
   const skipOpening = useCallback(() => {
@@ -92,6 +111,8 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
     audioRef.current?.pause();
     if (audioRef.current) audioRef.current.currentTime = 0;
     setMusicOn(false);
+    setEnvelopeReady(false);
+    setEnvelopeFailed(false);
     setOpeningState("sealed");
   };
 
@@ -117,13 +138,13 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
       </div>
     </nav>}
 
-    {(openingState === "sealed" || openingState === "opening") && <section className={`${styles.opening} ${openingState === "opening" ? styles.openingActive : ""}`} aria-label="A blue envelope with a seashell seal">
-        <div className={styles.openingPaper} aria-hidden="true" />
+    {(openingState === "sealed" || openingState === "opening") && <section className={`${styles.opening} ${openingState === "opening" ? styles.openingActive : ""} ${envelopeFailed ? styles.openingFallback : ""}`} aria-label="A blue envelope with a seashell seal">
       <div className={styles.openingTop}>
         <span className={styles.smallCaps}>Maison de Moments</span>
         <span className={styles.openingNumber}>No. 02 / Wedding collection</span>
       </div>
-      <div className={styles.envelopeStage} aria-hidden="true"><div className={styles.envelopeInside} /><div className={styles.envelopeFront} /><div className={styles.envelopeFlap} /><div className={styles.seal} /></div>
+      <div className={styles.staticEnvelope} style={{ visibility: envelopeReady ? "hidden" : "visible" }} aria-hidden="true"><div className={styles.seal} /></div>
+      {!reducedMotion && !envelopeFailed && <div className={styles.envelopeCanvas} style={{ visibility: envelopeReady ? "visible" : "hidden" }} aria-hidden="true"><BeachEnvelope opening={openingState === "opening"} onReady={envelopeDidLoad} onComplete={finishEnvelope} onUnavailable={envelopeUnavailable} /></div>}
       {openingState === "sealed" && <button className={styles.sealTarget} onClick={open} aria-label="Open the blue wedding envelope" />}
       {openingState === "opening" && <button className={styles.skipOpening} onClick={skipOpening}>Skip to invitation</button>}
       <div className={styles.openingBottom}>

@@ -3,33 +3,25 @@
 .showcase button { cursor:pointer; }
 .smallCaps,.eyebrow { text-transform:uppercase; letter-spacing:.27em; font:600 .65rem/1.5 Arial,sans-serif; }
 .eyebrow { color:#6c8e8b; }
-.opening { position:relative; min-height:100svh; display:flex; flex-direction:column; justify-content:space-between; align-items:center; overflow:hidden; padding:clamp(28px,5vh,50px) 24px clamp(43px,7vh,70px); perspective:1300px; background:#82b1c3; }
-.openingPaper { position:absolute; inset:0; pointer-events:none; background:#81b0c0; }
+.opening { --seal-y:71.2%; --envelope-art:url("/beach-wedding/blue-envelope-desktop.webp"); --art-size:100% 100%; --art-position:center; position:relative; min-height:100svh; display:flex; flex-direction:column; justify-content:space-between; align-items:center; overflow:hidden; padding:clamp(28px,5vh,50px) 24px clamp(43px,7vh,70px); background:linear-gradient(#f9fbf794,#f9fbf75e),url("/beach-wedding/shoreline-watercolor.webp") center 62%/cover no-repeat; }
 .openingTop,.openingBottom { z-index:2; width:min(900px,100%); text-align:center; }
 .openingTop { display:flex; justify-content:space-between; color:#f7f8ee; text-shadow:0 1px 7px #244a5c88; }
 .openingNumber { font:italic .8rem Georgia,serif; }
 .openingBottom { color:#f7f8ee; text-shadow:0 1px 7px #244a5c99; }
 .openingBottom .smallCaps { display:block; margin-top:14px; }
 .scriptLine { margin:0; font-size:clamp(1.65rem,3.8vw,2.4rem); font-style:italic; }
-.envelopeStage { position:absolute; inset:0; pointer-events:none; }
-.envelopeInside { position:absolute; inset:0; background:linear-gradient(#f9fbf5b0,#faf7e755),url("/beach-wedding/shoreline-watercolor.webp") center 63%/cover no-repeat; }
-.envelopeInside::after { content:"A sea of love"; position:absolute; left:0; right:0; top:28%; color:#507381; text-align:center; font:italic clamp(1.8rem,5vw,3.8rem) Georgia,serif; text-shadow:0 2px 12px #ffffffe8; }
-.envelopeFront,.envelopeFlap { position:absolute; inset:0; background:url("/beach-wedding/blue-envelope.webp") center/cover no-repeat; }
-.envelopeFront { clip-path:polygon(0 0,50% 70%,100% 0,100% 100%,0 100%); }
-.envelopeFlap { transform-origin:50% 0; clip-path:polygon(0 0,100% 0,50% 70%); transition:transform .95s cubic-bezier(.2,.72,.2,1); }
-.seal { position:absolute; left:50%; top:70%; width:clamp(125px,17vw,195px); aspect-ratio:1; transform:translate(-50%,-50%); background:url("/beach-wedding/shell-seal.webp") center/contain no-repeat; filter:drop-shadow(0 10px 12px #173e4d60); }
-.sealTarget { position:absolute; z-index:5; inset:0; width:100%; border:0; background:transparent; }
+.staticEnvelope,.envelopeCanvas { position:absolute; z-index:1; inset:0; pointer-events:none; }
+.staticEnvelope { background-image:var(--envelope-art); background-size:var(--art-size); background-position:var(--art-position); background-repeat:no-repeat; }
+.envelopeCanvas canvas { display:block; }
+.seal { position:absolute; left:50%; top:var(--seal-y); width:min(195px,18svh,32vw); aspect-ratio:1; transform:translate(-50%,-50%); background:url("/beach-wedding/shell-seal.webp") center/contain no-repeat; filter:drop-shadow(0 10px 12px #173e4d60); }
+.sealTarget { position:absolute; z-index:5; top:var(--seal-y); left:50%; width:clamp(145px,21vw,210px); aspect-ratio:1; transform:translate(-50%,-50%); border:0; border-radius:50%; background:transparent; }
 .sealTarget:focus-visible { outline:3px solid var(--coral); outline-offset:9px; }
-.openingActive .envelopeStage { animation:envelopeJourney 9.4s cubic-bezier(.27,.12,.2,1) both; }
-.openingActive .envelopeFlap { animation:flapUnfold 6.2s .7s cubic-bezier(.36,.02,.18,1) both; }
-.openingActive .seal { animation:shellLift 2.7s .15s cubic-bezier(.2,.65,.2,1) both; }
-.openingActive .envelopeFront { animation:frontRecede 4s 2.5s cubic-bezier(.34,.1,.25,1) both; }
-.openingActive .envelopeInside::after { animation:innerCaptionOut 2s 4s both; }
+.openingFallback.openingActive .staticEnvelope { animation:fallbackDissolve 2.8s ease-in-out both; }
 .openingActive .openingTop,.openingActive .openingBottom { animation:openingCopyOut 1.4s 2.1s both; }
 .musicPreference { position:absolute; z-index:7; right:clamp(20px,4vw,55px); bottom:22px; display:flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; border:1px solid #ffffff9c; border-radius:99px; color:#fff; background:#214f5a54; backdrop-filter:blur(9px); text-transform:uppercase; letter-spacing:.12em; font:600 .61rem Arial,sans-serif; }
-.skipOpening { position:absolute; z-index:8; top:clamp(25px,5vh,52px); right:clamp(20px,4vw,55px); padding:9px 0; border:0; border-bottom:1px solid currentColor; color:#fffdf6; background:transparent; text-shadow:0 1px 7px #244a5c; text-transform:uppercase; letter-spacing:.16em; font:600 .62rem Arial,sans-serif; }
+.skipOpening { position:absolute; z-index:8; top:clamp(25px,5vh,52px); right:clamp(20px,4vw,55px); padding:11px 14px; border:1px solid #6d919455; border-radius:99px; color:#315b66; background:#fffaf0ed; text-transform:uppercase; letter-spacing:.16em; font:600 .62rem Arial,sans-serif; }
 .overture { position:relative; min-height:100svh; display:grid; place-content:center; justify-items:center; gap:22px; overflow:hidden; padding:90px 24px; color:#315b66; text-align:center; background:#eff5f0; }
-.overtureArt { position:absolute; inset:0; z-index:0; background:linear-gradient(#f9fbf794,#f9fbf75e),url("/beach-wedding/shoreline-watercolor.webp") center 62%/cover; animation:overtureZoom 4s ease-out both; }
+.overtureArt { position:absolute; inset:0; z-index:0; background:linear-gradient(#f9fbf794,#f9fbf75e),url("/beach-wedding/shoreline-watercolor.webp") center 62%/cover; }
 .overtureLine { position:relative; z-index:1; margin:0; font-size:clamp(2.8rem,7vw,6rem); font-style:italic; line-height:1.04; text-shadow:0 2px 18px #fff; opacity:0; }
 .overtureLine:nth-of-type(1) { animation:overtureLine 2.2s .2s both; }
 .overtureLine:nth-of-type(2) { animation:overtureLine 2.2s 1.7s both; }
@@ -41,7 +33,7 @@
 .navActions button { min-width:44px; min-height:40px; display:flex; align-items:center; justify-content:center; gap:7px; padding:0 14px; border:1px solid #8cb2b5; border-radius:99px; color:var(--deep); background:#ffffffc9; text-transform:uppercase; letter-spacing:.11em; font:600 .62rem Arial,sans-serif; }
 .navActions button:last-child { border-color:var(--deep); color:#fff; background:var(--deep); }
 .hero { position:relative; min-height:100svh; isolation:isolate; display:grid; place-items:center; padding:110px 20px 95px; overflow:hidden; text-align:center; background:#dbeef1; }
-.heroArt { position:absolute; z-index:-2; inset:0; background:url("/beach-wedding/shoreline-watercolor.webp") center 65%/cover no-repeat; animation:heroArrive 7s ease-out both; }
+.heroArt { position:absolute; z-index:-2; inset:0; background:url("/beach-wedding/shoreline-watercolor.webp") center 65%/cover no-repeat; }
 .hero::before { content:""; position:absolute; z-index:-1; inset:0; background:linear-gradient(to bottom,#f8fbf9aa 0%,#f8fbf97d 39%,transparent 80%); }
 .heroContent { width:min(800px,100%); margin-top:-7vh; animation:heroCopyIn 1.8s .1s both; }
 .heroPrelude { margin:22px 0 12px; color:#8e7563; font:italic clamp(1.6rem,3.5vw,2.5rem) Georgia,serif; }
@@ -138,23 +130,12 @@
 .dialog dd { margin:0; line-height:1.6; }
 .dialog > button:not(.close) { display:block; width:100%; margin-top:9px; color:#416c75; background:transparent; }
 .dialog > button.dialogPrimary { color:#fff; background:#416c75; }
-@keyframes envelopeJourney { 0%,12% { transform:scale(1); } 52% { transform:scale(1.23) translateY(-3%); } 78% { transform:scale(1.9) translateY(-8%); } 100% { transform:scale(3.45) translateY(-13%); } }
-@keyframes flapUnfold { 0%,9% { opacity:1; transform:rotateX(0); } 72% { opacity:1; transform:rotateX(162deg); } 100% { opacity:0; transform:rotateX(180deg); } }
-@keyframes shellLift { 0%,28% { opacity:1; transform:translate(-50%,-50%) scale(1); } 75% { opacity:.65; transform:translate(-50%,-68%) scale(.8) rotate(15deg); } 100% { opacity:0; transform:translate(-50%,-84%) scale(.6) rotate(22deg); } }
-@keyframes frontRecede { 0%,30% { opacity:1; transform:none; } 100% { opacity:0; transform:translateY(18%); } }
+@keyframes fallbackDissolve { from { opacity:1; } to { opacity:0; } }
 @keyframes openingCopyOut { 0%,30% { opacity:1; } 100% { opacity:0; } }
-@keyframes innerCaptionOut { 0%,25% { opacity:1; } 100% { opacity:0; } }
-@keyframes overtureZoom { from { opacity:.5; transform:scale(1.18); } to { opacity:1; transform:scale(1.02); } }
 @keyframes overtureLine { 0% { opacity:0; transform:translateY(16px); } 22%,68% { opacity:1; transform:none; } 100% { opacity:0; transform:translateY(-12px); } }
-@keyframes heroArrive { from { transform:scale(1.12); } to { transform:scale(1); } }
 @keyframes heroCopyIn { from { opacity:0; transform:translateY(25px); } to { opacity:1; transform:none; } }
-@media (min-width:701px) {
-  .envelopeFront,.envelopeFlap { background-image:url("/beach-wedding/blue-envelope-desktop.webp"); }
-  .envelopeFront { clip-path:polygon(0 0,50% 72%,100% 0,100% 100%,0 100%); }
-  .envelopeFlap { clip-path:polygon(0 0,100% 0,50% 72%); }
-  .seal { top:72%; }
-}
 @media (max-width:700px) {
+  .opening { --seal-y:50%; --envelope-art:url("/beach-wedding/blue-envelope-mobile-centered.webp"); --art-size:auto 128%; --art-position:center bottom; }
   .openingTop { display:grid; gap:8px; }
   .openingBottom { padding-bottom:34px; }
   .skipOpening { top:auto; bottom:19px; right:20px; }
@@ -193,7 +174,7 @@
   .program h3 { font-size:1.3rem; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .envelopeStage,.envelopeFlap,.seal,.envelopeFront,.openingTop,.openingBottom,.overtureArt,.overtureLine,.heroArt,.heroContent { animation:none!important; }
+  .staticEnvelope,.openingTop,.openingBottom,.overtureLine,.heroContent { animation:none!important; }
   .surfFrame { transition:none; }
   .showcase :global(*) { scroll-behavior:auto!important; }
 }
