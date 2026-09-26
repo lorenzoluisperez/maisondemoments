@@ -36,6 +36,8 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
   const [musicPreferred, setMusicPreferred] = useState(true);
   const [envelopeReady, setEnvelopeReady] = useState(false);
   const [envelopeFailed, setEnvelopeFailed] = useState(false);
+  const [wordsStarted, setWordsStarted] = useState(false);
+  const wordsStartedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const timers = useRef<number[]>([]);
 
@@ -72,10 +74,12 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
 
   const finishEnvelope = useCallback(() => {
     setOpeningState("overture");
-    timers.current.push(window.setTimeout(() => setOpeningState("revealed"), 4_000));
+    // The words begin during the last 940ms of the envelope's 9.4s motion.
+    timers.current.push(window.setTimeout(() => setOpeningState("revealed"), wordsStartedRef.current ? 3_210 : 4_150));
   }, []);
   const envelopeDidLoad = useCallback(() => setEnvelopeReady(true), []);
   const envelopeUnavailable = useCallback(() => { setEnvelopeReady(false); setEnvelopeFailed(true); }, []);
+  const beginWords = useCallback(() => { wordsStartedRef.current = true; setWordsStarted(true); }, []);
 
   useEffect(() => {
     if (openingState !== "opening" || !envelopeFailed) return;
@@ -113,6 +117,8 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
     setMusicOn(false);
     setEnvelopeReady(false);
     setEnvelopeFailed(false);
+    wordsStartedRef.current = false;
+    setWordsStarted(false);
     setOpeningState("sealed");
   };
 
@@ -144,7 +150,7 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
         <span className={styles.openingNumber}>No. 02 / Wedding collection</span>
       </div>}
       <div className={styles.staticEnvelope} style={{ visibility: envelopeReady || openingState === "overture" ? "hidden" : "visible" }} aria-hidden="true"><div className={styles.seal} /></div>
-      {!reducedMotion && !envelopeFailed && <div className={styles.envelopeCanvas} style={{ visibility: envelopeReady ? "visible" : "hidden" }} aria-hidden="true"><BeachEnvelope opening={openingState === "opening"} onReady={envelopeDidLoad} onComplete={finishEnvelope} onUnavailable={envelopeUnavailable} /></div>}
+      {!reducedMotion && !envelopeFailed && <div className={styles.envelopeCanvas} style={{ visibility: envelopeReady ? "visible" : "hidden" }} aria-hidden="true"><BeachEnvelope opening={openingState === "opening"} onReady={envelopeDidLoad} onWordsStart={beginWords} onComplete={finishEnvelope} onUnavailable={envelopeUnavailable} /></div>}
       {openingState === "sealed" && <button className={styles.sealTarget} onClick={open} aria-label="Open the blue wedding envelope" />}
       {(openingState === "opening" || openingState === "overture") && <button className={styles.skipOpening} onClick={skipOpening}>Skip to invitation</button>}
       {openingState !== "overture" && <div className={styles.openingBottom}>
@@ -152,7 +158,7 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
         <p className={styles.smallCaps}>{openingState === "opening" ? "Opening your invitation" : "Tap the seashell to open"}</p>
       </div>}
       {openingState === "sealed" && <button className={styles.musicPreference} onClick={() => setMusicPreferred((current) => !current)} aria-pressed={musicPreferred}><Music2 size={16} />Music {musicPreferred ? "on" : "off"}</button>}
-      {openingState === "overture" && <div className={styles.overtureCopy}><p className={styles.overtureLine}>The tide brought us here</p><p className={styles.overtureLine}>to a lifetime together</p></div>}
+      {(wordsStarted || openingState === "overture") && <div className={styles.overtureCopy}><p className={styles.overtureLine}>The tide brought us here</p><p className={styles.overtureLine}>to a lifetime together</p></div>}
     </section>}
 
     {openingState === "revealed" && <>

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 type Props = {
   opening: boolean;
   onReady: () => void;
+  onWordsStart: () => void;
   onComplete: () => void;
   onUnavailable: () => void;
 };
@@ -29,7 +30,7 @@ const smooth = (value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-export function BeachEnvelope({ opening, onReady, onComplete, onUnavailable }: Props) {
+export function BeachEnvelope({ opening, onReady, onWordsStart, onComplete, onUnavailable }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const openingRef = useRef(opening);
   const playRef = useRef<(() => void) | null>(null);
@@ -88,10 +89,12 @@ export function BeachEnvelope({ opening, onReady, onComplete, onUnavailable }: P
       let last = 0;
       let playing = false;
       let finished = false;
+      let wordsStarted = false;
 
       const fit = () => {
         const w = host.clientWidth;
         const h = host.clientHeight;
+        if (w <= 0 || h <= 0) return;
         const mobile = w <= 700;
         const map = mobile ? mobileMap : desktopMap;
         const edge = mobile ? mobileEdge : desktopEdge;
@@ -161,6 +164,10 @@ export function BeachEnvelope({ opening, onReady, onComplete, onUnavailable }: P
         host.dataset.progress = progress.toFixed(3);
         host.dataset.zoom = camera.zoom.toFixed(3);
         renderer.render(scene, camera);
+        if (!wordsStarted && progress >= .9) {
+          wordsStarted = true;
+          onWordsStart();
+        }
         if (progress < 1) frame = requestAnimationFrame(tick);
         else if (!finished) { finished = true; playing = false; onComplete(); }
       };
@@ -200,7 +207,7 @@ export function BeachEnvelope({ opening, onReady, onComplete, onUnavailable }: P
       if (openingRef.current) play();
     }).catch(() => { dispose(); if (!cancelled) onUnavailable(); });
     return () => { cancelled = true; playRef.current = null; dispose(); };
-  }, [onReady, onComplete, onUnavailable]);
+  }, [onReady, onWordsStart, onComplete, onUnavailable]);
 
   return <div ref={hostRef} data-envelope-renderer data-progress="0" data-zoom="1" style={{ width: "100%", height: "100%" }} />;
 }

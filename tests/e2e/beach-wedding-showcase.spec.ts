@@ -58,6 +58,7 @@ test("the 3D opening completes with a gentle zoom, ordered surf, and replay", as
   expect(Number(await renderer.getAttribute("data-zoom"))).toBeGreaterThan(1);
   expect(Number(await renderer.getAttribute("data-zoom"))).toBeLessThanOrEqual(1.08);
   await expect(page.getByText("The tide brought us here")).toBeVisible({ timeout: 11_000 });
+  await expect(page.getByRole("region", { name: "Introducing the wedding" })).toBeVisible();
   expect(await introScene?.evaluate((element) => element.isConnected && element.getAttribute("aria-label") === "Introducing the wedding")).toBe(true);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 7_000 });
   const frames = page.locator("[data-surf-frame]");
