@@ -20,9 +20,8 @@
 .openingActive .openingTop,.openingActive .openingBottom { animation:openingCopyOut 1.4s 2.1s both; }
 .musicPreference { position:absolute; z-index:7; right:clamp(20px,4vw,55px); bottom:22px; display:flex; align-items:center; gap:8px; min-height:40px; padding:0 12px; border:1px solid #ffffff9c; border-radius:99px; color:#fff; background:#214f5a54; backdrop-filter:blur(9px); text-transform:uppercase; letter-spacing:.12em; font:600 .61rem Arial,sans-serif; }
 .skipOpening { position:absolute; z-index:8; top:clamp(25px,5vh,52px); right:clamp(20px,4vw,55px); padding:11px 14px; border:1px solid #6d919455; border-radius:99px; color:#315b66; background:#fffaf0ed; text-transform:uppercase; letter-spacing:.16em; font:600 .62rem Arial,sans-serif; }
-.overture { position:relative; min-height:100svh; display:grid; place-content:center; justify-items:center; gap:22px; overflow:hidden; padding:90px 24px; color:#315b66; text-align:center; background:#eff5f0; }
-.overtureArt { position:absolute; inset:0; z-index:0; background:linear-gradient(#f9fbf794,#f9fbf75e),url("/beach-wedding/shoreline-watercolor.webp") center 62%/cover; }
-.overtureLine { position:relative; z-index:1; margin:0; font-size:clamp(2.8rem,7vw,6rem); font-style:italic; line-height:1.04; text-shadow:0 2px 18px #fff; opacity:0; }
+.overtureCopy { position:absolute; z-index:3; inset:0; display:grid; place-content:center; justify-items:center; gap:22px; padding:90px 24px; color:#315b66; text-align:center; pointer-events:none; }
+.overtureLine { margin:0; font-size:clamp(2.8rem,7vw,6rem); font-style:italic; line-height:1.04; text-shadow:0 2px 18px #fff; opacity:0; will-change:opacity,transform; }
 .overtureLine:nth-of-type(1) { animation:overtureLine 2.2s .2s both; }
 .overtureLine:nth-of-type(2) { animation:overtureLine 2.2s 1.7s both; }
 .overture .skipOpening { color:#315b66; text-shadow:none; }

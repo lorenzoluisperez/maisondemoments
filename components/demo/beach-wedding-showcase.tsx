@@ -138,23 +138,22 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
       </div>
     </nav>}
 
-    {(openingState === "sealed" || openingState === "opening") && <section className={`${styles.opening} ${openingState === "opening" ? styles.openingActive : ""} ${envelopeFailed ? styles.openingFallback : ""}`} aria-label="A blue envelope with a seashell seal">
-      <div className={styles.openingTop}>
+    {openingState !== "revealed" && <section className={`${styles.opening} ${openingState === "opening" ? styles.openingActive : ""} ${openingState === "overture" ? styles.overture : ""} ${envelopeFailed ? styles.openingFallback : ""}`} aria-label={openingState === "overture" ? "Introducing the wedding" : "A blue envelope with a seashell seal"}>
+      {openingState !== "overture" && <div className={styles.openingTop}>
         <span className={styles.smallCaps}>Maison de Moments</span>
         <span className={styles.openingNumber}>No. 02 / Wedding collection</span>
-      </div>
-      <div className={styles.staticEnvelope} style={{ visibility: envelopeReady ? "hidden" : "visible" }} aria-hidden="true"><div className={styles.seal} /></div>
+      </div>}
+      <div className={styles.staticEnvelope} style={{ visibility: envelopeReady || openingState === "overture" ? "hidden" : "visible" }} aria-hidden="true"><div className={styles.seal} /></div>
       {!reducedMotion && !envelopeFailed && <div className={styles.envelopeCanvas} style={{ visibility: envelopeReady ? "visible" : "hidden" }} aria-hidden="true"><BeachEnvelope opening={openingState === "opening"} onReady={envelopeDidLoad} onComplete={finishEnvelope} onUnavailable={envelopeUnavailable} /></div>}
       {openingState === "sealed" && <button className={styles.sealTarget} onClick={open} aria-label="Open the blue wedding envelope" />}
-      {openingState === "opening" && <button className={styles.skipOpening} onClick={skipOpening}>Skip to invitation</button>}
-      <div className={styles.openingBottom}>
+      {(openingState === "opening" || openingState === "overture") && <button className={styles.skipOpening} onClick={skipOpening}>Skip to invitation</button>}
+      {openingState !== "overture" && <div className={styles.openingBottom}>
         <p className={styles.scriptLine}>An invitation carried by the tide</p>
         <p className={styles.smallCaps}>{openingState === "opening" ? "Opening your invitation" : "Tap the seashell to open"}</p>
-      </div>
+      </div>}
       {openingState === "sealed" && <button className={styles.musicPreference} onClick={() => setMusicPreferred((current) => !current)} aria-pressed={musicPreferred}><Music2 size={16} />Music {musicPreferred ? "on" : "off"}</button>}
+      {openingState === "overture" && <div className={styles.overtureCopy}><p className={styles.overtureLine}>The tide brought us here</p><p className={styles.overtureLine}>to a lifetime together</p></div>}
     </section>}
-
-    {openingState === "overture" && <section className={styles.overture} aria-label="Introducing the wedding"><div className={styles.overtureArt} aria-hidden="true" /><p className={styles.overtureLine}>The tide brought us here</p><p className={styles.overtureLine}>to a lifetime together</p><button className={styles.skipOpening} onClick={skipOpening}>Skip to invitation</button></section>}
 
     {openingState === "revealed" && <>
       <section id="reveal" className={styles.hero} aria-labelledby="beach-title">
