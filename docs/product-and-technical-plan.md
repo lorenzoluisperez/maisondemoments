@@ -2,13 +2,13 @@
 
 Status: active source of truth
 
-Last updated: 2026-09-25
+Last updated: 2026-09-27
 
 This document records the agreed product direction, architecture, release boundaries, implementation phases, and current status. Update it whenever scope, architecture, or phase status changes.
 
 ## Current position
 
-**The current creative priority is building finished sample invitation products.** The fixture-driven wedding showcase at `/demo/wedding` is the first AI-assisted proof of concept. A second wedding study at `/demo/wedding-beach` keeps its couple, date, times, and guest information, while moving the fictional celebration to Boracay with original tropical artwork, a slow blue envelope opening with a seashell seal, ordered painted wave frames, and illustrated guest sections. These showcases are separate from the eight earlier event and collection presets and are not yet editable through the backend. More sample products should be designed and validated before choosing how to make these finished designs editable. No target number of samples has been agreed.
+**The current creative priority is building finished sample invitation products.** The fixture-driven wedding showcase at `/demo/wedding` is the first AI-assisted proof of concept. `/demo/wedding-beach` retains its couple, date, times, and guest information in a fictional Boracay celebration with original tropical artwork and painted moving surf. `/demo/wedding-bridgerton` is a Filipino heritage study in fictional Intramuros venues. It retains the same couple and core event details while adding an original embossed envelope with an outward-lifting pearl seal, floral ornaments, a keepsake story spread, arched venue illustrations, Filipino formal attire and an embroidered fan, engraved entourage and illustrated program layouts, and a Manila-time countdown. Browser checks cover its local guest path, but physical-device review and MP3 file provenance remain open. These showcases are separate from the eight earlier event and collection presets and are not yet editable through the backend. More sample products should be designed and validated before choosing how to make these finished designs editable. No target number of samples has been agreed.
 
 The technical roadmap remains at the Phase 7 infrastructure gate. Phase 1 implementation and Phases 2 through 7 implementation are complete. The portal and constrained studio already exist for the earlier preset system; the product-first priority does not erase that work. Phase 1 still requires its physical-device release gate. Phase 7 still requires production backup credentials, PITR configuration, and a successful isolated restore drill. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
 

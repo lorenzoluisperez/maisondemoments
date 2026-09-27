@@ -4,7 +4,7 @@ This repository is a designer-operated platform for premium, semi-custom interac
 
 ## Current product priority
 
-- Build a collection of polished, distinct sample invitation products first. The fixture-driven wedding showcase at `/demo/wedding` is the initial AI-assisted proof of concept, not a backend-editable product or evidence that the portfolio is complete.
+- Build a collection of polished, distinct sample invitation products first. `/demo/wedding`, `/demo/wedding-beach`, and `/demo/wedding-bridgerton` are fixture-driven wedding studies, not backend-editable products or evidence that the portfolio is complete.
 - Once enough finished examples exist, decide which facts and presentation choices recur, then make those products editable through the existing backend and bounded studio. The user has not set a sample count or approved an editor schema. Do not let anticipated backend controls dictate the creative design of new showcases.
 - The existing portal, studio, and production infrastructure remain implemented. Maintain them when needed, but do not treat their existence as a reason to prioritize more editor features ahead of sample products.
 
