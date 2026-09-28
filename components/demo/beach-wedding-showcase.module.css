@@ -54,6 +54,7 @@
 .story { background:linear-gradient(180deg,#fffdf7,#f7f2e6); }
 .storyLayout { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:clamp(35px,7vw,100px); align-items:start; max-width:1250px; margin:auto; }
 .storyArtwork { position:sticky; top:86px; width:100%; aspect-ratio:.7; max-height:780px; margin:0; overflow:hidden; background:#f9f7ef; box-shadow:0 22px 50px #2f5b6423; }
+.storyArtworkImage { position:absolute; inset:0; }
 .storyArtwork img { object-fit:cover; }
 .storyArtwork figcaption { position:absolute; bottom:24px; left:25px; right:25px; padding:9px 15px; color:#2e5b67; text-align:center; background:#fffdf6dd; font:italic 1.15rem Georgia,serif; }
 .storyChapters { width:100%; border-top:1px solid #b7c8c2; }
@@ -80,6 +81,11 @@
 .eventCards p { line-height:1.65; }
 .swatches { display:flex; justify-content:center; gap:9px; margin-top:20px; }
 .swatches i { width:21px; height:21px; border:1px solid #635b4930; border-radius:50%; }
+.showcase[data-ornament="quiet"] .swatches { display:none; }
+.showcase .hero h1, .showcase .celebration h3, .showcase .celebration strong { overflow-wrap:anywhere; }
+.hero h1 em { display:block; max-width:100%; font:inherit; overflow-wrap:anywhere; }
+.showcase[data-fit="compact"] .hero h1 { font-size:clamp(2.6rem,10vw,5.5rem); line-height:.92; }
+.showcase[data-fit="compact"] .celebration h3 { font-size:clamp(1.5rem,2.7vw,2.4rem); }
 .entourage { background:radial-gradient(circle at 50% 5%,#edf5ec,#d8e9e8 78%); }
 .entouragePaper { position:relative; width:min(1120px,100%); margin:auto; padding:clamp(70px,8vw,110px) clamp(25px,7vw,100px); background:#fffdf7; box-shadow:0 25px 70px #2b5a6523; overflow:hidden; }
 .entourageOrnament,.entouragePaper::after { position:absolute; width:clamp(170px,25vw,330px); aspect-ratio:1; background:url("/beach-wedding/frangipani-corner.webp") center/contain no-repeat; opacity:.84; pointer-events:none; }

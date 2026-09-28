@@ -4,7 +4,7 @@ Status: accepted for the MVP foundation. Revisit a decision only when the stated
 
 | Decision | Choice | Rejected alternatives | Consequences and revisit evidence |
 |---|---|---|---|
-| 001 Service model | Designer-operated, one semi-custom package | Customer page builder, bespoke-only service | Keeps quality and scope controlled. Revisit after pilot margin and support data. |
+| 001 Service model | Designer-operated, bounded semi-custom service | Customer page builder, bespoke-only service | The original one-package launch assumption is superseded by ADR 014. |
 | 002 Deployment shape | One TypeScript and Next.js application with domain modules | Early microservices or multi-app monorepo | Reduces operational overhead. Split only for measured isolation or bundle constraints. |
 | 003 Content model | Event facts are separate from presentation configuration | Decorative text copies of facts | Prevents date and venue drift. Revisit only if a validated new content source cannot map cleanly. |
 | 004 Event schemas | Four discriminated schemas over a shared base | One loose event JSON document | Makes required fields explicit. Add types through versioned migrations. |
@@ -17,3 +17,4 @@ Status: accepted for the MVP foundation. Revisit a decision only when the stated
 | 011 Background work | PostgreSQL tasks with leases and idempotency | In-memory jobs, immediate queue vendor | Provides durable work at current scale. Adopt a queue after measured contention. |
 | 012 Retention and recovery | PITR plus separate media backups and deletion replay | Database-only backups, indefinite retention | Recovery covers files and removed records stay removed. Revisit after restore drills. |
 | 013 Experience budgets | Semantic fallback, reduced motion, 600 KiB critical transfer, real-device gate | Animation-gated content, desktop-only QA | Makes practical information dependable. Adjust from field p75 data. |
+| [014 Wedding product commerce](014-wedding-product-commerce.md) | Three wedding products, three tiers, PHP PayMongo checkout, one application | Premature category launch, automatic currency conversion, separate admin deployment | Preserves designer control and a single exact-version delivery path. |

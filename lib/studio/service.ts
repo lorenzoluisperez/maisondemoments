@@ -3,7 +3,7 @@ import "server-only";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { auditEvents, eventBriefs, invitationDrafts, invitations, jobOrders } from "@/db/schema";
+import { auditEvents, eventBriefs, invitationDrafts, invitations, jobOrders, packages } from "@/db/schema";
 import { canEditInvitationDraft, canReadOrder, type Actor } from "@/lib/auth/permissions";
 import { eventBriefDocumentSchema } from "@/lib/content/brief";
 import { listContentOrders } from "@/lib/content/service";
@@ -13,6 +13,7 @@ import { getCatalogArtwork } from "@/lib/media/catalog";
 import { resolveMediaReferences } from "@/lib/media/service";
 import { getJobOrder } from "@/lib/orders/service";
 import { saveDraftOverridesSchema } from "@/lib/studio/contracts";
+import { originalProductPresentation } from "@/lib/products/presentation";
 
 export class StudioAuthorizationError extends Error {}
 export class StudioConflictError extends Error {
@@ -58,6 +59,9 @@ export async function getStudioOrder(actor: Actor, orderId: string) {
     slug: row.slug,
     version: row.revision,
     media: { gallery: brief.gallery },
+    product: order.productSlug && ["garden-romance", "coastal-romance", "heritage-romance"].includes(order.productSlug)
+      ? { slug: order.productSlug as "garden-romance" | "coastal-romance" | "heritage-romance", weddingDetails: brief.weddingDetails }
+      : undefined,
   });
   return {
     order: {
@@ -68,6 +72,8 @@ export async function getStudioOrder(actor: Actor, orderId: string) {
       collectionKey: order.collectionKey,
       state: order.state,
       dueDate: order.dueDate,
+      productSlug: order.productSlug,
+      tier: order.productSlug ? order.packageCode.replace("WEDDING_", "") : null,
     },
     draft: {
       invitationId: row.invitationId,
@@ -88,11 +94,14 @@ export async function saveDraftOverrides(actor: Actor, orderId: string, input: u
     customerId: jobOrders.customerId,
     assignedDesignerId: jobOrders.assignedDesignerId,
     collectionKey: jobOrders.collectionKey,
+    productSlug: jobOrders.productSlug,
+    packageCode: packages.code,
     invitationId: invitations.id,
     configuration: invitationDrafts.configuration,
     revision: invitationDrafts.revision,
     reviewState: invitationDrafts.reviewState,
   }).from(jobOrders)
+    .innerJoin(packages, eq(packages.id, jobOrders.packageId))
     .innerJoin(invitations, eq(invitations.jobOrderId, jobOrders.id))
     .innerJoin(invitationDrafts, eq(invitationDrafts.invitationId, invitations.id))
     .where(eq(jobOrders.id, parsedOrderId)).limit(1);
@@ -103,7 +112,19 @@ export async function saveDraftOverrides(actor: Actor, orderId: string, input: u
     throw new StudioConflictError("This draft is locked for review", current.revision);
   }
 
-  const configuration = applyOverrides(invitationConfigSchema.parse(current.configuration), parsed);
+  const previous = invitationConfigSchema.parse(current.configuration);
+  const configuration = applyOverrides(previous, parsed);
+  if (current.productSlug) {
+    const withoutProductStyle = (value: typeof configuration) => ({ ...value, productPresentation: undefined });
+    if (JSON.stringify(withoutProductStyle(configuration)) !== JSON.stringify(withoutProductStyle(previous))) {
+      throw new StudioAuthorizationError("This product supports only its released design options");
+    }
+    const nextStyle = configuration.productPresentation ?? originalProductPresentation;
+    if (current.packageCode === "WEDDING_ESSENTIAL" &&
+      (nextStyle.palette !== "original" || nextStyle.ornaments !== "original")) {
+      throw new StudioAuthorizationError("Essential uses the original design styling");
+    }
+  }
   assertCatalogBoundaries(configuration, current.collectionKey);
   const [updated] = await db.transaction(async (transaction) => {
     const rows = await transaction.update(invitationDrafts).set({
@@ -151,6 +172,7 @@ function applyOverrides(configuration: z.infer<typeof invitationConfigSchema>, i
     ...configuration,
     ...(input.typography ? { typography: input.typography } : {}),
     ...(input.animationIntensity ? { animationIntensity: input.animationIntensity } : {}),
+    ...(input.productPresentation ? { productPresentation: input.productPresentation } : {}),
     scenes,
   });
 }

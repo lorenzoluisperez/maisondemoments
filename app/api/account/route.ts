@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { syncCustomerAccount } from "@/lib/accounts/service";
-import { AccountSetupRequiredError, AuthenticationRequiredError, requireCurrentActor } from "@/lib/auth/current-actor";
+import { AccountSetupRequiredError, AuthenticationRequiredError, MfaRequiredError, requireCurrentActor } from "@/lib/auth/current-actor";
 import { isTrustedMutationRequest, PayloadTooLargeError, readBoundedJson } from "@/lib/http/request-security";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,6 +14,7 @@ export async function GET() {
     const actor = await requireCurrentActor();
     return NextResponse.json({ actor }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
+    if (error instanceof MfaRequiredError) return NextResponse.json({ error: error.message, verifyUrl: "/mfa" }, { status: 403 });
     if (error instanceof AuthenticationRequiredError) return NextResponse.json({ error: error.message }, { status: 401 });
     if (error instanceof AccountSetupRequiredError) return NextResponse.json({ error: error.message }, { status: 403 });
     throw error;

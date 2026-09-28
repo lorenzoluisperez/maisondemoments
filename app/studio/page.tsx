@@ -1,5 +1,5 @@
 import { StudioWorkspace } from "@/components/studio/studio-workspace";
 
-export default function StudioPage() {
-  return <StudioWorkspace />;
+export default async function StudioPage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
+  return <StudioWorkspace initialOrderId={(await searchParams).order} />;
 }

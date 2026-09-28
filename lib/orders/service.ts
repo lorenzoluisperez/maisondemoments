@@ -13,6 +13,9 @@ import {
   events,
   jobOrders,
   packages,
+  purchases,
+  checkoutAttempts,
+  paymentEntries,
   staffMemberships,
 } from "@/db/schema";
 import { canCreateOrder, canReadOrder, type Actor } from "@/lib/auth/permissions";
@@ -53,9 +56,9 @@ export async function listOrderCreationOptions(actor: Actor) {
 export async function createJobOrder(
   actor: Actor,
   input: CreateJobOrderInput,
-  options: { jobNumberYear?: number } = {},
+  options: { jobNumberYear?: number; paidPurchaseId?: string } = {},
 ) {
-  if (!canCreateOrder(actor)) throw new OrderAuthorizationError("Admin permission required");
+  if (!canCreateOrder(actor) && !options.paidPurchaseId) throw new OrderAuthorizationError("Admin permission required");
 
   const parsed = createJobOrderSchema.parse(input);
   const jobNumberYear = z.number().int().min(2020).max(9999).parse(options.jobNumberYear ?? new Date().getUTCFullYear());
@@ -65,6 +68,21 @@ export async function createJobOrder(
   const db = getDb();
 
   const created = await db.transaction(async (transaction) => {
+    if (options.paidPurchaseId) await transaction.execute(sql`select pg_advisory_xact_lock(hashtextextended(${options.paidPurchaseId}, 0))`);
+    const [paidPurchase] = options.paidPurchaseId ? await transaction.select().from(purchases)
+      .where(eq(purchases.id, options.paidPurchaseId)).limit(1) : [];
+    if (options.paidPurchaseId && (!paidPurchase || paidPurchase.customerId !== actor.accountId ||
+      paidPurchase.status !== "PAID" || paidPurchase.jobOrderId ||
+      paidPurchase.customerId !== parsed.customerId || parsed.currency !== "PHP" ||
+      paidPurchase.priceMinor !== parsed.quotedAmountMinor || parsed.depositRequiredMinor !== parsed.quotedAmountMinor ||
+      paidPurchase.eventDate !== event.primaryLocalDate || paidPurchase.timezone !== event.timezone ||
+      !["garden-romance", "coastal-romance", "heritage-romance"].includes(paidPurchase.productSlug))) {
+      throw new OrderAuthorizationError("Paid purchase is not ready for an order");
+    }
+    const [settledAttempt] = paidPurchase ? await transaction.select().from(checkoutAttempts).where(and(
+      eq(checkoutAttempts.purchaseId, paidPurchase.id), eq(checkoutAttempts.state, "PAID"),
+    )).limit(1) : [];
+    if (paidPurchase && !settledAttempt?.providerPaymentId) throw new OrderValidationError("Confirmed payment is missing");
     const [customer] = await transaction
       .select({ id: accounts.id })
       .from(accounts)
@@ -73,11 +91,12 @@ export async function createJobOrder(
     if (!customer) throw new OrderReferenceError("Active customer account not found");
 
     const [selectedPackage] = await transaction
-      .select({ id: packages.id, termsSnapshot: packages.termsSnapshot })
+      .select({ id: packages.id, code: packages.code, termsSnapshot: packages.termsSnapshot })
       .from(packages)
       .where(and(eq(packages.id, parsed.packageId), eq(packages.active, true)))
       .limit(1);
     if (!selectedPackage) throw new OrderReferenceError("Active package not found");
+    if (paidPurchase && selectedPackage.code !== `WEDDING_${paidPurchase.tier}`) throw new OrderAuthorizationError("Package does not match the paid tier");
 
     if (parsed.assignedDesignerId) {
       const [designer] = await transaction
@@ -107,12 +126,13 @@ export async function createJobOrder(
         customerId: parsed.customerId,
         assignedDesignerId: parsed.assignedDesignerId,
         packageId: parsed.packageId,
-        packageTermsSnapshot: selectedPackage.termsSnapshot,
+        packageTermsSnapshot: paidPurchase?.termsSnapshot ?? selectedPackage.termsSnapshot,
         currency: parsed.currency,
         quotedAmountMinor: parsed.quotedAmountMinor,
         depositRequiredMinor: parsed.depositRequiredMinor,
         dueDate: parsed.dueDate,
         collectionKey: parsed.collectionKey,
+        productSlug: paidPurchase?.productSlug ?? null,
       })
       .returning({ id: jobOrders.id, jobNumber: jobOrders.jobNumber });
 
@@ -158,8 +178,18 @@ export async function createJobOrder(
     await transaction.insert(eventBriefs).values({
       jobOrderId: order.id,
       eventType: event.type,
-      document: briefFromEvent(event),
+      document: paidPurchase?.brief ?? briefFromEvent(event),
     });
+
+    if (paidPurchase && settledAttempt?.providerPaymentId) {
+      await transaction.insert(paymentEntries).values({
+        jobOrderId: order.id, amountMinor: paidPurchase.priceMinor, currency: "PHP",
+        method: "PAYMONGO", externalReference: settledAttempt.providerPaymentId,
+        confirmedBy: null, idempotencyKey: paidPurchase.id,
+      });
+      await transaction.update(purchases).set({ status: "ORDER_CREATED", jobOrderId: order.id, updatedAt: new Date() })
+        .where(eq(purchases.id, paidPurchase.id));
+    }
 
     await transaction.insert(auditEvents).values({
       actorAccountId: actor.accountId,
@@ -174,6 +204,7 @@ export async function createJobOrder(
 
   return getJobOrder(actor, created.id);
 }
+
 
 export async function getJobOrder(actor: Actor, orderId: string) {
   const parsedOrderId = z.string().uuid().parse(orderId);
@@ -194,6 +225,7 @@ export async function getJobOrder(actor: Actor, orderId: string) {
       depositRequiredMinor: jobOrders.depositRequiredMinor,
       dueDate: jobOrders.dueDate,
       collectionKey: jobOrders.collectionKey,
+      productSlug: jobOrders.productSlug,
       createdAt: jobOrders.createdAt,
       updatedAt: jobOrders.updatedAt,
     })

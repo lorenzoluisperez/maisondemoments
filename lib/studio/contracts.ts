@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { productPresentationSchema } from "@/lib/products/presentation";
 
 export const saveDraftOverridesSchema = z.object({
   expectedRevision: z.number().int().positive(),
   typography: z.enum(["romantic-serif", "editorial-serif"]).optional(),
   animationIntensity: z.enum(["subtle", "standard", "cinematic"]).optional(),
+  productPresentation: productPresentationSchema.optional(),
   scenes: z.array(z.object({
     id: z.string().min(1).max(80),
     layoutVariant: z.enum(["centered", "cards", "columns", "editorial"]).optional(),

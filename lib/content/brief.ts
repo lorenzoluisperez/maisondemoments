@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { eventSchema, validateEventForSubmission, type Event } from "@/lib/domain/event";
 import { snapshotMediaReferenceSchema } from "@/lib/invitation/config";
+import { weddingDetailsSchema } from "@/lib/products/content";
 
 const boundedText = (maximum: number) => z.string().trim().max(maximum);
 const personDraftSchema = z.object({
@@ -42,6 +43,7 @@ export const eventBriefDocumentSchema = z.object({
   schemaVersion: z.literal(1),
   event: eventBriefEventSchema,
   gallery: z.array(snapshotMediaReferenceSchema).max(12),
+  weddingDetails: weddingDetailsSchema.optional(),
 }).strict();
 
 export type EventBriefDocument = z.infer<typeof eventBriefDocumentSchema>;

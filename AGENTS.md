@@ -1,12 +1,12 @@
 # Maison de Moments project guidance
 
-This repository is a designer-operated platform for premium, semi-custom interactive invitations. The first release covers weddings, birthdays, debuts, and christenings. Customers provide structured event facts, designers compose within bounded controls, customers approve an immutable version, and admins publish it. Guests use private household links and allocated RSVP seats. The product is a creative service, not a self-service page builder.
+This repository is a designer-operated platform for premium, semi-custom interactive invitations. The current commercial launch scope is three wedding products: Garden Romance, Coastal Romance, and Heritage Romance. Birthday, debut, and christening support remains in the legacy foundation for future products. Customers provide structured facts, designers compose within bounded controls, customers approve an immutable version, and admins publish it. Guests use private household links and allocated RSVP seats. The product is a creative service, not a self-service page builder.
 
 ## Current product priority
 
-- Build a collection of polished, distinct sample invitation products first. `/demo/wedding`, `/demo/wedding-beach`, and `/demo/wedding-bridgerton` are fixture-driven wedding studies, not backend-editable products or evidence that the portfolio is complete.
-- Once enough finished examples exist, decide which facts and presentation choices recur, then make those products editable through the existing backend and bounded studio. The user has not set a sample count or approved an editor schema. Do not let anticipated backend controls dictate the creative design of new showcases.
-- The existing portal, studio, and production infrastructure remain implemented. Maintain them when needed, but do not treat their existence as a reason to prioritize more editor features ahead of sample products.
+- Make the three finished wedding designs reliable purchasable products while preserving their `/demo` fictional previews. The new storefront lives at `/` and `/designs`; existing `/catalog` redirects to `/designs`.
+- Essential and Signature have separately configured PHP prices and full hosted PayMongo payment. Couture requires an immutable offered scope before payment. Keep sales closed until merchant, policy, tax, delivery, and price configuration is complete.
+- Use one shared wedding fact model and a versioned selected-design renderer through studio preview, customer review, and guest delivery. Keep legacy invitations and eight earlier presets compatible. Treat current implementation as a foundation requiring staged purchase, visual, and operational validation before accepting real customers.
 
 ## Start with the task
 
@@ -28,7 +28,7 @@ This repository is a designer-operated platform for premium, semi-custom interac
 
 ## Product and implementation invariants
 
-- Preserve the four event types, one semi-custom package, two artwork collections, and eight event and collection presets unless the user explicitly changes scope.
+- Preserve the four underlying event types, two earlier artwork collections, and eight legacy presets for compatibility. The commercial wedding products now offer Essential, Signature, and Couture tiers; do not advertise unfinished event categories as purchasable.
 - Preserve a semantic, naturally scrollable guest journey with reliable access to Details and RSVP. Motion and media must not block practical information; reduced motion and long content must work. The synthetic wedding showcase reveals these controls after its opening.
 - Keep event facts separate from presentation. Use the shared renderer for studio preview, customer review, and guest delivery. Do not give customers arbitrary HTML, CSS, scripts, or an unrestricted editor.
 - Customer approval belongs to one immutable review version. Publication is admin-controlled and gated by the current approved version, payment balance, and verified backups of referenced customer media. Keep financial, RSVP, and audit history intact during rollback or corrections.

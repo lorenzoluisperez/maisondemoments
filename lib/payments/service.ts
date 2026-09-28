@@ -48,6 +48,9 @@ export async function recordPayment(actor: Actor, orderId: string, input: unknow
       await transaction.execute(sql`select pg_advisory_xact_lock(hashtextextended(${id}, 0))`);
       const [order] = await transaction.select().from(jobOrders).where(eq(jobOrders.id, id)).limit(1);
       if (!order) throw new PaymentNotFoundError("Job order not found");
+      if (order.productSlug || parsed.method.toUpperCase() === "PAYMONGO") {
+        throw new PaymentConflictError("Hosted-checkout receipts must come from verified provider payment state");
+      }
       const [existing] = await transaction.select({ id: paymentEntries.id }).from(paymentEntries)
         .where(eq(paymentEntries.idempotencyKey, parsed.idempotencyKey)).limit(1);
       if (existing) return;

@@ -11,6 +11,7 @@ import {
 import { canEditInvitationDraft, canReadOrder, type Actor } from "@/lib/auth/permissions";
 import { completeEventFromBrief, eventBriefDocumentSchema } from "@/lib/content/brief";
 import { compileInvitation } from "@/lib/invitation/compiler";
+import { weddingProductReviewFitIssues } from "@/lib/products/validation";
 import { invitationConfigSchema, invitationSnapshotSchema, type InvitationSnapshot } from "@/lib/invitation/config";
 import { resolveMediaReferences } from "@/lib/media/service";
 import {
@@ -34,6 +35,7 @@ export async function createReviewVersion(actor: Actor, orderId: string, input: 
     const [row] = await transaction.select({
       customerId: jobOrders.customerId,
       assignedDesignerId: jobOrders.assignedDesignerId,
+      productSlug: jobOrders.productSlug,
       orderState: jobOrders.state,
       invitationId: invitations.id,
       slug: invitations.slug,
@@ -57,18 +59,27 @@ export async function createReviewVersion(actor: Actor, orderId: string, input: 
     if (row.revision !== parsed.expectedRevision) throw new ReviewConflictError("A newer draft revision already exists");
     if (row.reviewState !== "EDITING" && row.reviewState !== "CHANGES_REQUESTED") throw new ReviewConflictError("This draft is already locked for review");
 
-    const completed = completeEventFromBrief(eventBriefDocumentSchema.parse(row.briefDocument));
+    const briefDocument = eventBriefDocumentSchema.parse(row.briefDocument);
+    const completed = completeEventFromBrief(briefDocument);
     if (!completed.ready) throw new ReviewConflictError("The submitted event content is no longer complete");
+    const draftConfig = invitationConfigSchema.parse(row.configuration);
+    if (row.productSlug) {
+      const fitIssues = weddingProductReviewFitIssues(briefDocument, draftConfig.productPresentation?.fit ?? "standard");
+      if (fitIssues.length) throw new ReviewConflictError(fitIssues[0].message);
+    }
     const [latest] = await transaction.select({ version: invitationVersions.version, snapshot: invitationVersions.snapshot })
       .from(invitationVersions).where(eq(invitationVersions.invitationId, row.invitationId))
       .orderBy(desc(invitationVersions.version)).limit(1);
     const nextVersion = (latest?.version ?? 0) + 1;
     const compiled = compileInvitation({
       event: completed.event,
-      config: invitationConfigSchema.parse(row.configuration),
+      config: draftConfig,
       slug: row.slug,
       version: nextVersion,
       media: { gallery: eventBriefDocumentSchema.parse(row.briefDocument).gallery },
+      product: row.productSlug && ["garden-romance", "coastal-romance", "heritage-romance"].includes(row.productSlug)
+        ? { slug: row.productSlug as "garden-romance" | "coastal-romance" | "heritage-romance", weddingDetails: eventBriefDocumentSchema.parse(row.briefDocument).weddingDetails }
+        : undefined,
     });
     const { contentHash, ...snapshot } = compiled;
     let previousSnapshot: InvitationSnapshot | undefined;
@@ -301,6 +312,13 @@ export async function changeInvitationAvailability(actor: Actor, invitationId: s
         : parsed.action === "remove" ? current.availability !== "REMOVED"
           : current.availability === "LIVE" || current.availability === "SUSPENDED";
     if (!allowed) throw new PublicationBlockedError(`Cannot ${parsed.action} an invitation in ${current.availability.toLowerCase()} state`);
+    if (parsed.action === "resume") {
+      const [order] = await transaction.select({ productSlug: jobOrders.productSlug, required: jobOrders.quotedAmountMinor }).from(jobOrders).where(eq(jobOrders.id, current.jobOrderId)).limit(1);
+      if (order?.productSlug) {
+        const [paid] = await transaction.select({ amount: sql<number>`coalesce(sum(${paymentEntries.amountMinor}), 0)::bigint` }).from(paymentEntries).where(eq(paymentEntries.jobOrderId, current.jobOrderId));
+        if (Number(paid?.amount ?? 0) < order.required) throw new PublicationBlockedError("Outstanding balance blocks invitation access");
+      }
+    }
     await transaction.update(invitations).set({
       availability: target,
       accessEpoch: parsed.action === "resume" ? current.accessEpoch : current.accessEpoch + 1,

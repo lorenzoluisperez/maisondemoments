@@ -93,6 +93,7 @@ export async function getEventBrief(actor: Actor, orderId: string) {
       jobNumber: order.jobNumber,
       state: order.state,
       collectionKey: order.collectionKey,
+      productSlug: order.productSlug,
       dueDate: order.dueDate,
     },
     document,

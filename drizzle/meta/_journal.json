@@ -141,6 +141,41 @@
       "when": 1789386121000,
       "tag": "0019_phase_7_transactional_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790527399276,
+      "tag": "0020_boring_deadpool",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790527926526,
+      "tag": "0021_gigantic_havok",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790613807426,
+      "tag": "0022_clammy_mariko_yashida",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790614302345,
+      "tag": "0023_cuddly_vindicator",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790618186226,
+      "tag": "0024_keen_grandmaster",
+      "breakpoints": true
     }
   ]
 }

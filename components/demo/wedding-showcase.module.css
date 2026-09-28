@@ -13,6 +13,10 @@
 }
 
 .showcase button, .showcase a { font: inherit; }
+.showcase[data-ornament="quiet"] .outfits, .showcase[data-ornament="quiet"] .swatches { display: none; }
+.showcase .titleCard h1 span, .showcase .eventGrid h3, .showcase .eventGrid strong { overflow-wrap: anywhere; }
+.showcase[data-fit="compact"] .titleCard h1 { font-size: clamp(2.45rem, 10vw, 4.8rem); line-height: .94; }
+.showcase[data-fit="compact"] .eventGrid h3 { font-size: clamp(1.45rem, 2.7vw, 2.3rem); }
 .nav { position: fixed; z-index: 80; inset: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 18px clamp(18px, 4vw, 58px); color: #fff9e9; pointer-events: none; }
 .nav::before { content: ""; position: absolute; z-index: -1; inset: 0 0 -24px; background: linear-gradient(to bottom, rgba(18, 22, 15, .62), transparent); pointer-events: none; }
 .nav button { pointer-events: auto; }
@@ -184,6 +188,7 @@
 .rsvpPhoto { position: relative; justify-self: end; width: min(360px, 78vw); aspect-ratio: .77; padding: 13px 13px 68px; background: #f8efd9 url("/wedding-showcase/cotton-card-v4.webp") center/620px; box-shadow: 0 22px 46px rgba(43,38,27,.16); transform: rotate(-2deg); }
 .rsvpPhoto img { inset: 13px 13px 68px !important; width: calc(100% - 26px) !important; height: calc(100% - 81px) !important; object-fit: cover; }
 .rsvpPhoto::after { content: "See you in Tagaytay?"; position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: var(--olive); font-size: 1.15rem; font-style: italic; }
+.showcase[data-live="true"] .rsvpPhoto::after { content: none; }
 .rsvpContent { max-width: 630px; }
 .rsvpContent h2 { color: var(--olive); }
 .rsvpContent > p:not(.kicker) { max-width: 490px; margin: 26px 0; line-height: 1.75; }
@@ -223,6 +228,7 @@
 .staticFlap img { object-fit: contain; object-position: center 5%; opacity: .82; filter: grayscale(1) contrast(.82) brightness(1.12); }
 .staticSeal { position: absolute; z-index: 4; left: 50%; top: 65%; width: min(18.4svh, 31.5vw); aspect-ratio: 1; transform: translate(-50%,-50%); filter: drop-shadow(4px 10px 5px #6b5a4940); }
 .staticSeal img { object-fit: contain; }
+.staticSeal span { position: absolute; inset: 0; display: grid; place-items: center; padding: 20%; color: #a48a6e; font: italic clamp(1.1rem, 2.2vw, 2.2rem) Georgia, serif; text-align: center; text-shadow: 1px 2px 2px #6650396b; overflow-wrap: anywhere; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
 @keyframes spin { to { transform: rotate(360deg); } }

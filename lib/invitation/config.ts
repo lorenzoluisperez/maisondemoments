@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { weddingDetailsSchema } from "@/lib/products/content";
+import { productPresentationSchema } from "@/lib/products/presentation";
 
 export const moduleTypeSchema = z.enum(["opening", "identity", "details", "participants", "story", "gallery", "dress-code", "gifts", "rsvp", "closing"]);
 
@@ -29,6 +31,7 @@ export const invitationConfigSchema = z.object({
   rendererVersion: z.literal("v1"),
   typography: z.enum(["romantic-serif", "editorial-serif"]),
   animationIntensity: z.enum(["subtle", "standard", "cinematic"]),
+  productPresentation: productPresentationSchema.optional(),
   scenes: z.array(sceneSchema).min(4).max(8),
 }).strict();
 
@@ -49,7 +52,7 @@ export const invitationSnapshotSchema = z.object({
   dateLabel: z.string().min(1).max(120),
   rsvpDeadlineLabel: z.string().min(1).max(120),
   activities: z.array(z.object({
-    id: z.string().uuid(), label: z.string().min(1).max(80), timeLabel: z.string().min(1).max(80),
+    id: z.string().uuid(), kind: z.enum(["ceremony", "reception", "program", "party"]).optional(), label: z.string().min(1).max(80), timeLabel: z.string().min(1).max(80),
     venueName: z.string().min(1).max(160), address: z.string().min(1).max(240), mapUrl: z.string().url(),
   }).strict()).min(1).max(8),
   participants: z.array(z.object({ roleLabel: z.string().min(1).max(60), displayName: z.string().min(1).max(120) }).strict()).max(120),
@@ -57,6 +60,13 @@ export const invitationSnapshotSchema = z.object({
   dressCode: z.string().max(500).optional(),
   giftInformation: z.string().max(800).optional(),
   media: z.object({ gallery: z.array(snapshotMediaReferenceSchema).max(12) }).strict(),
+  product: z.object({
+    slug: z.enum(["garden-romance", "coastal-romance", "heritage-romance"]),
+    designVersion: z.literal(1),
+    dateIso: z.string().datetime({ offset: true }),
+    timezone: z.string().min(1),
+    weddingDetails: weddingDetailsSchema,
+  }).strict().optional(),
   config: invitationConfigSchema,
 }).strict();
 

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/db";
@@ -17,6 +17,7 @@ import { getStudioOrder } from "@/lib/studio/service";
 const migrationUrl = process.env.MIGRATION_DATABASE_URL;
 if (!migrationUrl) throw new Error("Guest integration tests require MIGRATION_DATABASE_URL");
 const adminSql = postgres(migrationUrl, { max: 1, prepare: false });
+const jobNumberYear = randomInt(3000, 9999);
 const fixture = {
   adminId: randomUUID(), adminAuthId: randomUUID(), designerId: randomUUID(), designerAuthId: randomUUID(),
   customerId: randomUUID(), customerAuthId: randomUUID(), otherId: randomUUID(), otherAuthId: randomUUID(), packageId: randomUUID(),
@@ -51,7 +52,7 @@ beforeAll(async () => {
   const order = await createJobOrder(adminActor, {
     customerId: fixture.customerId, assignedDesignerId: fixture.designerId, packageId: fixture.packageId,
     currency: "PHP", quotedAmountMinor: 200000, depositRequiredMinor: 100000, dueDate: "2094-08-01", collectionKey: "midnight-garden", event,
-  }, { jobNumberYear: 2094 });
+  }, { jobNumberYear });
   orderId = order.id;
   await adminSql`insert into payment_entries (job_order_id, amount_minor, currency, method, confirmed_by, idempotency_key) values (${orderId}, 200000, 'PHP', 'bank-transfer', ${fixture.adminId}, ${randomUUID()})`;
   const brief = await getEventBrief(customerActor, orderId);
@@ -65,16 +66,20 @@ beforeAll(async () => {
 afterAll(async () => {
   await closeDb();
   await adminSql.begin(async (sql) => {
-    await sql`delete from audit_events where actor_account_id in (${fixture.adminId}, ${fixture.designerId}, ${fixture.customerId}, ${fixture.otherId}) or (entity_type = 'guest_group' and entity_id in (select id from guest_groups where invitation_id in (select id from invitations where job_order_id = ${orderId})))`;
-    await sql`delete from approvals where version_id in (select version.id from invitation_versions version join invitations invitation on invitation.id = version.invitation_id where invitation.job_order_id = ${orderId})`;
-    await sql`delete from background_jobs where kind = 'SEND_EMAIL' and payload->>'deliveryId' in (select id::text from notification_deliveries where job_order_id = ${orderId})`;
-    await sql`delete from notification_deliveries where job_order_id = ${orderId}`;
-    await sql`delete from payment_entries where job_order_id = ${orderId}`;
-    await sql`delete from job_orders where id = ${orderId}`;
+    if (orderId) {
+      await sql`delete from audit_events where actor_account_id in (${fixture.adminId}, ${fixture.designerId}, ${fixture.customerId}, ${fixture.otherId}) or (entity_type = 'guest_group' and entity_id in (select id from guest_groups where invitation_id in (select id from invitations where job_order_id = ${orderId})))`;
+      await sql`delete from approvals where version_id in (select version.id from invitation_versions version join invitations invitation on invitation.id = version.invitation_id where invitation.job_order_id = ${orderId})`;
+      await sql`delete from background_jobs where kind = 'SEND_EMAIL' and payload->>'deliveryId' in (select id::text from notification_deliveries where job_order_id = ${orderId})`;
+      await sql`delete from notification_deliveries where job_order_id = ${orderId}`;
+      await sql`delete from payment_entries where job_order_id = ${orderId}`;
+      await sql`delete from job_orders where id = ${orderId}`;
+    } else {
+      await sql`delete from audit_events where actor_account_id in (${fixture.adminId}, ${fixture.designerId}, ${fixture.customerId}, ${fixture.otherId})`;
+    }
     await sql`delete from packages where id = ${fixture.packageId}`;
     await sql`delete from staff_memberships where account_id in (${fixture.adminId}, ${fixture.designerId})`;
     await sql`delete from accounts where id in (${fixture.adminId}, ${fixture.designerId}, ${fixture.customerId}, ${fixture.otherId})`;
-    await sql`delete from job_order_counters where year = 2094`;
+    await sql`delete from job_order_counters where year = ${jobNumberYear}`;
   });
   await adminSql.end({ timeout: 5 });
 }, 60_000);

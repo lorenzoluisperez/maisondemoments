@@ -35,9 +35,114 @@ export const packages = pgTable("packages", {
   termsSnapshot: jsonb("terms_snapshot").notNull(), active: boolean("active").notNull().default(true),
 });
 
+export const productOffers = pgTable("product_offers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  productSlug: text("product_slug").notNull(),
+  tier: text("tier").notNull(),
+  priceMinor: bigint("price_minor", { mode: "number" }),
+  turnaroundDays: integer("turnaround_days"),
+  enabled: boolean("enabled").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("product_offer_unique").on(table.productSlug, table.tier),
+  check("product_offer_tier_valid", sql`${table.tier} IN ('ESSENTIAL', 'SIGNATURE')`),
+  check("product_offer_price_valid", sql`(${table.priceMinor} IS NULL OR ${table.priceMinor} > 0) AND (${table.turnaroundDays} IS NULL OR ${table.turnaroundDays} > 0)`),
+]);
+
+export const coutureQuotes = pgTable("couture_quotes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").notNull().references(() => accounts.id),
+  productSlug: text("product_slug").notNull(),
+  request: text("request").notNull(),
+  scope: text("scope"),
+  exclusions: text("exclusions"),
+  revisionRounds: integer("revision_rounds"),
+  deliveryDays: integer("delivery_days"),
+  priceMinor: bigint("price_minor", { mode: "number" }),
+  state: text("state").notNull().default("REQUESTED"),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("couture_quotes_customer_idx").on(table.customerId),
+  check("couture_quote_state_valid", sql`${table.state} IN ('REQUESTED', 'OFFERED', 'ACCEPTED', 'DECLINED', 'EXPIRED')`),
+]);
+
+export const purchases = pgTable("purchases", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").notNull().references(() => accounts.id),
+  productSlug: text("product_slug").notNull(),
+  tier: text("tier").notNull(),
+  quoteId: uuid("quote_id").unique().references(() => coutureQuotes.id),
+  eventDate: date("event_date").notNull(),
+  timezone: text("timezone").notNull(),
+  contactName: text("contact_name").notNull(),
+  priceMinor: bigint("price_minor", { mode: "number" }).notNull(),
+  currency: text("currency").notNull().default("PHP"),
+  termsSnapshot: jsonb("terms_snapshot").notNull(),
+  status: text("status").notNull().default("AWAITING_PAYMENT"),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  brief: jsonb("brief"),
+  briefRevision: integer("brief_revision").notNull().default(1),
+  jobOrderId: uuid("job_order_id").unique().references(() => jobOrders.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("purchases_customer_idx").on(table.customerId),
+  check("purchase_status_valid", sql`${table.status} IN ('AWAITING_PAYMENT', 'PAID', 'ORDER_CREATED', 'CANCELLED', 'REFUNDED')`),
+  check("purchase_tier_valid", sql`${table.tier} IN ('ESSENTIAL', 'SIGNATURE', 'COUTURE')`),
+  check("purchase_price_valid", sql`${table.priceMinor} > 0 AND ${table.currency} = 'PHP' AND ${table.briefRevision} > 0`),
+]);
+
+export const checkoutAttempts = pgTable("checkout_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  purchaseId: uuid("purchase_id").notNull().references(() => purchases.id),
+  providerSessionId: text("provider_session_id").unique(),
+  providerPaymentId: text("provider_payment_id").unique(),
+  reference: text("reference").notNull().unique(),
+  state: text("state").notNull().default("CREATING"),
+  checkoutUrl: text("checkout_url"),
+  amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+  currency: text("currency").notNull().default("PHP"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("checkout_attempt_purchase_idx").on(table.purchaseId),
+  check("checkout_attempt_state_valid", sql`${table.state} IN ('CREATING', 'OPEN', 'PAID', 'FAILED', 'CANCELLED', 'EXPIRED')`),
+]);
+
 export const jobOrderCounters = pgTable("job_order_counters", {
   year: integer("year").primaryKey(), lastValue: integer("last_value").notNull().default(0),
 });
+
+export const commerceDailyMetrics = pgTable("commerce_daily_metrics", {
+  day: date("day").notNull(),
+  productSlug: text("product_slug").notNull(),
+  tier: text("tier").notNull().default("ALL"),
+  stage: text("stage").notNull(),
+  count: integer("count").notNull().default(0),
+}, (table) => [
+  primaryKey({ columns: [table.day, table.productSlug, table.tier, table.stage] }),
+  check("commerce_metric_valid", sql`${table.tier} IN ('ALL', 'ESSENTIAL', 'SIGNATURE', 'COUTURE') AND ${table.stage} IN ('PRODUCT_VIEW', 'CHECKOUT_STARTED', 'PAID', 'REFUNDED', 'QUOTE_REQUESTED') AND ${table.count} >= 0`),
+]);
+
+export const productionCostEntries = pgTable("production_cost_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  purchaseId: uuid("purchase_id").notNull().references(() => purchases.id),
+  category: text("category").notNull(),
+  minutes: integer("minutes"),
+  amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+  note: text("note").notNull(),
+  recordedBy: uuid("recorded_by").notNull().references(() => accounts.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  voidedAt: timestamp("voided_at", { withTimezone: true }),
+  voidedBy: uuid("voided_by").references(() => accounts.id),
+}, (table) => [
+  index("production_cost_purchase_idx").on(table.purchaseId),
+  index("production_cost_recorded_by_idx").on(table.recordedBy),
+  index("production_cost_voided_by_idx").on(table.voidedBy),
+  check("production_cost_valid", sql`${table.category} IN ('LABOR', 'ARTWORK', 'PAYMENT_FEE', 'OTHER') AND ${table.amountMinor} >= 0 AND char_length(btrim(${table.note})) BETWEEN 1 AND 500 AND ((${table.category} = 'LABOR' AND ${table.minutes} BETWEEN 1 AND 1440) OR (${table.category} <> 'LABOR' AND ${table.minutes} IS NULL)) AND ((${table.voidedAt} IS NULL AND ${table.voidedBy} IS NULL) OR (${table.voidedAt} IS NOT NULL AND ${table.voidedBy} IS NOT NULL))`),
+]);
 
 export const jobOrders = pgTable("job_orders", {
   id: uuid("id").primaryKey().defaultRandom(), jobNumber: text("job_number").notNull().unique(),
@@ -47,6 +152,7 @@ export const jobOrders = pgTable("job_orders", {
   currency: text("currency").notNull(), quotedAmountMinor: bigint("quoted_amount_minor", { mode: "number" }).notNull(),
   depositRequiredMinor: bigint("deposit_required_minor", { mode: "number" }).notNull(), dueDate: date("due_date"),
   collectionKey: text("collection_key").notNull().default("midnight-garden"),
+  productSlug: text("product_slug"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -259,7 +365,7 @@ export const guestRateLimits = pgTable("guest_rate_limits", {
 export const paymentEntries = pgTable("payment_entries", {
   id: uuid("id").primaryKey().defaultRandom(), jobOrderId: uuid("job_order_id").notNull().references(() => jobOrders.id),
   amountMinor: bigint("amount_minor", { mode: "number" }).notNull(), currency: text("currency").notNull(), method: text("method").notNull(),
-  externalReference: text("external_reference"), confirmedBy: uuid("confirmed_by").notNull().references(() => accounts.id), reversalOfId: uuid("reversal_of_id").references((): AnyPgColumn => paymentEntries.id),
+  externalReference: text("external_reference"), confirmedBy: uuid("confirmed_by").references(() => accounts.id), reversalOfId: uuid("reversal_of_id").references((): AnyPgColumn => paymentEntries.id),
   idempotencyKey: uuid("idempotency_key").notNull().unique(), note: text("note"),
   confirmedAt: timestamp("confirmed_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

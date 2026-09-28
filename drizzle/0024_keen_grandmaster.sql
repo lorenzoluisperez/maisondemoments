@@ -1,0 +1,2 @@
+CREATE INDEX "production_cost_recorded_by_idx" ON "production_cost_entries" USING btree ("recorded_by");--> statement-breakpoint
+CREATE INDEX "production_cost_voided_by_idx" ON "production_cost_entries" USING btree ("voided_by");

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, LockKeyhole } from "lucide-react";
-import { TheatricalInvitation } from "@/components/invitation/theatrical-invitation";
+import { ProductInvitation } from "@/components/products/product-invitation";
 import type { InvitationRenderModel } from "@/lib/media/types";
 
 type Slot = { id: string; type: "ADULT" | "CHILD"; assignedName: string | null; isAdditionalGuest: boolean; displayOrder: number };
@@ -36,7 +36,7 @@ export function PrivateInvitation({ slug }: { slug: string }) {
     } catch (error) { setMessage(error instanceof Error ? error.message : "This invitation is unavailable."); }
   })(); }, [load, slug]);
   if (!data) return <main className="private-invitation-gate"><LockKeyhole /><p className="eyebrow">Maison de Moments</p><h1>{message}</h1><p>Household links may be revoked or reissued by the host.</p></main>;
-  return <TheatricalInvitation snapshot={data.snapshot} rsvpContent={<HouseholdRsvp slug={slug} data={data} onSaved={setData} />} />;
+  return <ProductInvitation snapshot={data.snapshot} rsvpContent={<HouseholdRsvp slug={slug} data={data} onSaved={setData} />} />;
 }
 
 function HouseholdRsvp({ slug, data, onSaved }: { slug: string; data: GuestData; onSaved: (data: GuestData) => void }) {

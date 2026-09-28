@@ -2,39 +2,44 @@
 
 Status: active source of truth
 
-Last updated: 2026-09-27
+Last updated: 2026-09-29
 
 This document records the agreed product direction, architecture, release boundaries, implementation phases, and current status. Update it whenever scope, architecture, or phase status changes.
 
 ## Current position
 
-**The current creative priority is building finished sample invitation products.** The fixture-driven wedding showcase at `/demo/wedding` is the first AI-assisted proof of concept. `/demo/wedding-beach` retains its couple, date, times, and guest information in a fictional Boracay celebration with original tropical artwork and painted moving surf. `/demo/wedding-bridgerton` is a Filipino heritage study in fictional Intramuros venues. It retains the same couple and core event details while adding an original embossed envelope with an outward-lifting pearl seal, floral ornaments, a keepsake story spread, arched venue illustrations, Filipino formal attire and an embroidered fan, engraved entourage and illustrated program layouts, and a Manila-time countdown. Browser checks cover its local guest path, but physical-device review and MP3 file provenance remain open. These showcases are separate from the eight earlier event and collection presets and are not yet editable through the backend. More sample products should be designed and validated before choosing how to make these finished designs editable. No target number of samples has been agreed.
+The three finished wedding studies are being promoted to Garden Romance, Coastal Romance, and Heritage Romance. The public storefront and product pages are implemented in the application, with the old homepage collections removed. The `/demo` routes stay fictional previews. The customer purchase, PHP PayMongo checkout, quote, passwordless code, staff MFA, initial wedding brief, and product snapshot pathways are implemented locally but have not passed provider-backed staging integration or production release gates. Local product pages show packages as unavailable when the new catalog tables have not been migrated or offers have not been enabled.
 
-The technical roadmap remains at the Phase 7 infrastructure gate. Phase 1 implementation and Phases 2 through 7 implementation are complete. The portal and constrained studio already exist for the earlier preset system; the product-first priority does not erase that work. Phase 1 still requires its physical-device release gate. Phase 7 still requires production backup credentials, PITR configuration, and a successful isolated restore drill. Some Phase 0 commercial and rights decisions remain open and must be resolved before accepting paid orders.
+The existing portal, studio, review, publication, guest access, RSVP, media, and operational foundation remains. Earlier orders and the eight event and collection presets stay compatible. Their historical phase evidence does not prove the new commerce journey. The prior sample-first sequence and manual 50 percent deposit assumption are superseded for these wedding products.
 
-| Phase | Status | Evidence or remaining work |
+| Workstream | Current status | Gate still open |
 |---|---|---|
-| 0. Product and art contract | Partially complete | Product boundaries and architecture are documented. Pricing terms, artwork rights, privacy terms, and production capacity still need written decisions. |
-| 1. Guest experience proof | Implementation complete, release gate pending | The shared scrollable renderer, eight presets, shortcuts, long-content behavior, and reduced motion are implemented. Physical iPhone, Android, and in-app-browser testing remains. |
-| 2. Domain foundation | Complete | Four event schemas, live database model, ownership checks, JO generation, least-privilege runtime access, RLS, API boundaries, integration tests, and production build pass. |
-| 3. Media and renderer | Complete | Private signed uploads, durable Sharp processing, immutable variants, signed delivery, cleanup, persistent artwork metadata, renderer asset bindings, live integration tests, and budgets pass. |
-| 4. Production slice | Complete | Persistent event briefs, incremental customer autosave, completeness checks, media attachment, automatic drafts, and the conflict-safe constrained studio pass live integration tests. |
-| 5. Review and publishing | Complete | Frozen reviews, exact-version customer decisions, material-change reporting, payment-gated admin publication, compatible rollback, availability controls, and audit history pass live integration tests. |
-| 6. Guests and RSVP | Complete | Household entry and CSV import, allocated seats, private link sessions, amendments, deadline enforcement, corrections, revocation, and safe exports pass live integration tests. |
-| 7. Operational hardening | Implementation complete, infrastructure gate pending | Append-only payments and reversals, queues, structured monitoring, private email tasks, backup-gated publication, removal, retention, and a guarded restore drill are implemented. Configure off-provider storage and an isolated restore database, enable PITR, then pass the drill. |
-| 8. Private pilot | Not started | Complete at least two real pilot orders for each event type and measure time, usability, and margins. |
-| 9. Public launch | Not started | Publish the marketing catalog and open controlled intake after all launch gates pass. |
+| Product foundation | Three versioned wedding product identities, shared brief, selected renderer, personalized opening seal, compact fit preset, and conservative review length checks implemented locally | Full visual fit validation on real content |
+| Storefront and purchasing | Public pages, three tiers, quote flow, passwordless email-code UI, hosted PayMongo checkout and signed webhook implemented locally; checkout is explicitly off by default | Apply reviewed migrations on staging, configure merchant and email, run real test-mode payments and recovery cases |
+| Customer and staff workflows | Paid-brief intake, payment confirmation view, customer production timeline, actionable admin queues, aggregate 30-day funnel counts, recorded time/cost and tier contribution reports, pricing, quotes, designer assignment, provider-verified full refund recording, curated product controls, preview widths, and selected renderer in preview/review/guest paths implemented locally | Automate refund discovery and partial refunds, broader visual-fit and overflow checks, verify complete cost entry for real margin, and end-to-end verification |
+| Launch validation | Not complete | Merchant activation, legal and tax configuration, music provenance, separate backups and isolated restore, physical-device review |
 
-Detailed completion evidence lives in the [Phase 1 acceptance record](phase-1-acceptance.md), [Phase 2 acceptance record](phase-2-acceptance.md), [Phase 3 acceptance record](phase-3-acceptance.md), [Phase 4 acceptance record](phase-4-acceptance.md), [Phase 5 acceptance record](phase-5-acceptance.md), [Phase 6 acceptance record](phase-6-acceptance.md), and [Phase 7 acceptance record](phase-7-acceptance.md).
+The older Phase 1 through 7 acceptance records describe the legacy foundation only. Do not treat those records as acceptance of this commercial expansion.
+The local commercial release evidence and remaining gates are in [phase-commerce-acceptance.md](phase-commerce-acceptance.md).
 
-## Product-first build sequence
+## Commercial wedding release
 
-1. Create distinctive, complete sample invitations as guest-facing products. Use the wedding showcase to test the quality and feasibility of AI-assisted art, interaction, and implementation; do not assume its one-off code is already a reusable template.
-2. Review each sample as a product on relevant mobile and desktop devices, including its content, accessibility, motion fallback, navigation, and visual quality. Record what has actually passed. A browser preview alone does not close the physical-device gate.
-3. After a sufficient portfolio exists, compare the finished products and identify which event facts can be structured, which presentation choices can be safely bounded, and which design elements must remain product-specific. Decide the portfolio threshold and editable scope with the user at that point.
-4. Then adapt selected finished products to the existing portal, studio, review, publishing, and guest infrastructure. Preserve the immutable review and publication rules. Maintain existing backend behavior as needed while sample work proceeds.
+- One Next.js application and deployment. Public routes are `/` and `/designs`; customers use `/portal`, staff use `/admin` and `/studio`, and guests use private `/i/[slug]` links.
+- Three released wedding designs, each preserving its artwork and opening sequence. Future birthday, debut, and christening products are not on sale yet.
+- Essential includes structured facts, wording, names, initials, and supported photos with the original styling. Signature adds curated staff-controlled options. Couture requires a scoped immutable proposal with deliverables, exclusions, revision allowance, price, and delivery time before payment.
+- Essential and Signature have separate per-design PHP prices, full payment, two consolidated discretionary revision rounds, 12 photos, 500 households, and hosting through 90 days after the event. Factual corrections and staff defects do not use a revision round. Couture terms are snapshotted from the accepted proposal.
+- Customers sign in with email codes; staff also require TOTP MFA. Hosted PayMongo checkout in PHP is the first provider. Do not show converted currencies until settlement in those currencies is supported. Stripe is deferred.
+- A purchase can exist without a complete event brief. Verified payment precedes detailed content collection. Browser redirects never settle payment. Signed provider events or provider API reconciliation do. The existing append-only order ledger remains authoritative after intake.
+- Server permissions protect prices, quote acceptance, order ownership, designer assignment, review approval, payment history, publication, guest seats, and media. Customer-authored HTML, CSS, and scripts are not supported.
 
-The eight implemented event and collection presets prove the shared foundation; they are not a claim that eight polished showcase products are complete. Adding backend fields or generic editor controls before the product patterns are clear is not the current priority.
+## Delivery sequence and acceptance
+
+1. Complete the product renderer and content capabilities with exact-version snapshots and legacy compatibility.
+2. Complete test-mode storefront purchasing, email authentication, PayMongo confirmation, retries, reconciliation, and Couture acceptance.
+3. Complete the portal production timeline, provider-confirmed refunds, visual-fit tooling, business analytics, and admin exception queues.
+4. Validate complete purchase-to-publication journeys for all three designs on staging, then perform payment recovery and physical-device review before controlled live enablement.
+
+Required checks include authentication expiry and cross-account access, staff MFA, duplicate and delayed payment events, refund confirmation, quote immutability, tier restrictions, long and missing content, mobile and reduced motion, revoked household links, RSVP deadlines, concurrent edits, `npm run check`, production build, focused browser tests, and staging database integration tests. Track product view, checkout, paid order, production hours, revisions, delivery time, refunds, and margin by tier without sending private invitation facts or guest tokens to analytics.
 
 ## Product definition
 
@@ -50,39 +55,7 @@ The initial business is a productized creative service. Customers buy a finished
 
 ## Fixed product decisions
 
-- Support weddings, birthdays, debuts, and christenings.
-- Launch with one semi-custom package and two coordinated artwork collections.
-- Provide eight tested event and collection presets.
-- Use one coherent, naturally scrollable theatrical journey.
-- Keep Details and RSVP available throughout the invitation.
-- Use private household links with allocated guest slots and no guest accounts.
-- Give every household access to the same event activities.
-- Let only admins publish during the MVP.
-- Give each order one customer owner and final approver.
-- Include two consolidated design revision rounds by default.
-- Confirm quotes, deposits, and balances manually during the MVP.
-- Host invitations through 90 days after the event by default.
-- Limit the first package to 12 gallery photos and 500 households.
-- Use English application interfaces while accepting Unicode customer content.
-- Exclude uploaded video, arbitrary music, unlimited customization, and customer design editing from the MVP.
-
-The service must describe reusable collections as semi-custom. Exclusive artwork and commissions require separate terms.
-
-## MVP release boundary
-
-The first sellable release includes:
-
-- All four event types and eight event and collection presets.
-- One shared scrollable theatrical guest journey.
-- Customer portal and event-specific content collection.
-- Constrained internal studio and reusable compositions.
-- Immutable review versions and version-specific approval.
-- Admin publication, rollback, suspension, expiry, and removal.
-- Household links, allocated slots, RSVP amendments, and exports.
-- Manual payment confirmation.
-- Monitoring, durable background work, backups, retention, and recovery procedures.
-
-Optional content modules are story, gallery, schedule, participant groups, dress code, gift information, and reminders. Scenes may contain several modules. Long information views grow or scroll naturally and must never be squeezed into a fixed-height theatrical frame.
+The commercial release decisions above supersede the earlier one-package and manual-payment MVP assumptions. The underlying four event schemas, two artwork collections, eight presets, and historical orders remain supported for compatibility. The sellable collection currently contains only the three wedding products.
 
 ## Roles and permissions
 
@@ -97,23 +70,14 @@ Staff accounts require MFA. Designers do not need unrestricted payment details o
 
 ## End-to-end workflow
 
-1. The customer explores real demos and selects an event type, package, and collection.
-2. An admin confirms the quote and creates the Job Order.
-3. The customer completes event-specific sections and uploads media with incremental saving.
-4. The server validates required content and media readiness.
-5. Submitted content, confirmed deposit, collection, and delivery date make the order ready for production.
-6. The system generates a draft from structured facts and a preset without staff retyping names, dates, or venues.
-7. A designer applies bounded composition, typography, section, and animation choices.
-8. Internal QA checks facts, visual fit, responsive behavior, accessibility, and budgets.
-9. The system freezes an immutable review version.
-10. The customer approves that version or submits one consolidated revision request.
-11. An admin publishes the approved version after the payment gate passes.
-12. The customer distributes household links.
-13. Households respond and may amend responses until the deadline.
-14. Post-publication corrections create a new draft, review, approval, and publication cycle.
-15. Access expires after the contracted hosting period and personal content enters the retention workflow.
+1. The customer browses three wedding products, previews a fictional example, and selects a design and tier.
+2. Essential and Signature customers verify email, provide booking date and contact details, accept displayed terms, and pay in PHP via hosted checkout. Couture customers request a scoped proposal and accept its exact terms first.
+3. A signed PayMongo event or authorized reconciliation confirms the purchase. The customer completes the wedding brief in the portal, including supported photos after the production order is created.
+4. A designer reviews the selected design with customer facts, resolves content fit, and releases an immutable review version. The customer approves that exact version or requests a permitted revision.
+5. An admin publishes only after the current approval, financial balance, and referenced-media backup gates pass. The customer manages private household links and guest replies.
+6. Corrections after approval start a new review cycle. Expiry and retention follow the purchased terms and existing protected workflows.
 
-Customer delays pause the production promise. Turnaround begins only when the required brief and deposit are complete.
+Turnaround begins after verified payment and a complete brief. Customer delays pause production timing.
 
 ## Architecture baseline
 
@@ -355,31 +319,13 @@ Phase 7 completed the application layer for operating, monitoring, backing up, e
 
 ### Exit evidence and remaining infrastructure gate
 
-Domain and PostgreSQL tests cover payment authorization, idempotency, balance derivation, reversal invariants, tenant controls, publication, media, and RSVP behavior. Database verification covers all 36 application tables and 20 migrations. Production credentials are intentionally absent from the repository, so the actual off-provider copy and isolated PITR restore still require infrastructure configuration and a recorded drill. Phase 8 must not begin until that gate, the Phase 1 device gate, and the Phase 0 sales blockers are resolved.
+Earlier domain and PostgreSQL tests covered the legacy payment, authorization, publication, media, and RSVP foundation. Commerce migrations 0020 through 0024 have been applied and schema-verified on the development database, but not on staging. Production credentials are intentionally absent from the repository, so the actual off-provider copy and isolated PITR restore still require infrastructure configuration and a recorded drill. The commercial release must remain closed until those gates, device checks, and sales blockers are resolved.
 
-## Next phase and later phases
+## Pilot and launch gates
 
-The immediate creative work is the sample-product sequence above. The pilot and launch phases below remain gated by business terms, device verification, and production recovery evidence.
+Do not accept real payments until live merchant activation, account email delivery, published prices and capacity, cancellation and tax/invoice terms, licensed music provenance or removal, separate customer-media backups, an isolated restore, and physical-device behavior are verified. Staging must exercise every design through purchase, production, approval, publication, and private RSVP. Keep test and production credentials separate.
 
-### Phase 8: private pilot
-
-Complete at least two real orders for each event type. Measure staff touch time, revision count, device behavior, guest completion, support load, and contribution margin. Adjust package boundaries and pricing from evidence.
-
-### Phase 9: public launch
-
-Publish the marketing catalog and open controlled intake only when all eight presets, business terms, device gates, operational procedures, and capacity limits are ready.
-
-## Business decisions required before paid sales
-
-1. Package price, deposit, cancellation terms, included revisions, and correction versus redesign rules.
-2. Written artwork ownership, reuse, exclusivity, attribution, and source-file custody terms.
-3. Customer privacy notice, hosting period, removal process, processor agreements, and retention terms.
-4. Financial-record retention reviewed with an accountant.
-5. Measured weekly production capacity and an intake limit.
-6. The two launch collections and their event-specific motifs.
-7. A licensed music catalog, or an explicit launch without music.
-
-Working defaults remain a manual quote, 50 percent deposit, balance before first publication, two consolidated revisions, three active design jobs per designer, and hosting through 90 days after the event.
+Pilots should measure designer hours, revision counts, delivery time, refunds, customer support, guest completion, and margin per tier before expanding into more event categories.
 
 ## Operating rules
 

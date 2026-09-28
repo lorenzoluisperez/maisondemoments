@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 type Props = {
+  monogram?: string;
   run: number;
   reset: number;
   active: boolean;
@@ -24,7 +25,7 @@ const desktopFlapOutline: Array<[number, number]> = [
   [.06, .35], [.015, .315], [0, .29],
 ];
 
-export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnavailable }: Props) {
+export function ThreeEnvelope({ monogram, run, reset, active, onReady, onComplete, onUnavailable }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef(active);
   const sceneRef = useRef<{ play: () => void; reset: () => void; stop: () => void } | null>(null);
@@ -40,7 +41,7 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       const loaded = await Promise.allSettled([
         loader.loadAsync("/wedding-showcase/envelope-victorian-ivory-v1.webp"),
         loader.loadAsync("/wedding-showcase/envelope-victorian-desktop-v1.webp"),
-        loader.loadAsync("/wedding-showcase/wax-lc-pearl-v1.webp"),
+        loader.loadAsync(monogram ? "/wedding-showcase/wax-blank-pearl-v1.png" : "/wedding-showcase/wax-lc-pearl-v1.webp"),
         loader.loadAsync("/wedding-showcase/cotton-card-v4.webp"),
       ]);
       const textures = loaded.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
@@ -51,6 +52,7 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       }
       const [mobileEnvelopeMap, desktopEnvelopeMap, sealMap, paperMap] = textures;
       textures.forEach((texture) => { texture.colorSpace = T.SRGBColorSpace; texture.anisotropy = 4; });
+      const personalizedSeal = monogram ? makePersonalizedSealTexture(T, sealMap, monogram) : null;
       // Continue the paper below the viewport when the mobile composition
       // raises the flap. Mirroring the last portion avoids a hard lower edge.
       for (const envelopeMap of [mobileEnvelopeMap, desktopEnvelopeMap]) {
@@ -110,7 +112,7 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
       flap.add(flapReverse);
       flap.add(interiorLight);
       stage.add(flap);
-      const sealMaterial = new T.MeshBasicMaterial({ map: sealMap, transparent: true, depthWrite: false, side: T.DoubleSide });
+      const sealMaterial = new T.MeshBasicMaterial({ map: personalizedSeal ?? sealMap, transparent: true, depthWrite: false, side: T.DoubleSide });
       const seal = new T.Mesh(new T.PlaneGeometry(1, 1), sealMaterial);
       const shadowMap = makeShadowTexture(T);
       const shadowMaterial = new T.MeshBasicMaterial({ map: shadowMap, transparent: true, opacity: .45, depthWrite: false });
@@ -252,18 +254,45 @@ export function ThreeEnvelope({ run, reset, active, onReady, onComplete, onUnava
         });
         [face, flapMaterial, flapReverseMaterial, backLightMaterial, interiorLightMaterial, inside, sealMaterial, shadowMaterial].forEach((material) => material.dispose());
         [...textures, interiorLightMap, shadowMap].forEach((texture) => texture.dispose());
+        personalizedSeal?.dispose();
         renderer.dispose();
         renderer.domElement.remove();
       };
       if (cancelled) dispose(); else onReady();
     }).catch(() => { dispose(); if (!cancelled) onUnavailable(); });
     return () => { cancelled = true; dispose(); sceneRef.current = null; };
-  }, [onReady, onComplete, onUnavailable]);
+  }, [monogram, onReady, onComplete, onUnavailable]);
 
   useEffect(() => { activeRef.current = active; if (!active) sceneRef.current?.stop(); }, [active]);
   useEffect(() => { if (reset > 0) sceneRef.current?.reset(); }, [reset]);
   useEffect(() => { if (run > 0) sceneRef.current?.play(); }, [run]);
   return <div ref={hostRef} style={{ width: "100%", height: "100%" }} />;
+}
+
+function makePersonalizedSealTexture(T: typeof import("three"), base: import("three").Texture, monogram: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 1024;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  context.drawImage(base.image as CanvasImageSource, 0, 0, 1024, 1024);
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  let size = 170;
+  do {
+    context.font = `italic ${size}px Georgia, serif`;
+    if (context.measureText(monogram).width <= 610) break;
+    size -= 8;
+  } while (size > 56);
+  context.shadowColor = "rgba(102, 77, 51, .42)";
+  context.shadowBlur = 4;
+  context.shadowOffsetX = 3;
+  context.shadowOffsetY = 4;
+  context.fillStyle = "#a48a6e";
+  context.fillText(monogram, 512, 530, 620);
+  const texture = new T.CanvasTexture(canvas);
+  texture.colorSpace = T.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
 }
 
 function makeInteriorLightTexture(T: typeof import("three")) {

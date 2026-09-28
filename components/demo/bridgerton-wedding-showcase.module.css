@@ -59,6 +59,11 @@
 .detailsDialog{max-width:min(530px,calc(100% - 24px));max-height:calc(100svh - 30px);overflow:auto;padding:clamp(26px,5vw,50px);border:1px solid #baa172;border-radius:0;background:#fffaf2;color:#594e52;box-shadow:0 25px 70px #211c2966}.detailsTitle{color:#704b5d;font-size:2.2rem;font-style:italic;font-weight:400}.detailsDialog dl{margin:8px 0}.detailsDialog dl div{padding:13px 0;border-bottom:1px solid #ddcfb8}.detailsDialog dt{color:#9c7c4d;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase}.detailsDialog dd{margin:5px 0 0;line-height:1.55}.detailsActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.detailsActions button{font-size:.85rem}.detailsActions button:last-child{grid-column:span 2;background:#587a95}
 /* Original decorative art is kept clear of the live invitation text. */
 .flourish{display:block;width:180px;height:26px;margin:20px auto;color:#ae8c53}
+.showcase[data-ornament="quiet"] .flourish,.showcase[data-ornament="quiet"] .swatches{display:none}
+.showcase .hero h1,.showcase .venueGrid h3{overflow-wrap:anywhere;max-width:100%}
+.hero h1 em{display:block;max-width:100%;font:inherit;overflow-wrap:anywhere}
+.showcase[data-fit="compact"] .hero h1{font-size:clamp(2.65rem,9vw,5.5rem);line-height:1}
+.showcase[data-fit="compact"] .venueGrid h3{font-size:clamp(1.5rem,2.7vw,2.3rem)}
 .heroCrest{width:190px;height:66px;margin:0 auto 18px;background:url("/bridgerton-wedding/floral-swag.webp") center/contain no-repeat;display:grid;place-items:start center}.heroCrest span{font:italic 1.05rem Georgia,serif;color:#8c7150;padding-top:5px}
 .heroContent{padding-top:95px;padding-bottom:65px}.hero h1{font-size:clamp(4.5rem,8vw,7rem)}.heroContent>.flourish{margin:18px auto 0}.heroDate{margin-top:16px}
 .sectionHead::before{content:"";display:block;width:min(260px,70%);height:85px;margin:0 auto 24px;background:url("/bridgerton-wedding/floral-swag.webp") center/contain no-repeat}

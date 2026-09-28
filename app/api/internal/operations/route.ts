@@ -6,6 +6,7 @@ import { cleanupMediaStorage, runMediaWorker } from "@/lib/media/worker";
 import { runNotificationWorker } from "@/lib/notifications/worker";
 import { operationalLog } from "@/lib/operations/logger";
 import { runRetentionSweep } from "@/lib/operations/retention";
+import { reconcilePaymongoCheckouts } from "@/lib/commerce/paymongo";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -21,10 +22,11 @@ export async function GET(request: Request) {
     const queuedBackups = await enqueueMissingMediaBackups();
     const backups = await runBackupWorker(`cron:${runId}`, 2);
     const notifications = await runNotificationWorker(`cron:${runId}`, 4);
+    const payments = await reconcilePaymongoCheckouts();
     const retention = await runRetentionSweep();
     const cleanup = await cleanupMediaStorage();
-    operationalLog("info", "operations.run.completed", { runId, durationMs: Date.now() - started, mediaClaimed: media.claimed, backupClaimed: backups.claimed, emailClaimed: notifications.claimed, deletionCount: retention.purged.length });
-    return NextResponse.json({ runId, media, queuedBackups, backups, notifications, retention, cleanup });
+    operationalLog("info", "operations.run.completed", { runId, durationMs: Date.now() - started, mediaClaimed: media.claimed, backupClaimed: backups.claimed, emailClaimed: notifications.claimed, paymentInspected: payments.inspected, paymentErrors: payments.errors, deletionCount: retention.purged.length });
+    return NextResponse.json({ runId, media, queuedBackups, backups, notifications, payments, retention, cleanup });
   } catch (error) {
     Sentry.captureException(error, { tags: { surface: "operations-cron", runId } });
     operationalLog("error", "operations.run.failed", { runId, durationMs: Date.now() - started, errorCode: error instanceof Error && /^[A-Z0-9_]{3,80}$/.test(error.message) ? error.message : "OPERATIONS_RUN_FAILED" });

@@ -3,8 +3,12 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ArrowUpRight, Check, ChevronDown, MapPin, Menu, Music2, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import type { WeddingShowcaseFixture } from "@/lib/demo/wedding-showcase";
+import type { ResolvedMediaAsset } from "@/lib/media/types";
+import { ProductGallery } from "@/components/products/product-gallery";
+import type { ProductPresentation } from "@/lib/products/presentation";
 import styles from "./wedding-showcase.module.css";
 
 const ThreeEnvelope = dynamic(() => import("./three-envelope").then((module) => module.ThreeEnvelope), {
@@ -14,13 +18,13 @@ const ThreeEnvelope = dynamic(() => import("./three-envelope").then((module) => 
 
 type OpeningState = "waiting" | "opening" | "handoff" | "intro" | "open";
 
-export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }) {
+export function WeddingShowcase({ fixture, rsvpContent, gallery, editing = false, presentation, accentStyle }: { fixture: WeddingShowcaseFixture; rsvpContent?: ReactNode; gallery?: ResolvedMediaAsset[]; editing?: boolean; presentation?: ProductPresentation; accentStyle?: CSSProperties }) {
   const rootRef = useRef<HTMLElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const openingLock = useRef(false);
   const animationStarted = useRef(false);
   const openingTimer = useRef<number | null>(null);
-  const [openingState, setOpeningState] = useState<OpeningState>("waiting");
+  const [openingState, setOpeningState] = useState<OpeningState>(editing ? "open" : "waiting");
   const [run, setRun] = useState(0);
   const [reset, setReset] = useState(0);
   const [canvasReady, setCanvasReady] = useState(false);
@@ -186,11 +190,11 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
   const scene = Object.fromEntries(fixture.scenes.map((item) => [item.id, item])) as Record<string, WeddingShowcaseFixture["scenes"][number]>;
 
   return (
-    <main className={`${styles.showcase} ${!revealMoving || reducedMotion ? styles.pauseAmbience : ""}`} ref={rootRef}>
+    <main className={`${styles.showcase} ${!revealMoving || reducedMotion ? styles.pauseAmbience : ""}`} data-live={fixture.isLive ? "true" : "false"} data-ornament={presentation?.ornaments ?? "original"} data-fit={presentation?.fit ?? "standard"} style={accentStyle} ref={rootRef}>
       <audio ref={audioRef} src="/wedding-showcase/there-is-romance.mp3" loop preload="none" />
 
       {openingState === "open" && <nav className={styles.nav} aria-label="Invitation controls">
-        <button className={styles.monogram} onClick={() => goTo("opening")} aria-label="Return to the opening">L <i>&amp;</i> C</button>
+        <button className={styles.monogram} onClick={() => goTo("opening")} aria-label="Return to the opening">{fixture.couple.monogram}</button>
         <div className={styles.navActions}>
           <button onClick={replay} className={styles.iconButton} aria-label="Replay envelope opening"><RotateCcw /></button>
           <button onClick={() => void toggleMusic()} className={styles.iconButton} aria-label={musicOn ? "Mute music" : "Play music"}>{musicOn ? <Volume2 /> : <VolumeX />}</button>
@@ -201,8 +205,8 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
 
       <section id="opening" className={`${styles.opening} ${openingState === "open" ? styles.opened : ""} ${openingState === "opening" || openingState === "handoff" ? styles.openingInMotion : ""}`} aria-label={openingState === "open" ? "Your invitation" : "A sealed envelope"}>
         {(openingState === "intro" || openingState === "open") && <RevealSetting />}
-        {(openingState === "waiting" || openingState === "opening" || openingState === "handoff") && (!canvasReady || reducedMotion || fallback) && <StaticEnvelope />}
-        {!reducedMotion && !fallback && <div className={styles.canvasWrap} style={{ opacity: canvasReady && (openingState === "waiting" || openingState === "opening" || openingState === "handoff") ? 1 : 0 }} aria-hidden="true"><ThreeEnvelope run={run} reset={reset} active={openingState === "waiting" || openingState === "opening" || openingState === "handoff"} onReady={ready} onComplete={finishEnvelope} onUnavailable={unavailable} /></div>}
+        {(openingState === "waiting" || openingState === "opening" || openingState === "handoff") && (!canvasReady || reducedMotion || fallback) && <StaticEnvelope monogram={fixture.isLive ? fixture.couple.monogram : undefined} />}
+        {!reducedMotion && !fallback && openingState !== "open" && <div className={styles.canvasWrap} style={{ opacity: canvasReady && (openingState === "waiting" || openingState === "opening" || openingState === "handoff") ? 1 : 0 }} aria-hidden="true"><ThreeEnvelope monogram={fixture.isLive ? fixture.couple.monogram : undefined} run={run} reset={reset} active={openingState === "waiting" || openingState === "opening" || openingState === "handoff"} onReady={ready} onComplete={finishEnvelope} onUnavailable={unavailable} /></div>}
 
         {openingState === "waiting" && (
           <>
@@ -232,19 +236,21 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
         {openingState === "open" && (
           <div className={styles.revealCardWrap}><div className={styles.titleCard}>
             <p className={styles.kicker}>{scene.invitation.eyebrow}</p>
-            <h1 id="opening-title"><span>{fixture.couple.first}</span><i>&amp;</i><span>{fixture.couple.second}</span></h1>
+            <h1 id="opening-title"><span data-fit-critical="name">{fixture.couple.first}</span><i>&amp;</i><span data-fit-critical="name">{fixture.couple.second}</span></h1>
             <div className={styles.titleRule}><span />{fixture.dateLabel}<span /></div>
             <p>{scene.invitation.copy}</p>
-            <button className={styles.scrollCue} onClick={() => goTo("bookshop")}>Begin our story <ChevronDown /></button>
+            <button className={styles.scrollCue} onClick={() => goTo(fixture.storyEnabled === false ? "celebration" : "bookshop")}>{fixture.storyEnabled === false ? "Explore our day" : "Begin our story"} <ChevronDown /></button>
           </div></div>
         )}
         {!canvasReady && !reducedMotion && openingState === "waiting" && <span className={styles.srOnly} role="status">Preparing the three-dimensional invitation</span>}
       </section>
 
       {openingState === "open" && <>
-      <StoryScene id="bookshop" image={scene.bookshop.image} eyebrow={scene.bookshop.eyebrow} title={scene.bookshop.title} copy={scene.bookshop.copy} align="left" />
-      <StoryScene id="proposal" image={scene.proposal.image} eyebrow={scene.proposal.eyebrow} title={scene.proposal.title} copy={scene.proposal.copy} align="left" />
-      <StoryScene id="venue" image={scene.venue.image} eyebrow={scene.venue.eyebrow} title={scene.venue.title} copy={scene.venue.copy} align="right" />
+      {fixture.storyEnabled !== false && <>
+      {scene.bookshop.title && <StoryScene id="bookshop" image={scene.bookshop.image} eyebrow={scene.bookshop.eyebrow} title={scene.bookshop.title} copy={scene.bookshop.copy} align="left" />}
+      {scene.proposal.title && <StoryScene id="proposal" image={scene.proposal.image} eyebrow={scene.proposal.eyebrow} title={scene.proposal.title} copy={scene.proposal.copy} align="left" />}
+      {scene.venue.title && <StoryScene id="venue" image={scene.venue.image} eyebrow={scene.venue.eyebrow} title={scene.venue.title} copy={scene.venue.copy} align="right" />}
+      </>}
 
       <section id="celebration" className={styles.celebration} data-story-scene aria-labelledby="celebration-title">
         <div className={styles.paperTexture} />
@@ -255,29 +261,31 @@ export function WeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }
         </header>
         <Countdown target={fixture.dateIso} />
         <div className={styles.eventGrid}>
-          <article data-reveal><span>01</span><p className={styles.kicker}>The ceremony</p><h3>{fixture.ceremony.time}</h3><strong>{fixture.ceremony.venue}</strong><p>{fixture.ceremony.address}</p>{fixture.ceremony.mapUrl && <a href={fixture.ceremony.mapUrl} target="_blank" rel="noreferrer"><MapPin />View map <ArrowUpRight /></a>}</article>
-          <article data-reveal><span>02</span><p className={styles.kicker}>The reception</p><h3>{fixture.reception.time}</h3><strong>{fixture.reception.venue}</strong><p>{fixture.reception.address}</p></article>
-          <article className={styles.dressCard} data-reveal><span>03</span><p className={styles.kicker}>Dress code</p><h3>Garden formal</h3><div className={styles.outfits} aria-hidden="true"><i /><i /><i /></div><div className={styles.swatches}>{fixture.palette.map((color) => <span key={color.name} style={{ background: color.color }} title={color.name} />)}</div><p>A touch of romance in olive, rose, terracotta, or champagne.</p></article>
+          <article data-reveal><span>01</span><p className={styles.kicker}>The ceremony</p><h3>{fixture.ceremony.time}</h3><strong data-fit-critical="venue">{fixture.ceremony.venue}</strong><p>{fixture.ceremony.address}</p>{fixture.ceremony.mapUrl && <a href={fixture.ceremony.mapUrl} target="_blank" rel="noreferrer"><MapPin />View map <ArrowUpRight /></a>}</article>
+          <article data-reveal><span>02</span><p className={styles.kicker}>The reception</p><h3>{fixture.reception.time}</h3><strong data-fit-critical="venue">{fixture.reception.venue}</strong><p>{fixture.reception.address}</p></article>
+          {(fixture.dressCode || !fixture.isLive) && <article className={styles.dressCard} data-reveal><span>03</span><p className={styles.kicker}>Dress code</p><h3>{fixture.dressCode ?? "Garden formal"}</h3><div className={styles.outfits} aria-hidden="true"><i /><i /><i /></div><div className={styles.swatches}>{fixture.palette.map((color) => <span key={color.name} style={{ background: color.color }} title={color.name} />)}</div></article>}
         </div>
       </section>
 
-      <EntourageSection fixture={fixture} scene={scene.entourage} />
+      {fixture.entourage.length > 0 && <EntourageSection fixture={fixture} scene={scene.entourage} />}
       <ProgramSection fixture={fixture} scene={scene.program} />
 
+      <ProductGallery gallery={gallery} />
+
       <section id="rsvp" className={styles.rsvp} data-story-scene aria-labelledby="rsvp-title">
-        <div className={styles.rsvpPhoto} data-reveal><Image src={scene.venue.image ?? "/wedding-showcase/tagaytay-garden-watercolor-v1.webp"} alt="Watercolor view of a Tagaytay garden beside Taal Lake" fill sizes="(max-width: 700px) 72vw, 340px" /></div>
+        <div className={styles.rsvpPhoto} data-reveal><Image src={scene.venue.image ?? "/wedding-showcase/tagaytay-garden-watercolor-v1.webp"} alt={fixture.isLive ? "Watercolor garden landscape illustration" : "Watercolor view of a Tagaytay garden beside Taal Lake"} fill sizes="(max-width: 700px) 72vw, 340px" /></div>
         <div className={styles.rsvpContent}>
           <p className={styles.kicker} data-reveal>{scene.rsvp.eyebrow} by {fixture.rsvpDeadline}</p>
-          <h2 id="rsvp-title" data-reveal>{rsvp ? "Your demo reply is ready" : scene.rsvp.title}</h2>
-          {!rsvp ? <>
+          <h2 id="rsvp-title" data-reveal>{!rsvpContent && rsvp ? "Your demo reply is ready" : scene.rsvp.title}</h2>
+          {rsvpContent ?? (!rsvp ? <>
             <p data-reveal>{scene.rsvp.copy}</p>
             <div className={styles.rsvpActions} data-reveal><button className={styles.primaryButton} onClick={() => setRsvp("yes")}>Joyfully accepts</button><button className={styles.secondaryButton} onClick={() => setRsvp("no")}>Regretfully declines</button></div>
-          </> : <div className={styles.confirmation} role="status"><span><Check /></span><p>{rsvp === "yes" ? "We’ll save you a place under the Tagaytay stars." : "Your thoughtful reply would be shared with the couple."}</p><small>Demo only. Nothing was submitted.</small><button onClick={() => setRsvp(null)}>Change demo reply</button></div>}
+          </> : <div className={styles.confirmation} role="status"><span><Check /></span><p>{rsvp === "yes" ? "We’ll save you a place under the Tagaytay stars." : "Your thoughtful reply would be shared with the couple."}</p><small>Demo only. Nothing was submitted.</small><button onClick={() => setRsvp(null)}>Change demo reply</button></div>)}
         </div>
       </section>
 
       <footer className={styles.footer}>
-        <p>Same people. A brighter tomorrow.</p><span>L <i>&amp;</i> C</span>
+        <p>Same people. A brighter tomorrow.</p><span>{fixture.couple.monogram}</span>
         <small><a href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100044" target="_blank" rel="noreferrer">“There Is Romance”</a> by Kevin MacLeod, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.</small>
       </footer>
       </>}
@@ -370,9 +378,9 @@ function ProgramSection({ fixture, scene }: { fixture: WeddingShowcaseFixture; s
   </section>;
 }
 
-function StaticEnvelope() {
+function StaticEnvelope({ monogram }: { monogram?: string }) {
   return <div className={styles.staticEnvelope} aria-hidden="true">
-    <div className={styles.staticSeal} data-testid="static-envelope-seal"><Image src="/wedding-showcase/wax-lc-pearl-v1.webp" alt="" fill priority sizes="180px" /></div>
+    <div className={styles.staticSeal} data-testid="static-envelope-seal"><Image src={monogram ? "/wedding-showcase/wax-blank-pearl-v1.png" : "/wedding-showcase/wax-lc-pearl-v1.webp"} alt="" fill priority sizes="180px" />{monogram && <span>{monogram}</span>}</div>
   </div>;
 }
 
@@ -395,5 +403,5 @@ function Countdown({ target }: { target: string }) {
 }
 
 function Details({ fixture, onClose, onRsvp, onSection }: { fixture: WeddingShowcaseFixture; onClose: () => void; onRsvp: () => void; onSection: (id: "entourage" | "program") => void }) {
-  return <div className={styles.detailsBackdrop} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}><aside className={styles.detailsPanel} role="dialog" aria-modal="true" aria-labelledby="details-title"><button className={styles.closeButton} onClick={onClose} aria-label="Close details"><X /></button><p className={styles.kicker}>At a glance</p><h2 id="details-title">Wedding details</h2><dl><div><dt>Date</dt><dd>{fixture.dateLabel}</dd></div><div><dt>Ceremony</dt><dd>{fixture.ceremony.time}<br />{fixture.ceremony.venue}</dd></div><div><dt>Reception</dt><dd>{fixture.reception.time}<br />{fixture.reception.venue}</dd></div><div><dt>Dress code</dt><dd>Garden formal</dd></div></dl>{fixture.ceremony.mapUrl && <a href={fixture.ceremony.mapUrl} target="_blank" rel="noreferrer" className={styles.secondaryButton}><MapPin />Open map</a>}<button className={styles.secondaryButton} onClick={() => onSection("entourage")}>Meet the entourage</button><button className={styles.secondaryButton} onClick={() => onSection("program")}>View the program</button><button className={styles.primaryButton} onClick={onRsvp}>Go to RSVP</button></aside></div>;
+  return <div className={styles.detailsBackdrop} role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}><aside className={styles.detailsPanel} role="dialog" aria-modal="true" aria-labelledby="details-title"><button className={styles.closeButton} onClick={onClose} aria-label="Close details"><X /></button><p className={styles.kicker}>At a glance</p><h2 id="details-title">Wedding details</h2><dl><div><dt>Date</dt><dd>{fixture.dateLabel}</dd></div><div><dt>Ceremony</dt><dd>{fixture.ceremony.time}<br />{fixture.ceremony.venue}</dd></div><div><dt>Reception</dt><dd>{fixture.reception.time}<br />{fixture.reception.venue}</dd></div>{(fixture.dressCode || !fixture.isLive) && <div><dt>Dress code</dt><dd>{fixture.dressCode ?? "Garden formal"}</dd></div>}</dl>{fixture.ceremony.mapUrl && <a href={fixture.ceremony.mapUrl} target="_blank" rel="noreferrer" className={styles.secondaryButton}><MapPin />Open map</a>}{fixture.entourage.length > 0 && <button className={styles.secondaryButton} onClick={() => onSection("entourage")}>Meet the entourage</button>}<button className={styles.secondaryButton} onClick={() => onSection("program")}>View the program</button><button className={styles.primaryButton} onClick={onRsvp}>Go to RSVP</button></aside></div>;
 }

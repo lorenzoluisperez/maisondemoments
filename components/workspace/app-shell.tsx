@@ -3,10 +3,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { Activity, Gem, ListPlus, Palette, UserRound } from "lucide-react";
+import { Activity, Gem, ListPlus, Palette, Settings2, UserRound } from "lucide-react";
 import { LogoutButton } from "@/components/workspace/logout-button";
 
-export function AppShell({ area, children }: { area: "portal" | "studio"; children: ReactNode }) {
+export function AppShell({ area, children }: { area: "portal" | "studio" | "admin"; children: ReactNode }) {
   const [actor, setActor] = useState<{ accountType: "CUSTOMER" | "STAFF"; roles: string[] } | null>(null);
   useEffect(() => { void fetch("/api/account", { cache: "no-store", credentials: "same-origin" }).then(async (response) => {
     if (response.ok) setActor((await response.json() as { actor: typeof actor }).actor);
@@ -20,9 +20,10 @@ export function AppShell({ area, children }: { area: "portal" | "studio"; childr
         <nav aria-label="Workspace">
           <Link className={area === "portal" ? "active" : ""} href="/portal"><UserRound /> Customer portal</Link>
           {staff ? <Link className={area === "studio" ? "active" : ""} href="/studio"><Palette /> Production studio</Link> : null}
+          {admin ? <Link className={area === "admin" ? "active" : ""} href="/admin"><Settings2 /> Business admin</Link> : null}
           {admin ? <Link href="/studio/orders/new"><ListPlus /> New job order</Link> : null}
           {admin ? <Link href="/studio/operations"><Activity /> Operations</Link> : null}
-          <Link href="/catalog"><Gem /> Invitation previews</Link>
+          <Link href="/designs"><Gem /> Invitation designs</Link>
         </nav>
         <div className="workspace-mode"><LogoutButton /><span>Private workspace<br />Changes are stored securely</span></div>
       </aside>

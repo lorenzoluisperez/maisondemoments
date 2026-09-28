@@ -7,12 +7,17 @@ import { AppShell } from "@/components/workspace/app-shell";
 import { Progress } from "@/components/ui/progress";
 import { CustomerReviewBanner } from "@/components/portal/customer-review-banner";
 import { GuestManager } from "@/components/portal/guest-manager";
+import { WeddingDetailsFields } from "@/components/portal/wedding-details-fields";
+import { emptyWeddingDetails, weddingContentLimits } from "@/lib/products/content";
+import { weddingProduct } from "@/lib/products/catalog";
 import type { EventBriefDocument } from "@/lib/content/brief";
 import { uploadCustomerImage } from "@/lib/media/browser-upload";
 
 type OrderSummary = { id: string; jobNumber: string; state: string; eventType: EventBriefDocument["event"]["type"] };
+type PurchaseSummary = { id: string; productSlug: string; tier: string; status: string; priceMinor: number; currency: string; paidAt: string | null; jobOrderId: string | null };
+type QuoteSummary = { id: string; productSlug: string; state: string; scope: string | null; exclusions: string | null; priceMinor: number | null; deliveryDays: number | null; revisionRounds: number | null };
 type BriefResponse = {
-  order: { id: string; jobNumber: string; state: string; collectionKey: string; dueDate: string | null };
+  order: { id: string; jobNumber: string; state: string; collectionKey: string; dueDate: string | null; productSlug?: string | null };
   document: EventBriefDocument;
   revision: number;
   submittedAt: string | null;
@@ -22,6 +27,8 @@ type SaveState = "saved" | "unsaved" | "saving" | "error" | "conflict";
 
 export function PortalWorkspace() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseSummary[]>([]);
+  const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [brief, setBrief] = useState<BriefResponse | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -49,6 +56,12 @@ export function PortalWorkspace() {
         if (!response.ok) throw new Error(response.status === 401 ? "Sign in to open your customer portal" : body.error ?? "Could not load orders");
         const nextOrders = body.orders ?? [];
         setOrders(nextOrders);
+        const [purchaseResponse, quoteResponse] = await Promise.all([
+          fetch("/api/commerce/purchases", { credentials: "same-origin", cache: "no-store" }),
+          fetch("/api/commerce/quotes", { credentials: "same-origin", cache: "no-store" }),
+        ]);
+        if (purchaseResponse.ok) setPurchases(((await purchaseResponse.json()) as { purchases: PurchaseSummary[] }).purchases);
+        if (quoteResponse.ok) setQuotes(((await quoteResponse.json()) as { quotes: QuoteSummary[] }).quotes);
         const requestedOrderId = new URLSearchParams(window.location.search).get("order");
         const first = nextOrders.find((order) => order.id === requestedOrderId)?.id ?? nextOrders[0]?.id ?? null;
         setSelectedOrderId(first);
@@ -107,7 +120,7 @@ export function PortalWorkspace() {
     setUploading(true);
     setMessage(null);
     try {
-      for (const file of [...files].slice(0, 12 - brief.document.gallery.length)) {
+      for (const file of [...files].slice(0, weddingContentLimits.photos - brief.document.gallery.length)) {
         const media = await uploadCustomerImage(brief.order.id, file);
         mutateDocument((document) => ({ ...document, gallery: [...document.gallery, { mediaId: media.mediaId, alt: file.name.replace(/\.[^.]+$/, "") || "Event photograph" }] }));
       }
@@ -115,20 +128,23 @@ export function PortalWorkspace() {
     finally { setUploading(false); }
   }
 
-  if (!brief) return <AppShell area="portal"><section className="empty-workspace"><AlertCircle /><h2>{message ?? "No invitation order yet"}</h2><p>{message?.includes("Sign in") ? "Use the email address attached to your order. We will send a secure sign-in link." : "Your invitation order will appear here after it is created."}</p>{message?.includes("Sign in") ? <Link className="workspace-button" href="/login?returnTo=/portal">Sign in</Link> : null}</section></AppShell>;
+  if (!brief) return <AppShell area="portal"><section className="empty-workspace"><h1>My invitations</h1>{purchases.length || quotes.length ? <><CommerceOverview purchases={purchases} quotes={quotes} /><Link className="workspace-button" href="/designs">Explore another design</Link></> : <><AlertCircle /><h2>{message ?? "No invitation order yet"}</h2><p>{message?.includes("Sign in") ? "Use the email address attached to your account. We will send a secure code." : "Explore the designs to begin your invitation."}</p><Link className="workspace-button" href={message?.includes("Sign in") ? "/login?returnTo=/portal" : "/designs"}>{message?.includes("Sign in") ? "Sign in" : "Explore designs"}</Link></>}</section></AppShell>;
 
   const event = brief.document.event;
   const sections = [
     { id: "identity", label: "Names and date" }, { id: "schedule", label: "Venues and schedule" },
     { id: "participants", label: event.type === "debut" ? "Debut participants" : "People" },
-    { id: "wording", label: "Wording and details" }, { id: "photos", label: "Photos" },
+    { id: "wording", label: "Wording and details" },
+    ...(brief.order.productSlug ? [{ id: "design", label: "Design details" }] : []),
+    { id: "photos", label: "Photos" },
   ];
   const issueSections = new Set(brief.completion.issues.map((issue) => issue.section));
 
   return <AppShell area="portal">
+    <CommerceOverview purchases={purchases} quotes={quotes} />
     <header className="workspace-header"><div><p className="workspace-kicker">{brief.order.jobNumber}</p><h1>{eventTitle(event)}</h1></div>{orders.length > 1 ? <select className="workspace-select" value={selectedOrderId ?? ""} onChange={(change) => { if (saveState === "saved") { setSelectedOrderId(change.target.value); void loadBrief(change.target.value); } }}>{orders.map((order) => <option key={order.id} value={order.id}>{order.jobNumber}</option>)}</select> : null}</header>
-    <section className="portal-overview"><div><p>Brief completion</p><strong>{brief.completion.percent}%</strong><Progress value={brief.completion.percent} /></div><div><p>Current stage</p><strong>{brief.submittedAt ? "Submitted" : "Content collection"}</strong><span><Clock3 /> {saveLabel(saveState)}</span></div><div><p>Collection</p><strong>{brief.order.collectionKey === "midnight-garden" ? "Midnight Garden" : "Luminous Parchment"}</strong><span><Check /> Facts remain separate from design</span></div></section>
-    <CustomerReviewBanner orderId={brief.order.id} />
+    <section className="portal-overview"><div><p>Brief completion</p><strong>{brief.completion.percent}%</strong><Progress value={brief.completion.percent} /></div><div><p>Current stage</p><strong>{brief.submittedAt ? brief.order.state === "COLLECTING" ? "Awaiting assignment" : brief.order.state === "READY" ? "Ready for design" : brief.order.state === "IN_PRODUCTION" ? "In design" : brief.order.state === "DELIVERED" ? "Ready for approval" : "Submitted" : "Complete your details"}</strong><span><Clock3 /> {saveLabel(saveState)}</span></div><div><p>{brief.order.productSlug ? "Design" : "Collection"}</p><strong>{brief.order.productSlug ? weddingProduct(brief.order.productSlug)?.name ?? "Wedding design" : brief.order.collectionKey === "midnight-garden" ? "Midnight Garden" : "Luminous Parchment"}</strong><span><Check /> Facts remain separate from design</span></div></section>
+    <CustomerReviewBanner key={brief.order.id} orderId={brief.order.id} briefSubmitted={Boolean(brief.submittedAt)} orderState={brief.order.state} product={Boolean(brief.order.productSlug)} />
     {message ? <div className="workspace-alert"><AlertCircle />{message}</div> : null}
     {saveState === "conflict" ? <div className="workspace-alert conflict"><AlertCircle /><span>A newer copy was saved elsewhere.</span><button onClick={() => void loadBrief(brief.order.id)}><RefreshCw /> Reload current copy</button></div> : null}
     <div className="workspace-grid"><aside className="task-list">{sections.map((section, index) => <button key={section.id} className={activeSection === section.id ? "active" : issueSections.has(section.id) ? "" : "complete"} onClick={() => setActiveSection(section.id)}>{issueSections.has(section.id) ? <span>{index + 1}</span> : <Check />} {section.label}</button>)}</aside>
@@ -137,27 +153,33 @@ export function PortalWorkspace() {
         {activeSection === "schedule" ? <ScheduleFields event={event} onChange={replaceEvent} /> : null}
         {activeSection === "participants" ? <PeopleFields event={event} onChange={replaceEvent} /> : null}
         {activeSection === "wording" ? <WordingFields event={event} onChange={replaceEvent} /> : null}
-        {activeSection === "photos" ? <div className="photo-uploader"><label className="workspace-button secondary"><ImagePlus />{uploading ? "Uploading…" : "Add photos"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={uploading || brief.document.gallery.length >= 12} onChange={(change) => void addPhotos(change.target.files)} /></label><p>{brief.document.gallery.length} of 12 photographs selected</p>{brief.document.gallery.map((photo) => <div key={photo.mediaId}><input value={photo.alt} aria-label="Photo description" onChange={(change) => mutateDocument((document) => ({ ...document, gallery: document.gallery.map((item) => item.mediaId === photo.mediaId ? { ...item, alt: change.target.value } : item) }))} /><button aria-label="Remove photo" onClick={() => mutateDocument((document) => ({ ...document, gallery: document.gallery.filter((item) => item.mediaId !== photo.mediaId) }))}><Trash2 /></button></div>)}</div> : null}
+        {activeSection === "design" ? <WeddingDetailsFields details={brief.document.weddingDetails ?? emptyWeddingDetails} onChange={(details) => mutateDocument((document) => ({ ...document, weddingDetails: details }))} /> : null}
+        {activeSection === "photos" ? <div className="photo-uploader"><label className="workspace-button secondary"><ImagePlus />{uploading ? "Uploading…" : "Add photos"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={uploading || brief.document.gallery.length >= weddingContentLimits.photos} onChange={(change) => void addPhotos(change.target.files)} /></label><p>{brief.document.gallery.length} of {weddingContentLimits.photos} photographs selected</p>{brief.document.gallery.map((photo) => <div key={photo.mediaId}><input value={photo.alt} aria-label="Photo description" onChange={(change) => mutateDocument((document) => ({ ...document, gallery: document.gallery.map((item) => item.mediaId === photo.mediaId ? { ...item, alt: change.target.value } : item) }))} /><button aria-label="Remove photo" onClick={() => mutateDocument((document) => ({ ...document, gallery: document.gallery.filter((item) => item.mediaId !== photo.mediaId) }))}><Trash2 /></button></div>)}</div> : null}
         {brief.completion.issues.some((issue) => issue.section === activeSection) ? <div className="field-issues">{brief.completion.issues.filter((issue) => issue.section === activeSection).map((issue) => <p key={`${issue.path}-${issue.message}`}><AlertCircle />{issue.message}</p>)}</div> : null}
         <div className="form-actions"><span>{saveLabel(saveState)}</span><button className="workspace-button" disabled={!brief.completion.ready || saveState !== "saved" || submitting} onClick={() => void submitBrief()}>{submitting ? "Submitting…" : brief.submittedAt ? "Resubmit updated brief" : "Submit completed brief"}</button></div>
       </section></div><GuestManager orderId={brief.order.id} />
   </AppShell>;
 }
 
-function IdentityFields({ event, onChange }: FormProps) {
-  const common = <><div className="form-columns"><label>Event date<input type="date" value={event.primaryLocalDate} onChange={(change) => onChange({ ...event, primaryLocalDate: change.target.value })} /></label><label>RSVP deadline<input type="date" value={event.rsvpDeadline} onChange={(change) => onChange({ ...event, rsvpDeadline: change.target.value })} /></label></div><label>Event timezone<input value={event.timezone} onChange={(change) => onChange({ ...event, timezone: change.target.value })} /></label><label>Host wording<input value={event.hostWording} onChange={(change) => onChange({ ...event, hostWording: change.target.value })} /></label></>;
+function CommerceOverview({ purchases, quotes }: { purchases: PurchaseSummary[]; quotes: QuoteSummary[] }) {
+  if (!purchases.length && !quotes.length) return null;
+  return <section className="commerce-overview" aria-label="Purchases and proposals"><h2>Purchases and proposals</h2>{purchases.map((purchase) => <article key={purchase.id}><div><strong>{purchase.productSlug.replaceAll("-", " ")} · {purchase.tier.toLowerCase()}</strong><p>{purchase.status === "AWAITING_PAYMENT" ? "Payment still needed" : purchase.status === "PAID" ? "Payment confirmed. Add your wedding details." : purchase.status === "ORDER_CREATED" ? "In production" : purchase.status === "REFUNDED" ? "Full refund confirmed" : purchase.status.toLowerCase()}</p>{purchase.paidAt && <Link href={`/portal/purchases/${purchase.id}/receipt`}>View payment confirmation</Link>}</div>{purchase.status !== "REFUNDED" && <Link href={purchase.status === "AWAITING_PAYMENT" ? `/checkout?purchase=${purchase.id}` : purchase.status === "PAID" ? `/portal/purchases/${purchase.id}` : purchase.jobOrderId ? `/portal?order=${purchase.jobOrderId}` : "/portal"}>{purchase.status === "AWAITING_PAYMENT" ? "Continue payment" : purchase.status === "PAID" ? "Complete details" : "View order"}</Link>}</article>)}{quotes.map((quote) => <article key={quote.id}><div><strong>{quote.productSlug.replaceAll("-", " ")} · Couture</strong><p>{quote.state === "REQUESTED" ? "Proposal requested" : quote.state === "OFFERED" ? "Proposal ready for your review" : quote.state.toLowerCase()}</p></div>{quote.state === "OFFERED" ? <Link href={`/portal/quotes/${quote.id}`}>Review proposal</Link> : null}</article>)}</section>;
+}
+
+export function IdentityFields({ event, onChange, lockedBooking = false }: FormProps & { lockedBooking?: boolean }) {
+  const common = <><div className="form-columns"><label>Event date<input type="date" value={event.primaryLocalDate} disabled={lockedBooking} onChange={(change) => onChange({ ...event, primaryLocalDate: change.target.value })} /></label><label>RSVP deadline<input type="date" value={event.rsvpDeadline} onChange={(change) => onChange({ ...event, rsvpDeadline: change.target.value })} /></label></div><label>Event timezone<input value={event.timezone} disabled={lockedBooking} onChange={(change) => onChange({ ...event, timezone: change.target.value })} /></label>{lockedBooking && <p>Contact our team to change your booked event date or timezone.</p>}<label>Host wording<input value={event.hostWording} onChange={(change) => onChange({ ...event, hostWording: change.target.value })} /></label></>;
   if (event.type === "wedding") return <>{event.partners.map((person, index) => <div className="form-columns" key={index}><label>{index ? "Second partner" : "First partner"}<input value={person.displayName} onChange={(change) => { const partners = [...event.partners] as typeof event.partners; partners[index] = { ...person, displayName: change.target.value }; onChange({ ...event, partners }); }} /></label><label>Role label<input value={person.roleLabel} onChange={(change) => { const partners = [...event.partners] as typeof event.partners; partners[index] = { ...person, roleLabel: change.target.value }; onChange({ ...event, partners }); }} /></label></div>)}{common}</>;
   if (event.type === "birthday") return <><div className="form-columns"><label>Celebrant<input value={event.celebrant.displayName} onChange={(change) => onChange({ ...event, celebrant: { ...event.celebrant, displayName: change.target.value } })} /></label><label>Displayed age<input type="number" min="1" max="150" value={event.displayedAge ?? ""} onChange={(change) => onChange({ ...event, displayedAge: change.target.value ? Number(change.target.value) : null })} /></label></div>{common}</>;
   if (event.type === "debut") return <><label>Debutante<input value={event.debutante.displayName} onChange={(change) => onChange({ ...event, debutante: { ...event.debutante, displayName: change.target.value } })} /></label>{common}</>;
   return <><label>Child&apos;s name<input value={event.child.displayName} onChange={(change) => onChange({ ...event, child: { ...event.child, displayName: change.target.value } })} /></label>{common}</>;
 }
 
-function ScheduleFields({ event, onChange }: FormProps) {
+export function ScheduleFields({ event, onChange }: FormProps) {
   const update = (index: number, patch: Partial<(typeof event.activities)[number]>) => onChange({ ...event, activities: event.activities.map((activity, itemIndex) => itemIndex === index ? { ...activity, ...patch } : activity) });
   return <div className="repeating-fields">{event.activities.map((activity, index) => <fieldset key={activity.id}><legend>{activity.label || `Activity ${index + 1}`}</legend><div className="form-columns"><label>Label<input value={activity.label} onChange={(change) => update(index, { label: change.target.value })} /></label><label>Type<select value={activity.kind} onChange={(change) => update(index, { kind: change.target.value as typeof activity.kind })}><option value="ceremony">Ceremony</option><option value="reception">Reception</option><option value="program">Program</option><option value="party">Party</option></select></label></div><label>Date and time<input type="datetime-local" value={toLocalDateTime(activity.startsAt, event.timezone)} onChange={(change) => update(index, { startsAt: localDateTimeToIso(change.target.value, event.timezone) })} /></label><label>Venue<input value={activity.venueName} onChange={(change) => update(index, { venueName: change.target.value })} /></label><label>Address<input value={activity.address} onChange={(change) => update(index, { address: change.target.value })} /></label><label>HTTPS map link<input type="url" value={activity.mapUrl} onChange={(change) => update(index, { mapUrl: change.target.value })} /></label>{event.activities.length > 1 ? <button className="reset-button" onClick={() => onChange({ ...event, activities: event.activities.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 /> Remove activity</button> : null}</fieldset>)}<button className="workspace-button secondary" disabled={event.activities.length >= 8} onClick={() => onChange({ ...event, activities: [...event.activities, { id: crypto.randomUUID(), kind: "reception", label: "", startsAt: "", venueName: "", address: "", mapUrl: "" }] })}><Plus /> Add activity</button></div>;
 }
 
-function PeopleFields({ event, onChange }: FormProps) {
+export function PeopleFields({ event, onChange }: FormProps) {
   if (event.type === "christening") return <div className="repeating-fields"><fieldset><legend>Parents or guardians</legend><PersonRows rows={event.parentsOrGuardians} maximum={4} onChange={(parentsOrGuardians) => onChange({ ...event, parentsOrGuardians })} /></fieldset><fieldset><legend>Godparents and participants</legend><PersonRows rows={event.participants} maximum={120} onChange={(participants) => onChange({ ...event, participants })} /></fieldset></div>;
   return <PersonRows rows={event.participants} maximum={120} onChange={(participants) => onChange({ ...event, participants })} />;
 }
@@ -166,7 +188,7 @@ function PersonRows({ rows, maximum, onChange }: { rows: Array<{ roleLabel: stri
   return <div className="repeating-fields">{rows.map((person, index) => <div className="person-row" key={index}><input aria-label="Role" value={person.roleLabel} placeholder="Role" onChange={(change) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, roleLabel: change.target.value } : item))} /><input aria-label="Name" value={person.displayName} placeholder="Display name" onChange={(change) => onChange(rows.map((item, itemIndex) => itemIndex === index ? { ...item, displayName: change.target.value } : item))} /><button aria-label="Remove person" onClick={() => onChange(rows.filter((_, itemIndex) => itemIndex !== index))}><Trash2 /></button></div>)}<button className="workspace-button secondary" disabled={rows.length >= maximum} onClick={() => onChange([...rows, { roleLabel: "", displayName: "" }])}><Plus /> Add person</button></div>;
 }
 
-function WordingFields({ event, onChange }: FormProps) { return <><label>Story<textarea rows={5} value={event.story} onChange={(change) => onChange({ ...event, story: change.target.value })} /></label><label>Dress code<textarea rows={3} value={event.dressCode} onChange={(change) => onChange({ ...event, dressCode: change.target.value })} /></label><label>Gift information<textarea rows={3} value={event.giftInformation} onChange={(change) => onChange({ ...event, giftInformation: change.target.value })} /></label></>; }
+export function WordingFields({ event, onChange }: FormProps) { return <><label>Story<textarea rows={5} value={event.story} onChange={(change) => onChange({ ...event, story: change.target.value })} /></label><label>Dress code<textarea rows={3} value={event.dressCode} onChange={(change) => onChange({ ...event, dressCode: change.target.value })} /></label><label>Gift information<textarea rows={3} value={event.giftInformation} onChange={(change) => onChange({ ...event, giftInformation: change.target.value })} /></label></>; }
 
 type FormProps = { event: EventBriefDocument["event"]; onChange: (event: EventBriefDocument["event"]) => void };
 function eventTitle(event: EventBriefDocument["event"]) { if (event.type === "wedding") return `${event.partners[0].displayName} & ${event.partners[1].displayName}`; if (event.type === "birthday") return event.celebrant.displayName; if (event.type === "debut") return event.debutante.displayName; return event.child.displayName; }

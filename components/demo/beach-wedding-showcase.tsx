@@ -2,8 +2,12 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ArrowDown, Check, Menu, Music2, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import type { WeddingShowcaseFixture } from "@/lib/demo/wedding-showcase";
+import type { ResolvedMediaAsset } from "@/lib/media/types";
+import { ProductGallery } from "@/components/products/product-gallery";
+import type { ProductPresentation } from "@/lib/products/presentation";
 import { BeachEnvelope } from "./beach-envelope";
 import styles from "./beach-wedding-showcase.module.css";
 
@@ -27,8 +31,8 @@ function PaintedSurfFrames({ reducedMotion }: { reducedMotion: boolean }) {
   </div>;
 }
 
-export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixture }) {
-  const [openingState, setOpeningState] = useState<OpeningState>("sealed");
+export function BeachWeddingShowcase({ fixture, rsvpContent, gallery, editing = false, presentation, accentStyle }: { fixture: WeddingShowcaseFixture; rsvpContent?: ReactNode; gallery?: ResolvedMediaAsset[]; editing?: boolean; presentation?: ProductPresentation; accentStyle?: CSSProperties }) {
+  const [openingState, setOpeningState] = useState<OpeningState>(editing ? "revealed" : "sealed");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [reply, setReply] = useState<"yes" | "no" | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -132,7 +136,7 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
   const scenes = Object.fromEntries(fixture.scenes.map((scene) => [scene.id, scene])) as Record<Chapter["id"], Chapter>;
   const entourage = fixture.entourage.filter((group) => !group.optional || group.members.length > 0);
 
-  return <main className={styles.showcase}>
+  return <main className={styles.showcase} data-ornament={presentation?.ornaments ?? "original"} data-fit={presentation?.fit ?? "standard"} style={accentStyle}>
     <audio ref={audioRef} src="/wedding-showcase/there-is-romance.mp3" loop preload="none" />
     {openingState === "revealed" && <nav className={styles.nav} aria-label="Invitation controls">
       <button className={styles.brand} onClick={() => goTo("reveal")} aria-label="Return to the invitation">L <span>&amp;</span> C</button>
@@ -168,15 +172,15 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
         <div className={styles.heroContent}>
           <p className={styles.eyebrow}>{scenes.invitation.eyebrow}</p>
           <p className={styles.heroPrelude}>A sea of love</p>
-          <h1 id="beach-title">{fixture.couple.first}<span>&amp;</span>{fixture.couple.second}</h1>
+          <h1 id="beach-title"><em data-fit-critical="name">{fixture.couple.first}</em><span>&amp;</span><em data-fit-critical="name">{fixture.couple.second}</em></h1>
           <div className={styles.heroDate}><span />{fixture.dateLabel}<span /></div>
           <p className={styles.heroInvitation}>{scenes.invitation.title}. {scenes.invitation.copy}</p>
           <button className={styles.heroScroll} onClick={() => goTo("story")}>Our story <ArrowDown size={16} /></button>
         </div>
-        <p className={styles.heroFootnote}>Boracay, painted in the colors of the sea</p>
+        <p className={styles.heroFootnote}>{fixture.isLive ? fixture.locationLabel : "Boracay, painted in the colors of the sea"}</p>
       </section>
 
-      <section id="story" className={styles.story} aria-labelledby="story-title">
+      {fixture.storyEnabled !== false && <section id="story" className={styles.story} aria-labelledby="story-title">
         <div className={styles.sectionIntro}>
           <span className={styles.shellMotif} aria-hidden="true" />
           <p className={styles.eyebrow}>The way to forever</p>
@@ -184,39 +188,39 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
           <p>From the first page to the promise of a lifetime.</p>
         </div>
         <div className={styles.storyLayout}>
-          <figure className={styles.storyArtwork}><Image src="/beach-wedding/palm-walkway.webp" alt="Watercolor path through palms and flowers toward the Boracay sea" fill sizes="(max-width: 800px) 90vw, 44vw" /><figcaption>Where every path led us</figcaption></figure>
+          <figure className={styles.storyArtwork}><div className={styles.storyArtworkImage}><Image src="/beach-wedding/palm-walkway.webp" alt={fixture.isLive ? "Watercolor path through palms beside the sea" : "Watercolor path through palms and flowers toward the Boracay sea"} fill sizes="(max-width: 800px) 90vw, 44vw" /></div><figcaption>Where every path led us</figcaption></figure>
           <div className={styles.storyChapters}>
-            {[scenes.bookshop, scenes.proposal, scenes.venue].map((scene, index) => <article className={styles.chapter} key={scene.id}>
+            {[scenes.bookshop, scenes.proposal, scenes.venue].filter((scene) => Boolean(scene.title)).map((scene, index) => <article className={styles.chapter} key={scene.id}>
               <div className={styles.chapterNumber}>{String(index + 1).padStart(2, "0")}</div>
               <div><p className={styles.eyebrow}>{scene.eyebrow}</p><h3>{scene.title}</h3><p>{scene.copy}</p></div>
             </article>)}
           </div>
         </div>
-      </section>
+      </section>}
 
       <section id="celebration" className={styles.celebration} aria-labelledby="celebration-title">
         <div className={styles.celebrationHead}>
           <p className={styles.eyebrow}>{scenes.celebration.eyebrow}</p>
           <h2 id="celebration-title">{scenes.celebration.title}</h2>
           <p>{scenes.celebration.copy}</p>
-          <div className={styles.dateStamp}><small>Monday</small><strong>14</strong><small>June 2027</small></div>
+          <div className={styles.dateStamp}><small>{new Intl.DateTimeFormat("en", { weekday: "long", timeZone: fixture.timezone ?? "Asia/Manila" }).format(new Date(fixture.dateIso))}</small><strong>{new Intl.DateTimeFormat("en", { day: "numeric", timeZone: fixture.timezone ?? "Asia/Manila" }).format(new Date(fixture.dateIso))}</strong><small>{new Intl.DateTimeFormat("en", { month: "long", year: "numeric", timeZone: fixture.timezone ?? "Asia/Manila" }).format(new Date(fixture.dateIso))}</small></div>
         </div>
         <figure className={styles.dinnerArtwork}><Image src="/beach-wedding/shoreline-dinner.webp" alt="Watercolor seaside wedding dinner with flowers and lanterns at sunset" fill sizes="(max-width: 700px) 100vw, 950px" /><figcaption>Meet us where the light meets the water</figcaption></figure>
         <div className={styles.eventCards}>
-          <article><span>01 / The ceremony</span><h3>{fixture.ceremony.time}</h3><strong>{fixture.ceremony.venue}</strong><p>{fixture.ceremony.address}</p></article>
-          <article><span>02 / The reception</span><h3>{fixture.reception.time}</h3><strong>{fixture.reception.venue}</strong><p>{fixture.reception.address}</p></article>
-          <article><span>03 / Dress code</span><h3>Beach formal</h3><p>A touch of romance in olive, rose, terracotta, or champagne.</p><div className={styles.swatches} aria-label={fixture.palette.map((color) => color.name).join(", ")}>{fixture.palette.map((color) => <i key={color.name} style={{ backgroundColor: color.color }} title={color.name} />)}</div></article>
+          <article><span>01 / The ceremony</span><h3>{fixture.ceremony.time}</h3><strong data-fit-critical="venue">{fixture.ceremony.venue}</strong><p>{fixture.ceremony.address}</p></article>
+          <article><span>02 / The reception</span><h3>{fixture.reception.time}</h3><strong data-fit-critical="venue">{fixture.reception.venue}</strong><p>{fixture.reception.address}</p></article>
+          {(fixture.dressCode || !fixture.isLive) && <article><span>03 / Dress code</span><h3>{fixture.dressCode ?? "Beach formal"}</h3><div className={styles.swatches} aria-label={fixture.palette.map((color) => color.name).join(", ")}>{fixture.palette.map((color) => <i key={color.name} style={{ backgroundColor: color.color }} title={color.name} />)}</div></article>}
         </div>
       </section>
 
-      <section id="entourage" className={styles.entourage} aria-labelledby="entourage-title">
+      {fixture.entourage.length > 0 && <section id="entourage" className={styles.entourage} aria-labelledby="entourage-title">
         <div className={styles.entouragePaper}>
           <div className={styles.entourageOrnament} aria-hidden="true" />
           <div className={styles.sectionIntro}><p className={styles.eyebrow}>{scenes.entourage.eyebrow}</p><h2 id="entourage-title">{scenes.entourage.title}</h2><p>{scenes.entourage.copy}</p></div>
           <div className={styles.entourageGrid}>{entourage.map((group) => <article key={group.id}><h3>{group.title}</h3><ul>{group.members.map((member) => <li key={member}>{member}</li>)}</ul></article>)}</div>
           <p className={styles.note}>{fixture.entourageNote}</p>
         </div>
-      </section>
+      </section>}
 
       <section id="program" className={styles.program} aria-labelledby="program-title">
         <div className={styles.programLayout}>
@@ -229,17 +233,18 @@ export function BeachWeddingShowcase({ fixture }: { fixture: WeddingShowcaseFixt
         </div>
       </section>
 
+      <ProductGallery gallery={gallery} />
       <section id="rsvp" className={styles.rsvp} aria-labelledby="rsvp-title">
         <div className={styles.rsvpCard}>
           <span className={styles.rsvpSun} aria-hidden="true" />
           <p className={styles.eyebrow}>{scenes.rsvp.eyebrow} by {fixture.rsvpDeadline}</p>
-          <h2 id="rsvp-title">{reply ? "Your demo reply is ready" : scenes.rsvp.title}</h2>
-          {!reply ? <><p>{scenes.rsvp.copy}</p><div className={styles.rsvpActions}><button onClick={() => setReply("yes")}>Joyfully accepts</button><button onClick={() => setReply("no")}>Regretfully declines</button></div></> : <div className={styles.reply} role="status"><Check /><p>{reply === "yes" ? "We’ll save you a place beneath the Boracay stars." : "Your thoughtful reply would be shared with the couple."}</p><small>Demo only. Nothing was submitted.</small><button onClick={() => setReply(null)}>Change demo reply</button></div>}
+          <h2 id="rsvp-title">{!rsvpContent && reply ? "Your demo reply is ready" : scenes.rsvp.title}</h2>
+          {rsvpContent ?? (!reply ? <><p>{scenes.rsvp.copy}</p><div className={styles.rsvpActions}><button onClick={() => setReply("yes")}>Joyfully accepts</button><button onClick={() => setReply("no")}>Regretfully declines</button></div></> : <div className={styles.reply} role="status"><Check /><p>{reply === "yes" ? "We’ll save you a place beneath the Boracay stars." : "Your thoughtful reply would be shared with the couple."}</p><small>Demo only. Nothing was submitted.</small><button onClick={() => setReply(null)}>Change demo reply</button></div>)}
         </div>
       </section>
-      <footer className={styles.footer}><p>Same people. A brighter tomorrow.</p><span>{fixture.couple.monogram}</span><small>Maison de Moments · Tropical wedding study<br /><a href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100044" target="_blank" rel="noreferrer">“There Is Romance”</a> by Kevin MacLeod, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.</small></footer>
+      <footer className={styles.footer}><p>Same people. A brighter tomorrow.</p><span>{fixture.couple.monogram}</span><small>Maison de Moments · Coastal Romance<br /><a href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100044" target="_blank" rel="noreferrer">“There Is Romance”</a> by Kevin MacLeod, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.</small></footer>
     </>}
 
-    {detailsOpen && <div className={styles.dialogBackdrop} onMouseDown={(event) => { if (event.currentTarget === event.target) setDetailsOpen(false); }}><aside className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="beach-details-title"><button className={styles.close} onClick={() => setDetailsOpen(false)} aria-label="Close details"><X /></button><p className={styles.eyebrow}>At a glance</p><h2 id="beach-details-title">Wedding details</h2><dl><div><dt>Date</dt><dd>{fixture.dateLabel}</dd></div><div><dt>Ceremony</dt><dd>{fixture.ceremony.time}<br />{fixture.ceremony.venue}<br />{fixture.ceremony.address}</dd></div><div><dt>Reception</dt><dd>{fixture.reception.time}<br />{fixture.reception.venue}<br />{fixture.reception.address}</dd></div><div><dt>Dress code</dt><dd>Beach formal</dd></div></dl><button onClick={() => { setDetailsOpen(false); goTo("entourage"); }}>Meet the entourage</button><button onClick={() => { setDetailsOpen(false); goTo("program"); }}>View the program</button><button className={styles.dialogPrimary} onClick={() => { setDetailsOpen(false); goTo("rsvp"); }}>Go to RSVP</button></aside></div>}
+    {detailsOpen && <div className={styles.dialogBackdrop} onMouseDown={(event) => { if (event.currentTarget === event.target) setDetailsOpen(false); }}><aside className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="beach-details-title"><button className={styles.close} onClick={() => setDetailsOpen(false)} aria-label="Close details"><X /></button><p className={styles.eyebrow}>At a glance</p><h2 id="beach-details-title">Wedding details</h2><dl><div><dt>Date</dt><dd>{fixture.dateLabel}</dd></div><div><dt>Ceremony</dt><dd>{fixture.ceremony.time}<br />{fixture.ceremony.venue}<br />{fixture.ceremony.address}</dd></div><div><dt>Reception</dt><dd>{fixture.reception.time}<br />{fixture.reception.venue}<br />{fixture.reception.address}</dd></div>{(fixture.dressCode || !fixture.isLive) && <div><dt>Dress code</dt><dd>{fixture.dressCode ?? "Beach formal"}</dd></div>}</dl>{fixture.entourage.length > 0 && <button onClick={() => { setDetailsOpen(false); goTo("entourage"); }}>Meet the entourage</button>}<button onClick={() => { setDetailsOpen(false); goTo("program"); }}>View the program</button><button className={styles.dialogPrimary} onClick={() => { setDetailsOpen(false); goTo("rsvp"); }}>Go to RSVP</button></aside></div>}
   </main>;
 }

@@ -1,10 +1,10 @@
 # Maison de Moments
 
-Designer-operated software for producing premium interactive invitations. The first release supports weddings, birthdays, debuts, and christenings across two versioned artwork collections.
+Designer-operated software for premium interactive invitations. The commercial launch collection is three wedding designs; the underlying platform retains birthday, debut, and christening schemas for future products.
 
 ## Current focus
 
-Build polished sample invitation products before expanding backend editability for those designs. `/demo/wedding` is the first fixture-driven, AI-assisted proof of concept. `/demo/wedding-beach` is a tropical Boracay study with original artwork and painted moving surf. `/demo/wedding-bridgerton` is a Filipino heritage romance set in fictional Intramuros venues, with an embossed envelope, barong and Filipiniana attire, an illustrated program, an entourage register, and a live countdown. The studies retain the synthetic couple and core event facts and are separate from the eight presets, portal, and constrained studio. The sample-product portfolio is still in progress. After enough finished examples exist, define reusable fields and bounded controls from those products, then integrate selected designs with the existing backend. The sample count and editable scope remain open decisions. See the [product-first build sequence](docs/product-and-technical-plan.md#product-first-build-sequence).
+Garden Romance, Coastal Romance, and Heritage Romance are the first wedding products. Browse them at `/designs`; the existing `/demo/wedding`, `/demo/wedding-beach`, and `/demo/wedding-bridgerton` routes remain fictional previews. Essential and Signature require configured PHP prices and full PayMongo hosted payment. Couture starts with a scoped proposal. The shared wedding brief feeds the selected design in studio previews, frozen customer reviews, and private guest delivery. This implementation is not enabled for live sales until staging payment, merchant, email, legal, backup, music, and physical-device gates pass. See the [commercial wedding release plan](docs/product-and-technical-plan.md#commercial-wedding-release).
 
 ## Implemented foundation
 
@@ -16,7 +16,7 @@ Build polished sample invitation products before expanding backend editability f
 - Admin job-order intake with in-place customer account creation, package terms, event baselines, assignment, and commercial amounts
 - Household entry and CSV import, allocated adult and child seats, revocable private links, guest sessions, deadline-aware RSVP amendments, audited corrections, and formula-safe exports
 - Customer and staff sign-out from every private workspace
-- Append-only manual payment ledger, exact reversals, production queues, failed-task retry, and role-aware workspace navigation
+- Append-only payment ledger, exact reversals, signed PayMongo settlement intake, production queues, failed-task retry, and role-aware workspace navigation
 - Fixed transactional email tasks, structured logs, privacy-reduced Sentry reporting, and protected scheduled operations
 - Off-provider media backup with checksum verification, backup-gated publication, expiry, removal, deletion tombstones, and guarded restoration replay
 - Strict Zod event, invitation, upload, and RSVP contracts
@@ -44,9 +44,11 @@ npm run dev
 
 Open:
 
-- `/` for the collection catalog
-- `/i/wedding-midnight-garden-demo` for a guest experience
+- `/` and `/designs` for the public storefront
+- `/designs/garden-romance` for a product page and fictional preview
+- `/demo/wedding`, `/demo/wedding-beach`, and `/demo/wedding-bridgerton` for the three wedding studies
 - `/portal` for the customer workflow
+- `/admin` for pricing, Couture proposals, and purchase intake
 - `/studio` for the designer queue and constrained editor
 - `/studio/orders/new` for admin job-order intake
 - `/studio/operations` for admin production and infrastructure queues
@@ -79,8 +81,8 @@ npm run test:e2e
 3. Run `npm run db:migrate`, `npm run db:configure-role`, and `npm run db:verify` through the migration environment.
 4. Run `npm run storage:setup`, `npm run catalog:seed`, and `npm run media:verify` from a trusted server environment.
 5. Configure the remaining values documented in `.env.example`. Never expose the Supabase secret key, background-job secret, guest-token secrets, or database URLs to the browser.
-6. Enable Supabase email OTP for customers and MFA-enforced staff sign-in.
-7. Configure `CRON_SECRET`, Resend, the server-only Sentry DSN, Supabase PITR, and a separate S3-compatible media backup destination. Vercel schedules the combined operations endpoint from `vercel.json`.
+6. Configure the Supabase email OTP template with `{{ .Token }}` for customer codes, and enroll staff TOTP MFA.
+7. Configure PayMongo test keys and webhook, versioned service and cancellation URLs, tax notice, `CRON_SECRET`, Resend, the server-only Sentry DSN, Supabase PITR, and a separate S3-compatible media backup destination. Keep `COMMERCE_CHECKOUT_ENABLED=false` and `COMMERCE_ANALYTICS_ENABLED=false` until staging checkout, analytics notice, and launch gates pass. Vercel schedules the combined operations endpoint from `vercel.json`.
 8. Deploy to Vercel only after integration, browser, restore, and real-device gates pass. The optional `dev:sites` and `build:sites` scripts retain the portable preview path used during initial UI construction.
 
 Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.

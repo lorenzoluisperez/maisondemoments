@@ -19,6 +19,11 @@ export type WeddingShowcaseFixture = {
   program: Array<{ time: string; title: string; detail?: string }>;
   programNote: string;
   scenes: WeddingShowcaseScene[];
+  dressCode?: string;
+  locationLabel?: string;
+  storyEnabled?: boolean;
+  isLive?: boolean;
+  timezone?: string;
 };
 
 export const weddingShowcase: WeddingShowcaseFixture = {
