@@ -659,6 +659,8 @@ html { scroll-behavior:smooth; }
 .boutique-process span { color:#966f5b; font:italic 2rem Georgia,serif; }
 .boutique-process h2 { margin:20px 0 12px; font-size:2.2rem; }
 .boutique-process p { max-width:290px; color:#635a56; line-height:1.65; }
+.boutique-process>.boutique-button { grid-column:1/-1; justify-self:start; }
+.boutique-text-link { display:inline-flex; align-items:center; gap:9px; margin-top:20px; color:#493b39; font-size:.84rem; font-weight:700; text-decoration:underline; text-underline-offset:5px; }
 .boutique-footer { display:flex; flex-wrap:wrap; gap:28px; padding:45px clamp(22px,5vw,84px); background:#3a302d; color:#f8f4ed; font-size:.78rem; }
 .boutique-footer span { margin-right:auto; text-transform:uppercase; letter-spacing:.15em; }
 .boutique-collection-heading { max-width:920px; padding-block:110px 65px; }
@@ -685,7 +687,27 @@ html { scroll-behavior:smooth; }
 .boutique-terms { max-width:950px; margin:auto; padding:0 22px 115px; text-align:center; }
 .boutique-terms h2 { font-size:2.5rem; }
 .boutique-terms p { color:#635a56; line-height:1.65; }
+.boutique-collection-heading .boutique-button,.boutique-next .boutique-button { margin-top:24px; }
+.boutique-order-hero { max-width:900px; margin:auto; padding:clamp(65px,9vw,125px) 22px 60px; text-align:center; }
+.boutique-order-hero .boutique-back { justify-content:center; margin-bottom:35px; }
+.boutique-order-hero h1 { margin:0 0 24px; font-size:clamp(3.5rem,7vw,7rem); line-height:1; }
+.boutique-order-hero>p:last-child { max-width:690px; margin:auto; color:#635a56; font-size:1.1rem; line-height:1.75; }
+.boutique-order-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; max-width:1300px; margin:auto; padding:0 clamp(22px,5vw,84px) 95px; }
+.boutique-order-steps article { padding:35px 30px; background:#eee5da; }
+.boutique-order-steps span { color:#966f5b; font:italic 2rem Georgia,serif; }
+.boutique-order-steps h2 { margin:20px 0 12px; font-size:2rem; }
+.boutique-order-steps p { margin:0; color:#635a56; line-height:1.7; }
+.boutique-order-contact { padding:85px 22px 110px; background:#e9e0d4; text-align:center; }
+.boutique-order-contact h2 { margin:0 0 20px; font-size:clamp(2.7rem,5vw,5rem); }
+.boutique-order-contact>p { max-width:640px; margin:0 auto 25px; color:#635a56; line-height:1.7; }
+.boutique-order-contact blockquote { max-width:690px; margin:30px auto; padding:24px 30px; border-left:3px solid #946a53; background:#fffaf4; color:#493b39; font:1.16rem/1.6 Georgia,serif; text-align:left; }
+.boutique-social-links { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin:30px auto 20px; }
+.boutique-social-links a,.boutique-social-links span { display:inline-flex; align-items:center; justify-content:center; gap:12px; min-height:54px; padding:12px 20px; border:1px solid #493b39; color:#493b39; font-size:.84rem; font-weight:700; text-decoration:none; }
+.boutique-social-links a:hover { background:#493b39; color:#fffaf4; }
+.boutique-social-links span { border-color:#aa9c90; color:#736861; cursor:default; }
+.boutique-order-contact .boutique-order-note { margin-top:24px; font-size:.78rem; }
 @media(max-width:800px) { .boutique-hero,.boutique-product { grid-template-columns:1fr; } .boutique-hero-image { min-height:450px; } .boutique-product-art { min-height:420px; } .boutique-grid,.boutique-tiers { grid-template-columns:1fr; max-width:580px; } .boutique-art { height:480px; } .boutique-process { grid-template-columns:1fr; } .boutique-back { margin-bottom:30px; } }
+@media(max-width:800px) { .boutique-order-steps { grid-template-columns:1fr; max-width:630px; } }
 @media(max-width:520px) { .boutique-nav { padding:15px 18px; } .boutique-logo { font-size:.63rem; gap:6px; } .boutique-nav nav { gap:11px; } .boutique-nav nav a { font-size:.72rem; } .boutique-hero h1 { font-size:3.7rem; } .boutique-art { height:390px; } .boutique-hero-image { min-height:380px; } }
 
 .product-gallery { padding:clamp(70px,9vw,140px) clamp(20px,6vw,100px); background:#f7f1e9; color:#3d302f; }
@@ -695,3 +717,23 @@ html { scroll-behavior:smooth; }
 .product-gallery-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:clamp(12px,2vw,24px); max-width:1320px; margin:auto; }
 .product-gallery-grid picture { display:block; min-width:0; aspect-ratio:4/5; overflow:hidden; background:#e7ded4; }
 .product-gallery-grid img { display:block; width:100%; height:100%; object-fit:cover; }
+
+.boutique-collection-links { display:flex; justify-content:center; gap:18px 32px; flex-wrap:wrap; margin-top:28px; }
+.boutique-collection-links a { display:inline-flex; align-items:center; gap:9px; font-size:.85rem; text-underline-offset:5px; }
+.boutique-collection { scroll-margin-top:25px; }
+.boutique-collection-title { padding:35px clamp(22px,5vw,84px) 15px; }
+.boutique-collection-title h2 { font-size:clamp(2.2rem,4vw,3.8rem); margin:0 0 12px; }
+.boutique-collection-title>p:last-child { color:#726257; line-height:1.7; }
+.boutique-collection-title .boutique-kicker { margin-bottom:10px; }
+
+/* Stationery previews show the entire current invitation, not a cropped background. */
+.boutique-art[data-image-treatment="stationery"],
+.boutique-product-art[data-image-treatment="stationery"] { background:#e9e0d8; }
+.boutique-art[data-image-treatment="stationery"] img,
+.boutique-product-art[data-image-treatment="stationery"] img { object-fit:contain; padding:clamp(18px,3vw,40px); }
+.boutique-art[data-image-treatment="stationery"]:hover img { transform:none; }
+.boutique-art[data-image-treatment="stationery"]:focus-visible { outline:2px solid #896468; outline-offset:4px; }
+.boutique-product-art[data-image-treatment="stationery"] { min-height:640px; }
+@media(max-width:850px) {
+ .boutique-product-art[data-image-treatment="stationery"] { min-height:0; height:auto; aspect-ratio:3/4; }
+}

@@ -12,6 +12,7 @@ import { createJobOrder } from "@/lib/orders/service";
 import { standardTerms, weddingProduct } from "@/lib/products/catalog";
 import { emptyWeddingDetails } from "@/lib/products/content";
 import { weddingProductBriefIssues } from "@/lib/products/validation";
+import { showcaseOnly } from "@/lib/site-mode";
 
 export class CommerceError extends Error {}
 export class CommerceForbiddenError extends CommerceError {}
@@ -24,6 +25,7 @@ function admin(actor: Actor) {
   if (actor.accountType !== "STAFF" || !actor.roles.includes("ADMIN")) throw new CommerceForbiddenError("Admin access required");
 }
 export function commerceReady() {
+  if (showcaseOnly) return false;
   const secureUrl = (value: string | undefined, allowLocal = false) => {
     try {
       const url = new URL(value ?? "");
@@ -33,6 +35,7 @@ export function commerceReady() {
   return process.env.COMMERCE_CHECKOUT_ENABLED === "true" &&
     process.env.COMMERCE_ANALYTICS_ENABLED === "true" &&
     Boolean(process.env.PAYMONGO_SECRET_KEY?.match(/^sk_(test|live)_/)) &&
+    (process.env.NODE_ENV === "production" || !process.env.PAYMONGO_SECRET_KEY?.startsWith("sk_live_")) &&
     Boolean(process.env.PAYMONGO_WEBHOOK_SECRET) &&
     secureUrl(process.env.COMMERCE_TERMS_URL) && secureUrl(process.env.COMMERCE_CANCELLATION_URL) &&
     Boolean(process.env.COMMERCE_TAX_NOTICE?.trim()) && secureUrl(process.env.NEXT_PUBLIC_APP_URL, true);
@@ -178,6 +181,7 @@ export async function getCustomerPaymentConfirmation(actor: Actor, id: string) {
 }
 
 export async function requestCoutureQuote(actor: Actor, input: unknown) {
+  if (showcaseOnly) throw new CommerceConflictError("Please contact us on Facebook or Instagram to discuss an invitation");
   customer(actor);
   const parsed = quoteRequestSchema.parse(input);
   const [quote] = await getDb().insert(coutureQuotes).values({ customerId: actor.accountId, ...parsed }).returning();

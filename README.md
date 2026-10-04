@@ -1,12 +1,12 @@
 # Maison de Moments
 
-Designer-operated software for premium interactive invitations. The commercial launch collection is three wedding designs; the underlying platform retains birthday, debut, and christening schemas for future products.
+Designer-operated software for premium interactive invitations. The public collection includes three wedding designs and two debut showcases, Pearl & Poise and Eighteen in Wonderland; the underlying platform retains all four event schemas.
 
 ## Current focus
 
-Garden Romance, Coastal Romance, and Heritage Romance are the first wedding products. Browse them at `/designs`; the existing `/demo/wedding`, `/demo/wedding-beach`, and `/demo/wedding-bridgerton` routes remain fictional previews. Essential and Signature require configured PHP prices and full PayMongo hosted payment. Couture starts with a scoped proposal. The shared wedding brief feeds the selected design in studio previews, frozen customer reviews, and private guest delivery. This implementation is not enabled for live sales until staging payment, merchant, email, legal, backup, music, and physical-device gates pass. See the [commercial wedding release plan](docs/product-and-technical-plan.md#commercial-wedding-release).
+Garden Romance, Coastal Romance, and Heritage Romance are viewing-only wedding showcases. Pearl & Poise and Eighteen in Wonderland form the Debuts / 18th Birthdays category, with fictional samples at `/demo/debut-pearl` and `/demo/debut-wonderland`. Browse all five designs at `/designs`. Visitors inquire and order by messaging on Facebook or Instagram, following `/how-to-order`. Configure `FACEBOOK_PAGE_URL` and `INSTAGRAM_PROFILE_URL` with real HTTPS URLs before directing visitors to the site. The code keeps online checkout and customer portal routes paused. The existing commerce and private-workspace foundation is deferred. See the [product plan](docs/product-and-technical-plan.md#current-public-release).
 
-## Implemented foundation
+## Implemented foundation (private workflows deferred)
 
 - Eight event and collection presets with one semantic, naturally scrollable, reduced-motion-aware renderer
 - Always-available Details and RSVP controls, long participant-list handling, and synthetic public demos
@@ -30,7 +30,7 @@ Garden Romance, Coastal Romance, and Heritage Romance are the first wedding prod
 - 256-bit household token generation, keyed digest lookup, encrypted reissue storage, and timing-safe comparison
 - Domain and database integration tests for event types, snapshots, content persistence, generated drafts, studio conflicts, permissions, tenant isolation, JO concurrency, RSVP rules, and credentials
 
-The portal and studio use authenticated PostgreSQL data through purpose-specific server APIs. Public demos remain synthetic. Published invitations use household bearer links and server-verified guest sessions for real RSVP data.
+The dormant portal and studio foundation uses authenticated PostgreSQL data through purpose-specific server APIs. Public demos remain synthetic. Historical private invitations use household bearer links and server-verified guest sessions for real RSVP data.
 
 ## Run locally
 
@@ -47,21 +47,27 @@ Open:
 - `/` and `/designs` for the public storefront
 - `/designs/garden-romance` for a product page and fictional preview
 - `/demo/wedding`, `/demo/wedding-beach`, and `/demo/wedding-bridgerton` for the three wedding studies
-- `/portal` for the customer workflow
-- `/admin` for pricing, Couture proposals, and purchase intake
-- `/studio` for the designer queue and constrained editor
-- `/studio/orders/new` for admin job-order intake
-- `/studio/operations` for admin production and infrastructure queues
+- `/demo/debut-pearl` for Pearl & Poise, with four celebration lists of 18 names and demonstration-only RSVP
+- `/demo/debut-wonderland` for Eighteen in Wonderland, with a golden-key opening, watercolor storybook chapters, four lists of 18 names, and demonstration-only RSVP
+- `/how-to-order` for the inquiry steps and social contact links
 
-Run validation:
+The previous `/portal`, `/admin`, `/studio`, `/review`, `/login`, and checkout pages currently redirect to `/how-to-order`.
+
+Validate the current showcase:
 
 ```bash
 npm run check
+npx playwright test tests/e2e/storefront.spec.ts
+npm run build
+```
+
+The deferred private workflows have additional checks that require development or staging infrastructure:
+
+```bash
 npm run test:db
 npm run db:verify
 npm run media:verify
 npm run db:generate
-npm run build
 npm run guest:verify
 # Requires a disposable database, backup credentials, PostgreSQL client tools, and the confirmation variable.
 npm run ops:restore-drill
@@ -74,7 +80,11 @@ npm run test:e2e:setup
 npm run test:e2e
 ```
 
-## Production setup
+## Public showcase deployment
+
+Set `FACEBOOK_PAGE_URL` and `INSTAGRAM_PROFILE_URL` to the verified HTTPS URLs for the actual accounts before building or redeploying. Check both links on desktop and mobile before sharing the site. Leave `COMMERCE_CHECKOUT_ENABLED=false` and do not configure PayMongo for this release. The site displays labeled social placeholders until URLs are set.
+
+## Deferred private-workflow production setup
 
 1. Create separate Supabase projects for staging and production.
 2. Set the pooled `DATABASE_URL` for `maison_app` and the privileged, session-pooled `MIGRATION_DATABASE_URL` only in migration environments.
@@ -82,7 +92,7 @@ npm run test:e2e
 4. Run `npm run storage:setup`, `npm run catalog:seed`, and `npm run media:verify` from a trusted server environment.
 5. Configure the remaining values documented in `.env.example`. Never expose the Supabase secret key, background-job secret, guest-token secrets, or database URLs to the browser.
 6. Configure the Supabase email OTP template with `{{ .Token }}` for customer codes, and enroll staff TOTP MFA.
-7. Configure PayMongo test keys and webhook, versioned service and cancellation URLs, tax notice, `CRON_SECRET`, Resend, the server-only Sentry DSN, Supabase PITR, and a separate S3-compatible media backup destination. Keep `COMMERCE_CHECKOUT_ENABLED=false` and `COMMERCE_ANALYTICS_ENABLED=false` until staging checkout, analytics notice, and launch gates pass. Vercel schedules the combined operations endpoint from `vercel.json`.
+7. Configure the real Facebook and Instagram contact URLs for the public showcase. Keep `COMMERCE_CHECKOUT_ENABLED=false`; PayMongo checkout and customer portals are deferred. Configure private infrastructure only when that phase resumes. Vercel schedules the combined operations endpoint from `vercel.json`.
 8. Deploy to Vercel only after integration, browser, restore, and real-device gates pass. The optional `dev:sites` and `build:sites` scripts retain the portable preview path used during initial UI construction.
 
 Supabase uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and user-scoped server clients. Only privileged server code may use `SUPABASE_SECRET_KEY`. Keep real values in ignored environment files and maintain required variable names in `.env.example`.

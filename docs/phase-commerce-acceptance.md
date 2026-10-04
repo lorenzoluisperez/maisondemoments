@@ -1,6 +1,6 @@
 # Commercial wedding release acceptance
 
-Status: local implementation evidence only, 2026-09-29. Not accepted for live sales.
+Status: commerce and customer portal work paused on 2026-09-30. Local implementation evidence only, not accepted for live sales. The active release is a viewing-only showcase with Facebook and Instagram inquiries.
 
 ## Verified locally
 
@@ -10,6 +10,7 @@ Status: local implementation evidence only, 2026-09-29. Not accepted for live sa
 - Checkout is closed by default with `COMMERCE_CHECKOUT_ENABLED=false`, and seeded Essential and Signature offers are disabled. Product prices and terms cannot be inferred from sample fixtures.
 - Code review and unit tests cover signed PayMongo payload validation, a single confirmed payment identity, product fixture personalization, selected-design rendering, bounded presentation options, conservative name/venue fit rules, exact provider refund matching, and production-cost input limits. A provider-confirmed full refund path, aggregate funnel counters, and recorded contribution reports are present, but have not been exercised against PayMongo or staging PostgreSQL.
 - Commerce migrations 0020 through 0024 were applied to the development database. `npm run db:verify` passed with 25 migrations, 42 RLS-enabled application tables, no browser table grants, no public function grants, and no missing foreign-key indexes. The first full database suite exposed a stale fixed-year guest fixture; the repaired guest suite passed on its focused rerun. This is development evidence, not staging acceptance.
+- A focused development-database webhook test passed on 2026-09-30. It posts signed synthetic `checkout_session.payment.paid` payloads through the actual route, rejects bad signatures and mismatched mode or amount, settles an exact payment once, accepts a duplicate, and rejects a different payment identity. `npm run check` passed with 50 unit tests. No PayMongo account or money movement was involved in this test.
 
 ## Required before live sales
 

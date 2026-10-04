@@ -10,4 +10,8 @@ Attribution:
 Licensed under Creative Commons: By Attribution 4.0 License
 https://creativecommons.org/licenses/by/4.0/
 
-The repository does not record where the MP3 was downloaded or whether it was modified. Verify the file's provenance and modification status before public release.
+Verified on 2026-09-30: the repository MP3 is byte-identical to the artist's official download:
+https://incompetech.com/music/royalty-free/mp3-royaltyfree/There%20is%20Romance.mp3
+SHA-256: 937d39cf1c5e1a95161709cdd5333a6e69a60c692a31b39cc28f26ad6aea6971
+Size: 8051049 bytes. No edits or transcoding were made to this file.
+Used by the wedding showcase and Pearl & Poise debut showcase, with visible attribution.

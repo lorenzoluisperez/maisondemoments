@@ -2,27 +2,29 @@
 
 Status: active source of truth
 
-Last updated: 2026-09-29
+Last updated: 2026-10-04
 
 This document records the agreed product direction, architecture, release boundaries, implementation phases, and current status. Update it whenever scope, architecture, or phase status changes.
 
-## Current position
+## Current public release
 
-The three finished wedding studies are being promoted to Garden Romance, Coastal Romance, and Heritage Romance. The public storefront and product pages are implemented in the application, with the old homepage collections removed. The `/demo` routes stay fictional previews. The customer purchase, PHP PayMongo checkout, quote, passwordless code, staff MFA, initial wedding brief, and product snapshot pathways are implemented locally but have not passed provider-backed staging integration or production release gates. Local product pages show packages as unavailable when the new catalog tables have not been migrated or offers have not been enabled.
+The site is a viewing-only showcase for Garden Romance, Coastal Romance, Heritage Romance, Pearl & Poise, and Eighteen in Wonderland. The first three form the wedding collection; the latter two form Debuts / 18th Birthdays. Visitors can browse `/`, `/designs`, individual design pages, and the fictional `/demo` previews. `/how-to-order` explains the message-based process: choose a design, send the design name plus event date and location on Facebook or Instagram, then discuss availability, scope, pricing, and next steps with the team. The social icons remain visibly labeled placeholders until `FACEBOOK_PAGE_URL` and `INSTAGRAM_PROFILE_URL` contain real HTTPS profile URLs. Do not rely on the site for orders until at least one real contact link is configured and checked.
 
-The existing portal, studio, review, publication, guest access, RSVP, media, and operational foundation remains. Earlier orders and the eight event and collection presets stay compatible. Their historical phase evidence does not prove the new commerce journey. The prior sample-first sequence and manual 50 percent deposit assumption are superseded for these wedding products.
+There is no online ordering, payment, quote submission, or portal in this release. Public pages do not show checkout or sign-in entry points. Direct checkout, quote, login, customer, admin, studio, and review pages redirect to `/how-to-order`. `showcaseOnly` in `lib/site-mode.ts` keeps purchase creation, checkout session creation, quote requests, and offer enablement closed even if checkout environment variables are set. Leave `COMMERCE_CHECKOUT_ENABLED=false` in every deployed environment. The historical private foundation remains in the codebase but is not part of the public promise.
 
-| Workstream | Current status | Gate still open |
-|---|---|---|
-| Product foundation | Three versioned wedding product identities, shared brief, selected renderer, personalized opening seal, compact fit preset, and conservative review length checks implemented locally | Full visual fit validation on real content |
-| Storefront and purchasing | Public pages, three tiers, quote flow, passwordless email-code UI, hosted PayMongo checkout and signed webhook implemented locally; checkout is explicitly off by default | Apply reviewed migrations on staging, configure merchant and email, run real test-mode payments and recovery cases |
-| Customer and staff workflows | Paid-brief intake, payment confirmation view, customer production timeline, actionable admin queues, aggregate 30-day funnel counts, recorded time/cost and tier contribution reports, pricing, quotes, designer assignment, provider-verified full refund recording, curated product controls, preview widths, and selected renderer in preview/review/guest paths implemented locally | Automate refund discovery and partial refunds, broader visual-fit and overflow checks, verify complete cost entry for real margin, and end-to-end verification |
-| Launch validation | Not complete | Merchant activation, legal and tax configuration, music provenance, separate backups and isolated restore, physical-device review |
+The existing PayMongo, portal, studio, review, publication, guest, media, and operational work is deferred, not accepted for live use. Preserve earlier orders and the eight legacy presets. Previous local implementation and test evidence does not establish provider integration, release readiness, or the quality of a real-device guest experience. The older Phase 1 through 7 acceptance records describe legacy foundation only; [phase-commerce-acceptance.md](phase-commerce-acceptance.md) records deferred commerce evidence and open gates.
 
-The older Phase 1 through 7 acceptance records describe the legacy foundation only. Do not treat those records as acceptance of this commercial expansion.
-The local commercial release evidence and remaining gates are in [phase-commerce-acceptance.md](phase-commerce-acceptance.md).
+Current release checks: social URLs point to the intended accounts; the order steps are readable on mobile and desktop; every public design leads to the ordering guide; old checkout and customer portal URLs lead to the guide; no request can create a checkout session while showcase mode is active. Check the five demos separately for visual quality and guest interaction before promotion.
 
-## Commercial wedding release
+Pearl & Poise is a dedicated synthetic showcase at `/demo/debut-pearl`, with a listing at `/designs/pearl-and-poise`. Its stationery-first presentation uses realistic blush cotton-paper envelopes, a dimensional pearl seal, and hand-painted watercolor-style ornaments. Separate portrait and landscape envelope compositions fill the screen edge to edge with uniform scaling and edge cropping, so holding a phone feels like holding the envelope. The coordinated ivory, blush, champagne, and dark-ink palette keeps decoration subordinate to readable content. It includes a gently paced pearl-sealed opening, optional guest-initiated piano music with play/mute and visible attribution, program, dress code, countdown, four groups of 18 fictional names (Roses, Candles, Treasures, and Blue Bills), and a demonstration RSVP that submits nothing. Public discovery is independent of the dormant wedding commerce catalog. No database migration, customer editor, new payment capability, or private-delivery integration accompanies this design. See [debut showcase assets and verification](debut-pearl-showcase-assets.md). General birthday and christening showcases remain future work.
+
+Eighteen in Wonderland adds a separate synthetic showcase at `/demo/debut-wonderland` and listing at `/designs/eighteen-in-wonderland`. A powder-blue bookcloth cover and realistic engraved brass keyhole lead through watercolor paper layers into a tea garden. The key seats, turns, and withdraws; the garden and unfolded flower/tea pieces remain mounted through the introduction and formal invitation. Illustrated storybook spreads contain the program, attire, countdown, 18 Roses, Candles, Treasures, and Blue Bills (all 72 fictional names), pocket-watch Details on an opaque paper card, a Cheshire Cat surprise, and a sample RSVP. The existing debut fixture contract, licensed gesture-initiated piano, and public catalog are reused; no new commerce, editing, database, or private-delivery capability is introduced. See [Wonderland assets and verification](debut-wonderland-showcase-assets.md).
+
+The remaining sections document deferred platform architecture and earlier implementation evidence. They do not define active customer-facing features or purchase terms for the showcase.
+
+## Deferred commercial wedding release
+
+The following decisions and architecture describe a possible later online-commerce phase. They are not requirements or active purchase terms for the current viewing-only release. Reconfirm price, service scope, legal terms, workflow, and readiness before restarting this phase.
 
 - One Next.js application and deployment. Public routes are `/` and `/designs`; customers use `/portal`, staff use `/admin` and `/studio`, and guests use private `/i/[slug]` links.
 - Three released wedding designs, each preserving its artwork and opening sequence. Future birthday, debut, and christening products are not on sale yet.
@@ -32,7 +34,7 @@ The local commercial release evidence and remaining gates are in [phase-commerce
 - A purchase can exist without a complete event brief. Verified payment precedes detailed content collection. Browser redirects never settle payment. Signed provider events or provider API reconciliation do. The existing append-only order ledger remains authoritative after intake.
 - Server permissions protect prices, quote acceptance, order ownership, designer assignment, review approval, payment history, publication, guest seats, and media. Customer-authored HTML, CSS, and scripts are not supported.
 
-## Delivery sequence and acceptance
+## Deferred delivery sequence and acceptance
 
 1. Complete the product renderer and content capabilities with exact-version snapshots and legacy compatibility.
 2. Complete test-mode storefront purchasing, email authentication, PayMongo confirmation, retries, reconciliation, and Couture acceptance.
@@ -53,9 +55,9 @@ The product serves three audiences:
 
 The initial business is a productized creative service. Customers buy a finished invitation and a defined hosting period. A future self-service product may reuse the platform, but self-service must not shape the first release.
 
-## Fixed product decisions
+## Deferred online-commerce decisions
 
-The commercial release decisions above supersede the earlier one-package and manual-payment MVP assumptions. The underlying four event schemas, two artwork collections, eight presets, and historical orders remain supported for compatibility. The sellable collection currently contains only the three wedding products.
+These are prior online-commerce design decisions, retained for possible future work and subject to review before activation. The underlying four event schemas, two artwork collections, eight presets, and historical orders remain supported for compatibility. The current site accepts inquiries for three wedding designs and two debut showcases through social messaging only.
 
 ## Roles and permissions
 
@@ -68,7 +70,7 @@ The commercial release decisions above supersede the earlier one-package and man
 
 Staff accounts require MFA. Designers do not need unrestricted payment details or guest-list exports. Customer approval applies to one immutable version.
 
-## End-to-end workflow
+## Deferred online-commerce workflow
 
 1. The customer browses three wedding products, previews a fictional example, and selects a design and tier.
 2. Essential and Signature customers verify email, provide booking date and contact details, accept displayed terms, and pay in PHP via hosted checkout. Couture customers request a scoped proposal and accept its exact terms first.
@@ -79,7 +81,7 @@ Staff accounts require MFA. Designers do not need unrestricted payment details o
 
 Turnaround begins after verified payment and a complete brief. Customer delays pause production timing.
 
-## Architecture baseline
+## Architecture baseline for deferred private workflows
 
 - One TypeScript and Next.js repository and deployable application.
 - Supabase PostgreSQL, Auth, and Storage.

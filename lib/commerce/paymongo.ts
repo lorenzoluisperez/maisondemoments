@@ -9,11 +9,15 @@ import { weddingProduct } from "@/lib/products/catalog";
 import { verifyPaymongoSignatureBody } from "@/lib/commerce/signature";
 import { isConfirmedFullRefund, type ProviderRefund } from "@/lib/commerce/refund-verification";
 import { recordCommerceMetric, type CommerceMetricTier } from "@/lib/commerce/metrics";
+import { showcaseOnly } from "@/lib/site-mode";
 
 function credentials() {
   const key = process.env.PAYMONGO_SECRET_KEY;
   const secret = process.env.PAYMONGO_WEBHOOK_SECRET;
   if (!key || !secret) throw new CommerceConflictError("Payments are not configured");
+  if (process.env.NODE_ENV !== "production" && key.startsWith("sk_live_")) {
+    throw new CommerceConflictError("Live PayMongo payments are disabled in local development");
+  }
   return { key, secret, live: key.startsWith("sk_live_") };
 }
 
@@ -27,6 +31,7 @@ type ProviderSession = {
 };
 
 export async function createOrReuseCheckout(actor: Actor, purchaseId: string) {
+  if (showcaseOnly) throw new CommerceConflictError("Online checkout is paused. Please contact us on Facebook or Instagram");
   const purchase = await getCustomerPurchase(actor, purchaseId);
   if (purchase.status !== "AWAITING_PAYMENT") throw new CommerceConflictError("This purchase is no longer awaiting payment");
   if (!(purchase.termsSnapshot as { acceptedAt?: unknown } | null)?.acceptedAt) throw new CommerceConflictError("Service terms must be accepted before payment");
@@ -69,7 +74,7 @@ export async function createOrReuseCheckout(actor: Actor, purchaseId: string) {
     },
     body: JSON.stringify({ data: { attributes: {
       line_items: [{ name: `${weddingProduct(purchase.productSlug)?.name ?? "Wedding invitation"} · ${purchase.tier}`, amount: attempt.amountMinor, currency: "PHP", quantity: 1 }],
-      payment_method_types: (process.env.PAYMONGO_PAYMENT_METHODS ?? "card,gcash,qrph").split(","),
+      payment_method_types: (process.env.PAYMONGO_PAYMENT_METHODS ?? "qrph").split(","),
       success_url: `${base}/checkout/return?purchase=${purchase.id}`,
       cancel_url: `${base}/checkout?purchase=${purchase.id}`,
       reference_number: attempt.reference,
